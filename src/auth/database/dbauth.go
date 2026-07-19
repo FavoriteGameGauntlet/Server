@@ -10,7 +10,7 @@ type IDatabase interface {
 	GetUserByIdCommand(userId int) (typeauth.User, error)
 	GetUserByEmailCommand(userEmail string) (typeauth.User, error)
 	GetUserByLoginAndPasswordCommand(loginUser typeauth.LoginUser) (typeauth.User, error)
-	CreateUserCommand(signupUser typeauth.SignupUser) error
+	CreateUserCommand(signupUser typeauth.SignupUser) (typeauth.User, error)
 	CreateUserStatsCommand(login string) error
 	GetUserSessionByIdCommand(sessionId string) (typeauth.UserSession, error)
 	CreateUserSessionCommand(userId int) (typeauth.UserSession, error)
@@ -25,7 +25,7 @@ var getUserByLoginQuery = dbaccess.Query{Name: "GetUserByLoginQuery", SQL: `SELE
 func (db *Database) GetUserByLoginCommand(userLogin string) (user typeauth.User, err error) {
 	row := dbaccess.QueryRow(getUserByLoginQuery, userLogin)
 
-	err = row.Scan(&user.Id, &user.Login, &user.DisplayName, &user.Email)
+	err = row.Scan(&user.Id, &user.Login, &user.Email)
 
 	dbaccess.LogDbResult(getUserByLoginQuery, user, err)
 
@@ -37,7 +37,7 @@ var getUserByIdQuery = dbaccess.Query{Name: "GetUserByIdQuery", SQL: `SELECT * F
 func (db *Database) GetUserByIdCommand(userId int) (user typeauth.User, err error) {
 	row := dbaccess.QueryRow(getUserByIdQuery, userId)
 
-	err = row.Scan(&user.Id, &user.Login, &user.DisplayName, &user.Email)
+	err = row.Scan(&user.Id, &user.Login, &user.Email)
 
 	dbaccess.LogDbResult(getUserByIdQuery, user, err)
 
@@ -49,7 +49,7 @@ var getUserByEmailQuery = dbaccess.Query{Name: "GetUserByEmailQuery", SQL: `SELE
 func (db *Database) GetUserByEmailCommand(userEmail string) (user typeauth.User, err error) {
 	row := dbaccess.QueryRow(getUserByEmailQuery, userEmail)
 
-	err = row.Scan(&user.Id, &user.Login, &user.DisplayName, &user.Email)
+	err = row.Scan(&user.Id, &user.Login, &user.Email)
 
 	dbaccess.LogDbResult(getUserByEmailQuery, user, err)
 
@@ -61,21 +61,23 @@ var getUserByLoginAndPasswordQuery = dbaccess.Query{Name: "GetUserByLoginAndPass
 func (db *Database) GetUserByLoginAndPasswordCommand(loginUser typeauth.LoginUser) (user typeauth.User, err error) {
 	row := dbaccess.QueryRow(getUserByLoginAndPasswordQuery, loginUser.Login, loginUser.Password)
 
-	err = row.Scan(&user.Id, &user.Login, &user.DisplayName, &user.Email)
+	err = row.Scan(&user.Id, &user.Login, &user.Email)
 
 	dbaccess.LogDbResult(getUserByLoginAndPasswordQuery, user, err)
 
 	return
 }
 
-var createUserQuery = dbaccess.Query{Name: "CreateUserQuery", SQL: `SELECT create_user($1::text, $2::text, $3::text)`}
+var createUserQuery = dbaccess.Query{Name: "CreateUserQuery", SQL: `SELECT * FROM create_user($1::text, $2::text, $3::text)`}
 
-func (db *Database) CreateUserCommand(signupUser typeauth.SignupUser) error {
-	_, err := dbaccess.Exec(createUserQuery, signupUser.Login, signupUser.Email, signupUser.Password)
+func (db *Database) CreateUserCommand(signupUser typeauth.SignupUser) (user typeauth.User, err error) {
+	row := dbaccess.QueryRow(createUserQuery, signupUser.Login, signupUser.Email, signupUser.Password)
 
-	dbaccess.LogDbResult(createUserQuery, nil, err)
+	err = row.Scan(&user.Id, &user.Login, &user.Email)
 
-	return err
+	dbaccess.LogDbResult(createUserQuery, user, err)
+
+	return
 }
 
 var createUserStatsQuery = dbaccess.Query{Name: "CreateUserStatsQuery", SQL: `SELECT create_user_stats($1::text)`}
@@ -105,7 +107,7 @@ var createUserSessionQuery = dbaccess.Query{Name: "CreateUserSessionQuery", SQL:
 func (db *Database) CreateUserSessionCommand(userId int) (userSession typeauth.UserSession, err error) {
 	row := dbaccess.QueryRow(createUserSessionQuery, userId)
 
-	err = row.Scan(&userSession.Id, &userSession.UserId)
+	err = row.Scan(&userSession.Id, &userSession.UserId, &userSession.CreatedDate, &userSession.ExpiryDate)
 
 	dbaccess.LogDbResult(createUserSessionQuery, userSession, err)
 

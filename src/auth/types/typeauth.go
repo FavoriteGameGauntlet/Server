@@ -1,5 +1,7 @@
 package typeauth
 
+import "time"
+
 type User struct {
 	Id          int
 	Login       string
@@ -8,8 +10,10 @@ type User struct {
 }
 
 type UserSession struct {
-	Id     string
-	UserId int
+	Id          string
+	UserId      int
+	CreatedDate time.Time
+	ExpiryDate  time.Time
 }
 
 type Password struct {

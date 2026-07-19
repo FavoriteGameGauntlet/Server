@@ -12,6 +12,36 @@ type Timer struct {
 	LastActionDate time.Time
 }
 
+type CurrentTimer struct {
+	Id             int
+	GameId         int
+	State          TimerStateType
+	Duration       time.Duration
+	LastActionDate time.Time
+	TimeSpent      time.Duration
+}
+
+type CreatedTimer struct {
+	Id          int
+	UserId      int
+	PartyId     int
+	GameId      int
+	State       TimerStateType
+	Duration    time.Duration
+	CreatedDate time.Time
+}
+
+type EndedTimer struct {
+	Id             int
+	UserId         int
+	PartyId        int
+	GameId         int
+	State          TimerStateType
+	Duration       time.Duration
+	TimeSpent      time.Duration
+	LastActionDate time.Time
+}
+
 type TimerStateType string
 
 const (

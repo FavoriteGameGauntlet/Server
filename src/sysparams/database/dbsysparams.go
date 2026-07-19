@@ -6,18 +6,20 @@ import (
 )
 
 type IDatabase interface {
-	GetAllSystemParametersCommand() (parameters []typesysparams.SystemParameter, err error)
-	GetSystemParameterCommand(name string) (parameter typesysparams.SystemParameter, err error)
-	ChangeSystemParameterValueCommand(name string, value string) error
+	GetAllSystemParametersCommand(partyId int) (parameters []typesysparams.SystemParameter, err error)
+	GetSystemParameterCommand(partyId int, code string) (parameter typesysparams.SystemParameter, err error)
+	ChangeSystemParameterValueCommand(partyId int, systemParameterId int, value string) error
+	GetDefaultSystemParametersCommand() (parameters []typesysparams.DefaultSystemParameter, err error)
+	DeleteSystemParameterOverrideCommand(partyId int, systemParameterId int) error
 }
 
 type Database struct {
 }
 
-var getAllSystemParametersQuery = dbaccess.Query{Name: "GetAllSystemParametersQuery", SQL: `SELECT * FROM get_all_system_parameters()`}
+var getAllSystemParametersQuery = dbaccess.Query{Name: "GetAllSystemParametersQuery", SQL: `SELECT * FROM get_system_parameters($1::integer)`}
 
-func (db *Database) GetAllSystemParametersCommand() (parameters []typesysparams.SystemParameter, err error) {
-	rows, err := dbaccess.QueryRows(getAllSystemParametersQuery)
+func (db *Database) GetAllSystemParametersCommand(partyId int) (parameters []typesysparams.SystemParameter, err error) {
+	rows, err := dbaccess.QueryRows(getAllSystemParametersQuery, partyId)
 
 	if err != nil {
 		return
@@ -25,7 +27,7 @@ func (db *Database) GetAllSystemParametersCommand() (parameters []typesysparams.
 
 	for rows.Next() {
 		parameter := typesysparams.SystemParameter{}
-		err = rows.Scan(&parameter.Id, &parameter.Name, &parameter.Value, &parameter.ShouldShowToApp)
+		err = rows.Scan(&parameter.Id, &parameter.Code, &parameter.Name, &parameter.Description, &parameter.Value)
 
 		if err != nil {
 			_ = rows.Close()
@@ -41,24 +43,61 @@ func (db *Database) GetAllSystemParametersCommand() (parameters []typesysparams.
 	return
 }
 
-var getSystemParameterQuery = dbaccess.Query{Name: "GetSystemParameterQuery", SQL: `SELECT * FROM get_system_parameter($1::text)`, IsSilent: true}
+var getSystemParameterQuery = dbaccess.Query{Name: "GetSystemParameterQuery", SQL: `SELECT * FROM get_system_parameter($1::integer, $2::text)`, IsSilent: true}
 
-func (db *Database) GetSystemParameterCommand(name string) (parameter typesysparams.SystemParameter, err error) {
-	row := dbaccess.QueryRow(getSystemParameterQuery, name)
+func (db *Database) GetSystemParameterCommand(partyId int, code string) (parameter typesysparams.SystemParameter, err error) {
+	row := dbaccess.QueryRow(getSystemParameterQuery, partyId, code)
 
-	err = row.Scan(&parameter.Id, &parameter.Name, &parameter.Value, &parameter.ShouldShowToApp)
+	err = row.Scan(&parameter.Id, &parameter.Code, &parameter.Name, &parameter.Description, &parameter.Value)
 
 	dbaccess.LogDbResult(getSystemParameterQuery, parameter, err)
 
 	return
 }
 
-var changeSystemParameterValueQuery = dbaccess.Query{Name: "ChangeSystemParameterValueQuery", SQL: `SELECT change_system_parameter_value($1::text, $2::text)`}
+var changeSystemParameterValueQuery = dbaccess.Query{Name: "ChangeSystemParameterValueQuery", SQL: `SELECT change_system_parameter_value($1::integer, $2::integer, $3::text)`}
 
-func (db *Database) ChangeSystemParameterValueCommand(name string, value string) error {
-	_, err := dbaccess.Exec(changeSystemParameterValueQuery, name, value)
+func (db *Database) ChangeSystemParameterValueCommand(partyId int, systemParameterId int, value string) error {
+	_, err := dbaccess.Exec(changeSystemParameterValueQuery, partyId, systemParameterId, value)
 
 	dbaccess.LogDbResult(changeSystemParameterValueQuery, nil, err)
+
+	return err
+}
+
+var getDefaultSystemParametersQuery = dbaccess.Query{Name: "GetDefaultSystemParametersQuery", SQL: `SELECT * FROM get_default_system_parameters()`}
+
+func (db *Database) GetDefaultSystemParametersCommand() (parameters []typesysparams.DefaultSystemParameter, err error) {
+	rows, err := dbaccess.QueryRows(getDefaultSystemParametersQuery)
+
+	if err != nil {
+		return
+	}
+
+	for rows.Next() {
+		parameter := typesysparams.DefaultSystemParameter{}
+		err = rows.Scan(&parameter.Id, &parameter.Code, &parameter.DefaultValue, &parameter.Name, &parameter.Description)
+
+		if err != nil {
+			_ = rows.Close()
+			return
+		}
+
+		parameters = append(parameters, parameter)
+	}
+
+	dbaccess.LogDbResult(getDefaultSystemParametersQuery, parameters, err)
+
+	_ = rows.Close()
+	return
+}
+
+var deleteSystemParameterOverrideQuery = dbaccess.Query{Name: "DeleteSystemParameterOverrideQuery", SQL: `SELECT delete_system_parameter_override($1::integer, $2::integer)`}
+
+func (db *Database) DeleteSystemParameterOverrideCommand(partyId int, systemParameterId int) error {
+	_, err := dbaccess.Exec(deleteSystemParameterOverrideQuery, partyId, systemParameterId)
+
+	dbaccess.LogDbResult(deleteSystemParameterOverrideQuery, nil, err)
 
 	return err
 }

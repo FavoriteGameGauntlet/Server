@@ -7,81 +7,73 @@ import (
 )
 
 type IDatabase interface {
-	GetCurrentTimerCommand(userId int) (timer typetimers.Timer, err error)
-	CreateCurrentTimerCommand(userId int, gameId int, durationInS int) error
-	ActTimerCommand(timerId int, timerState typetimers.TimerStateType, remainingTime time.Duration) error
-	GetCompletedTimerUsersCommand() (userIds []int, err error)
+	GetCurrentTimerCommand(userId int, partyId int) (timer typetimers.CurrentTimer, err error)
+	CreateCurrentTimerCommand(userId int, partyId int, gameId int, duration time.Duration) (timer typetimers.CreatedTimer, err error)
+	ActTimerCommand(timerId int, timerState typetimers.TimerStateType, timeSpent time.Duration) error
+	GetCompletedTimerUsersCommand() (timers []typetimers.EndedTimer, err error)
 }
 
 type Database struct {
 }
 
-var getCurrentTimerQuery = dbaccess.Query{Name: "GetCurrentTimerQuery", SQL: `SELECT * FROM get_current_timer($1::integer)`}
+var getCurrentTimerQuery = dbaccess.Query{Name: "GetCurrentTimerQuery", SQL: `SELECT * FROM get_timer($1::integer, $2::integer)`}
 
-func (db *Database) GetCurrentTimerCommand(userId int) (timer typetimers.Timer, err error) {
-	row := dbaccess.QueryRow(getCurrentTimerQuery, userId)
+func (db *Database) GetCurrentTimerCommand(userId int, partyId int) (timer typetimers.CurrentTimer, err error) {
+	row := dbaccess.QueryRow(getCurrentTimerQuery, userId, partyId)
 
-	var durationInS int
-	var remainingTimeInS int
-	err = row.Scan(
-		&timer.Id,
-		&timer.State,
-		&durationInS,
-		&timer.LastActionDate,
-		&remainingTimeInS,
-	)
+	var durationRaw, timeSpentRaw string
+	err = row.Scan(&timer.Id, &timer.GameId, &timer.State, &durationRaw, &timer.LastActionDate, &timeSpentRaw)
 
-	if err != nil {
-		dbaccess.LogDbResult(getCurrentTimerQuery, timer, err)
-
-		return
+	if err == nil {
+		timer.Duration, err = dbaccess.ScanInterval(durationRaw)
 	}
-
-	timer.Duration = time.Duration(durationInS) * time.Second
-	timer.RemainingTime = time.Duration(remainingTimeInS) * time.Second
+	if err == nil {
+		timer.TimeSpent, err = dbaccess.ScanInterval(timeSpentRaw)
+	}
 
 	dbaccess.LogDbResult(getCurrentTimerQuery, timer, err)
 
 	return
 }
 
-var createCurrentTimerQuery = dbaccess.Query{Name: "CreateCurrentTimerQuery", SQL: `SELECT create_current_timer($1::integer, $2::integer, $3::integer)`}
+var createCurrentTimerQuery = dbaccess.Query{Name: "CreateCurrentTimerQuery", SQL: `SELECT * FROM create_timer($1::integer, $2::integer, $3::integer, $4::interval)`}
 
-func (db *Database) CreateCurrentTimerCommand(userId int, gameId int, durationInS int) error {
-	_, err := dbaccess.Exec(
-		createCurrentTimerQuery,
-		userId,
-		gameId,
-		durationInS,
-	)
+func (db *Database) CreateCurrentTimerCommand(userId int, partyId int, gameId int, duration time.Duration) (timer typetimers.CreatedTimer, err error) {
+	row := dbaccess.QueryRow(createCurrentTimerQuery, userId, partyId, gameId, duration)
 
-	dbaccess.LogDbResult(createCurrentTimerQuery, nil, err)
+	var durationRaw string
+	err = row.Scan(&timer.Id, &timer.UserId, &timer.PartyId, &timer.GameId, &timer.State, &durationRaw, &timer.CreatedDate)
 
-	return err
+	if err == nil {
+		timer.Duration, err = dbaccess.ScanInterval(durationRaw)
+	}
+
+	dbaccess.LogDbResult(createCurrentTimerQuery, timer, err)
+
+	return
 }
 
-var actTimerQuery = dbaccess.Query{Name: "ActTimerQuery", SQL: `SELECT act_timer($1::integer, $2::text, $3::integer)`}
+var actTimerQuery = dbaccess.Query{Name: "ActTimerQuery", SQL: `SELECT act_timer($1::integer, $2::text, $3::interval)`}
 
 func (db *Database) ActTimerCommand(
 	timerId int,
 	timerState typetimers.TimerStateType,
-	remainingTime time.Duration) error {
+	timeSpent time.Duration) error {
 
 	_, err := dbaccess.Exec(
 		actTimerQuery,
 		timerId,
 		timerState,
-		int(remainingTime.Seconds()),
-	)
+		timeSpent)
 
 	dbaccess.LogDbResult(actTimerQuery, nil, err)
 
 	return err
 }
 
-var getCompletedTimerUsersQuery = dbaccess.Query{Name: "GetCompletedTimerUsersQuery", SQL: `SELECT * FROM get_completed_timer_users()`, IsSilent: true}
+var getCompletedTimerUsersQuery = dbaccess.Query{Name: "GetCompletedTimerUsersQuery", SQL: `SELECT * FROM delete_ended_timers()`, IsSilent: true}
 
-func (db *Database) GetCompletedTimerUsersCommand() (userIds []int, err error) {
+func (db *Database) GetCompletedTimerUsersCommand() (timers []typetimers.EndedTimer, err error) {
 	rows, err := dbaccess.QueryRows(getCompletedTimerUsersQuery)
 
 	if err != nil {
@@ -89,19 +81,35 @@ func (db *Database) GetCompletedTimerUsersCommand() (userIds []int, err error) {
 	}
 
 	for rows.Next() {
-		var userId int
-		err = rows.Scan(&userId)
+		timer := typetimers.EndedTimer{}
+		var durationRaw, timeSpentRaw string
+		err = rows.Scan(
+			&timer.Id,
+			&timer.UserId,
+			&timer.PartyId,
+			&timer.GameId,
+			&timer.State,
+			&durationRaw,
+			&timeSpentRaw,
+			&timer.LastActionDate)
 
-		if err != nil {
-			dbaccess.LogDbResult(getCompletedTimerUsersQuery, userIds, err)
-
-			continue
+		if err == nil {
+			timer.Duration, err = dbaccess.ScanInterval(durationRaw)
+		}
+		if err == nil {
+			timer.TimeSpent, err = dbaccess.ScanInterval(timeSpentRaw)
 		}
 
-		userIds = append(userIds, userId)
+		if err != nil {
+			_ = rows.Close()
+			return
+		}
+
+		timers = append(timers, timer)
 	}
 
+	dbaccess.LogDbResult(getCompletedTimerUsersQuery, timers, err)
+
 	_ = rows.Close()
-	err = nil
 	return
 }

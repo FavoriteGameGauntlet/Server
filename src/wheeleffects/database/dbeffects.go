@@ -10,14 +10,20 @@ import (
 type IDatabase interface {
 	GetAvailableRollsCountCommand(userId int) (count int, err error)
 	GetAvailableEffectsCommand(userId int) (effects typewheeleffects.WheelEffects, err error)
-	GetEffectHistoryCommand(userId int) (effects typewheeleffects.RolledWheelEffectHistories, err error)
-	GetEffectHistoryByEffectNameCommand(userId int, effectName string) (effect typewheeleffects.RolledWheelEffect, err error)
-	MakeEffectRollCommand(userId int) (effects typewheeleffects.WheelEffects, err error)
-	ClearLastWheelEffectsCommand(userId int) error
-	AddLastRolledWheelEffectsCommand(userId int, effects typewheeleffects.WheelEffects) (err error)
-	GetLastRolledWheelEffectsCommand(userId int) (effects typewheeleffects.RolledWheelEffects, err error)
+	GetEffectHistoryCommand(userId int, partyId int) (history []typewheeleffects.WheelRowHistory, err error)
+	GetEffectHistoryByEffectNameCommand(userId int, partyId int, wheelRowName string) (history typewheeleffects.WheelRowHistory, err error)
+	MakeEffectRollCommand(userId int, partyId int, groupId int) (rolled typewheeleffects.RolledWheelRow, err error)
+	ClearLastWheelEffectsCommand(userId int, partyId int) error
+	AddLastRolledWheelEffectCommand(userId int, partyId int, wheelRowId int, position int) (created typewheeleffects.CreatedLastWheelRow, err error)
+	GetLastRolledWheelEffectsCommand(userId int, partyId int) (rows []typewheeleffects.LastWheelRow, err error)
 	MarkLastWheelEffectAppliedCommand(userId int, wheelEffectId int) error
-	AddWheelEffectHistoryCommand(userId int, wheelEffectId int) (historyId int, err error)
+	AddWheelEffectHistoryCommand(userId int, partyId int, wheelRowId int, sourceEventId *int) (created typewheeleffects.CreatedWheelRowHistory, err error)
+	CreateWheelGroupCommand(partyId int, name string) (group typewheeleffects.WheelGroup, err error)
+	GetWheelGroupsCommand(partyId int) (groups []typewheeleffects.WheelGroup, err error)
+	CreateWheelRowCommand(partyId int, name string, description string, changeId int, groupId int) (row typewheeleffects.CreatedWheelRow, err error)
+	GetWheelRowCommand(partyId int, wheelRowId int) (row typewheeleffects.WheelRow, err error)
+	GetWheelRowsCommand(partyId int) (rows []typewheeleffects.WheelRow, err error)
+	DeleteWheelRowCommand(partyId int, wheelRowId int) error
 }
 
 type Database struct {
@@ -69,137 +75,108 @@ func (db *Database) GetAvailableEffectsCommand(userId int) (effects typewheeleff
 	return
 }
 
-var getEffectHistoryQuery = dbaccess.Query{Name: "GetEffectHistoryQuery", SQL: `SELECT * FROM get_effect_history($1::integer)`}
+var getEffectHistoryQuery = dbaccess.Query{Name: "GetEffectHistoryQuery", SQL: `SELECT * FROM get_wheel_row_history($1::integer, $2::integer)`}
 
-func (db *Database) GetEffectHistoryCommand(userId int) (effects typewheeleffects.RolledWheelEffectHistories, err error) {
-	rows, err := dbaccess.QueryRows(getEffectHistoryQuery, userId)
-
-	if err != nil {
-		return
-	}
-
-	for rows.Next() {
-		effect := typewheeleffects.RolledWheelEffectHistory{}
-		err = rows.Scan(&effect.Name, &effect.Description, &effect.RollDate)
-
-		if err != nil {
-			dbaccess.LogDbResult(getEffectHistoryQuery, effects, err)
-
-			_ = rows.Close()
-			return
-		}
-
-		effects = append(effects, effect)
-	}
-
-	dbaccess.LogDbResult(getEffectHistoryQuery, effects, err)
-
-	_ = rows.Close()
-	return
-}
-
-var getEffectHistoryByEffectNameQuery = dbaccess.Query{Name: "GetEffectHistoryByEffectNameQuery", SQL: `SELECT * FROM get_effect_history_by_name($1::integer, $2::text)`}
-
-func (db *Database) GetEffectHistoryByEffectNameCommand(userId int, effectName string) (effect typewheeleffects.RolledWheelEffect, err error) {
-	row := dbaccess.QueryRow(getEffectHistoryByEffectNameQuery, userId, effectName)
-
-	err = row.Scan(&effect.Name, &effect.Description, &effect.RollDate)
-
-	dbaccess.LogDbResult(getEffectHistoryByEffectNameQuery, effect, err)
-
-	return
-}
-
-var makeEffectRollQuery = dbaccess.Query{Name: "MakeEffectRollQuery", SQL: `SELECT * FROM make_effect_roll($1::integer)`}
-
-func (db *Database) MakeEffectRollCommand(userId int) (effects typewheeleffects.WheelEffects, err error) {
-	rows, err := dbaccess.QueryRows(makeEffectRollQuery, userId)
+func (db *Database) GetEffectHistoryCommand(userId int, partyId int) (history []typewheeleffects.WheelRowHistory, err error) {
+	rows, err := dbaccess.QueryRows(getEffectHistoryQuery, userId, partyId)
 
 	if err != nil {
 		return
 	}
 
 	for rows.Next() {
-		effect := typewheeleffects.WheelEffect{}
-		err = rows.Scan(&effect.Id, &effect.Name, &effect.Description)
+		entry := typewheeleffects.WheelRowHistory{}
+		err = rows.Scan(&entry.Name, &entry.Description, &entry.AppliedDate)
 
 		if err != nil {
-			dbaccess.LogDbResult(makeEffectRollQuery, effects, err)
+			dbaccess.LogDbResult(getEffectHistoryQuery, history, err)
 
 			_ = rows.Close()
 			return
 		}
 
-		effects = append(effects, effect)
+		history = append(history, entry)
 	}
 
-	dbaccess.LogDbResult(makeEffectRollQuery, effects, err)
+	dbaccess.LogDbResult(getEffectHistoryQuery, history, err)
 
 	_ = rows.Close()
 	return
 }
 
-var clearLastWheelEffectsQuery = dbaccess.Query{Name: "ClearLastWheelEffectsQuery", SQL: `SELECT clear_last_wheel_effects($1::integer)`}
+var getEffectHistoryByEffectNameQuery = dbaccess.Query{Name: "GetEffectHistoryByEffectNameQuery", SQL: `SELECT * FROM get_wheel_row_history_by_name($1::integer, $2::integer, $3::text)`}
 
-func (db *Database) ClearLastWheelEffectsCommand(userId int) error {
-	_, err := dbaccess.Exec(clearLastWheelEffectsQuery, userId)
+func (db *Database) GetEffectHistoryByEffectNameCommand(userId int, partyId int, wheelRowName string) (history typewheeleffects.WheelRowHistory, err error) {
+	row := dbaccess.QueryRow(getEffectHistoryByEffectNameQuery, userId, partyId, wheelRowName)
+
+	err = row.Scan(&history.Name, &history.Description, &history.AppliedDate)
+
+	dbaccess.LogDbResult(getEffectHistoryByEffectNameQuery, history, err)
+
+	return
+}
+
+var makeEffectRollQuery = dbaccess.Query{Name: "MakeEffectRollQuery", SQL: `SELECT * FROM roll_wheel_group($1::integer, $2::integer, $3::integer)`}
+
+func (db *Database) MakeEffectRollCommand(userId int, partyId int, groupId int) (rolled typewheeleffects.RolledWheelRow, err error) {
+	row := dbaccess.QueryRow(makeEffectRollQuery, userId, partyId, groupId)
+
+	err = row.Scan(&rolled.Id, &rolled.UserId, &rolled.PartyId, &rolled.WheelRowId, &rolled.WheelPosition, &rolled.RolledDate, &rolled.IsManualChange)
+
+	dbaccess.LogDbResult(makeEffectRollQuery, rolled, err)
+
+	return
+}
+
+var clearLastWheelEffectsQuery = dbaccess.Query{Name: "ClearLastWheelEffectsQuery", SQL: `SELECT clear_last_wheel_rows($1::integer, $2::integer)`}
+
+func (db *Database) ClearLastWheelEffectsCommand(userId int, partyId int) error {
+	_, err := dbaccess.Exec(clearLastWheelEffectsQuery, userId, partyId)
 
 	dbaccess.LogDbResult(clearLastWheelEffectsQuery, nil, err)
 
 	return err
 }
 
-var addLastRolledWheelEffectsQuery = dbaccess.Query{Name: "AddLastRolledWheelEffectsQuery", SQL: `SELECT add_last_rolled_wheel_effect($1::integer, $2::integer, $3::integer)`}
+var addLastRolledWheelEffectsQuery = dbaccess.Query{Name: "AddLastRolledWheelEffectsQuery", SQL: `SELECT * FROM create_last_wheel_row($1::integer, $2::integer, $3::integer, $4::integer)`}
 
-func (db *Database) AddLastRolledWheelEffectsCommand(userId int, effects typewheeleffects.WheelEffects) (err error) {
-	for i, effect := range effects {
-		_, err = dbaccess.Exec(addLastRolledWheelEffectsQuery, userId, effect.Id, i-2)
+func (db *Database) AddLastRolledWheelEffectCommand(userId int, partyId int, wheelRowId int, position int) (created typewheeleffects.CreatedLastWheelRow, err error) {
+	row := dbaccess.QueryRow(addLastRolledWheelEffectsQuery, userId, partyId, wheelRowId, position)
 
-		if err != nil {
-			dbaccess.LogDbResult(addLastRolledWheelEffectsQuery, nil, err)
+	err = row.Scan(&created.Id, &created.UserId, &created.PartyId, &created.WheelRowId, &created.WheelPosition, &created.RolledDate)
 
-			return
-		}
-	}
-
-	dbaccess.LogDbResult(addLastRolledWheelEffectsQuery, effects, err)
+	dbaccess.LogDbResult(addLastRolledWheelEffectsQuery, created, err)
 
 	return
 }
 
-var getLastRolledWheelEffectsQuery = dbaccess.Query{Name: "GetLastRolledWheelEffectsQuery", SQL: `SELECT * FROM get_last_rolled_wheel_effects($1::integer)`}
+var getLastRolledWheelEffectsQuery = dbaccess.Query{Name: "GetLastRolledWheelEffectsQuery", SQL: `SELECT * FROM get_last_wheel_rows($1::integer, $2::integer)`}
 
-func (db *Database) GetLastRolledWheelEffectsCommand(userId int) (effects typewheeleffects.RolledWheelEffects, err error) {
-	rows, err := dbaccess.QueryRows(getLastRolledWheelEffectsQuery, userId)
+func (db *Database) GetLastRolledWheelEffectsCommand(userId int, partyId int) (rows []typewheeleffects.LastWheelRow, err error) {
+	rs, err := dbaccess.QueryRows(getLastRolledWheelEffectsQuery, userId, partyId)
 
 	if err != nil {
 		return
 	}
 
-	for rows.Next() {
-		effect := typewheeleffects.RolledWheelEffect{}
+	for rs.Next() {
+		row := typewheeleffects.LastWheelRow{}
 
-		err = rows.Scan(
-			&effect.Id,
-			&effect.Name,
-			&effect.Description,
-			&effect.RollDate,
-			&effect.Position,
-			&effect.IsApplied)
+		err = rs.Scan(&row.Id, &row.Name, &row.Description, &row.RolledDate, &row.WheelPosition)
 
 		if err != nil {
-			dbaccess.LogDbResult(getLastRolledWheelEffectsQuery, effects, err)
+			dbaccess.LogDbResult(getLastRolledWheelEffectsQuery, rows, err)
 
-			_ = rows.Close()
+			_ = rs.Close()
 			return
 		}
 
-		effects = append(effects, effect)
+		rows = append(rows, row)
 	}
 
-	dbaccess.LogDbResult(getLastRolledWheelEffectsQuery, effects, err)
+	dbaccess.LogDbResult(getLastRolledWheelEffectsQuery, rows, err)
 
-	_ = rows.Close()
+	_ = rs.Close()
 	return
 }
 
@@ -213,13 +190,114 @@ func (db *Database) MarkLastWheelEffectAppliedCommand(userId int, wheelEffectId 
 	return err
 }
 
-var addWheelEffectHistoryQuery = dbaccess.Query{Name: "AddWheelEffectHistoryQuery", SQL: `SELECT add_wheel_effect_history($1::integer, $2::integer)`}
+var addWheelEffectHistoryQuery = dbaccess.Query{Name: "AddWheelEffectHistoryQuery", SQL: `SELECT * FROM create_wheel_row_history($1::integer, $2::integer, $3::integer, $4::integer)`}
 
-func (db *Database) AddWheelEffectHistoryCommand(userId int, wheelEffectId int) (historyId int, err error) {
-	row := dbaccess.QueryRow(addWheelEffectHistoryQuery, userId, wheelEffectId)
-	err = row.Scan(&historyId)
+func (db *Database) AddWheelEffectHistoryCommand(userId int, partyId int, wheelRowId int, sourceEventId *int) (created typewheeleffects.CreatedWheelRowHistory, err error) {
+	row := dbaccess.QueryRow(addWheelEffectHistoryQuery, userId, partyId, wheelRowId, sourceEventId)
 
-	dbaccess.LogDbResult(addWheelEffectHistoryQuery, historyId, err)
+	err = row.Scan(&created.Id, &created.UserId, &created.PartyId, &created.WheelRowId, &created.AppliedDate)
+
+	dbaccess.LogDbResult(addWheelEffectHistoryQuery, created, err)
 
 	return
+}
+
+var createWheelGroupQuery = dbaccess.Query{Name: "CreateWheelGroupQuery", SQL: `SELECT * FROM create_wheel_group($1::integer, $2::text)`}
+
+func (db *Database) CreateWheelGroupCommand(partyId int, name string) (group typewheeleffects.WheelGroup, err error) {
+	row := dbaccess.QueryRow(createWheelGroupQuery, partyId, name)
+
+	err = row.Scan(&group.Id, &group.PartyId, &group.Name)
+
+	dbaccess.LogDbResult(createWheelGroupQuery, group, err)
+
+	return
+}
+
+var getWheelGroupsQuery = dbaccess.Query{Name: "GetWheelGroupsQuery", SQL: `SELECT * FROM get_wheel_groups($1::integer)`}
+
+func (db *Database) GetWheelGroupsCommand(partyId int) (groups []typewheeleffects.WheelGroup, err error) {
+	rows, err := dbaccess.QueryRows(getWheelGroupsQuery, partyId)
+
+	if err != nil {
+		return
+	}
+
+	for rows.Next() {
+		group := typewheeleffects.WheelGroup{}
+		err = rows.Scan(&group.Id, &group.PartyId, &group.Name)
+
+		if err != nil {
+			_ = rows.Close()
+			return
+		}
+
+		groups = append(groups, group)
+	}
+
+	dbaccess.LogDbResult(getWheelGroupsQuery, groups, err)
+
+	_ = rows.Close()
+	return
+}
+
+var createWheelRowQuery = dbaccess.Query{Name: "CreateWheelRowQuery", SQL: `SELECT * FROM create_wheel_row($1::integer, $2::text, $3::text, $4::integer, $5::integer)`}
+
+func (db *Database) CreateWheelRowCommand(partyId int, name string, description string, changeId int, groupId int) (row typewheeleffects.CreatedWheelRow, err error) {
+	r := dbaccess.QueryRow(createWheelRowQuery, partyId, name, description, changeId, groupId)
+
+	err = r.Scan(&row.Id, &row.PartyId, &row.Name, &row.Description, &row.ChangeId, &row.GroupId)
+
+	dbaccess.LogDbResult(createWheelRowQuery, row, err)
+
+	return
+}
+
+var getWheelRowQuery = dbaccess.Query{Name: "GetWheelRowQuery", SQL: `SELECT * FROM get_wheel_row($1::integer, $2::integer)`}
+
+func (db *Database) GetWheelRowCommand(partyId int, wheelRowId int) (row typewheeleffects.WheelRow, err error) {
+	r := dbaccess.QueryRow(getWheelRowQuery, partyId, wheelRowId)
+
+	err = r.Scan(&row.Id, &row.PartyId, &row.Name, &row.Description, &row.ChangeId, &row.GroupId, &row.IsManualChange)
+
+	dbaccess.LogDbResult(getWheelRowQuery, row, err)
+
+	return
+}
+
+var getWheelRowsQuery = dbaccess.Query{Name: "GetWheelRowsQuery", SQL: `SELECT * FROM get_wheel_rows($1::integer)`}
+
+func (db *Database) GetWheelRowsCommand(partyId int) (rows []typewheeleffects.WheelRow, err error) {
+	rs, err := dbaccess.QueryRows(getWheelRowsQuery, partyId)
+
+	if err != nil {
+		return
+	}
+
+	for rs.Next() {
+		row := typewheeleffects.WheelRow{}
+		err = rs.Scan(&row.Id, &row.PartyId, &row.Name, &row.Description, &row.ChangeId, &row.GroupId, &row.IsManualChange)
+
+		if err != nil {
+			_ = rs.Close()
+			return
+		}
+
+		rows = append(rows, row)
+	}
+
+	dbaccess.LogDbResult(getWheelRowsQuery, rows, err)
+
+	_ = rs.Close()
+	return
+}
+
+var deleteWheelRowQuery = dbaccess.Query{Name: "DeleteWheelRowQuery", SQL: `SELECT delete_wheel_row($1::integer, $2::integer)`}
+
+func (db *Database) DeleteWheelRowCommand(partyId int, wheelRowId int) error {
+	_, err := dbaccess.Exec(deleteWheelRowQuery, partyId, wheelRowId)
+
+	dbaccess.LogDbResult(deleteWheelRowQuery, nil, err)
+
+	return err
 }

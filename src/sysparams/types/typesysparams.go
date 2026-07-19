@@ -1,10 +1,19 @@
 package typesysparams
 
 type SystemParameter struct {
-	Id              int
-	Name            string
-	Value           string
-	ShouldShowToApp bool
+	Id          int
+	Code        string
+	Name        string
+	Description string
+	Value       string
+}
+
+type DefaultSystemParameter struct {
+	Id           int
+	Code         string
+	DefaultValue string
+	Name         string
+	Description  string
 }
 
 const (

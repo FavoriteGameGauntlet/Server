@@ -128,3 +128,68 @@ var TerritoryPointChangeSourceSlice = []string{
 	TerritoryPointChangeSourceLoss,
 	TerritoryPointChangeSourceOther,
 }
+
+type PointType struct {
+	Id          int
+	PartyId     int
+	Name        string
+	Description string
+	StartValue  int
+	IsPublic    bool
+	IsShared    bool
+	Minimum     int
+	Maximum     int
+	IsRemoved   bool
+}
+
+type PointTypeInfo struct {
+	Id          int
+	PartyId     int
+	Name        string
+	Description string
+	StartValue  int
+	IsPublic    bool
+	IsShared    bool
+	Minimum     int
+	Maximum     int
+}
+
+type UserPoint struct {
+	Id          int
+	UserId      int
+	PartyId     int
+	PointTypeId int
+	Value       int
+}
+
+type PartyPoint struct {
+	Id          int
+	PartyId     int
+	PointTypeId int
+	Value       int
+}
+
+type UserPointHistoryEntry struct {
+	Id                 int
+	UserId             int
+	PartyId            int
+	PointTypeId        int
+	SourceUserId       int
+	DesiredChangeValue int
+	ActualChangeValue  int
+	FinalValue         int
+	SourceEventId      int
+	ChangedDate        time.Time
+}
+
+type PartyPointHistoryEntry struct {
+	Id                 int
+	PartyId            int
+	PointTypeId        int
+	SourceUserId       int
+	DesiredChangeValue int
+	ActualChangeValue  int
+	FinalValue         int
+	SourceEventId      int
+	ChangedDate        time.Time
+}
