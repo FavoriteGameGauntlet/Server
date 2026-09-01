@@ -115,14 +115,14 @@ func (c *Controller) ChangeFreePoints(ctx echo.Context, login genpoints.Login) e
 
 	var effectId *int
 	if pointChangeDto.WheelEffectName != nil {
-		var effect typewheeleffects.RolledWheelEffect
-		effect, err = c.WheelEffectService.GetLastWheelEffectByName(userId, *pointChangeDto.WheelEffectName)
+		var wheelRow typewheeleffects.LastWheelRow
+		wheelRow, err = c.WheelEffectService.GetLastWheelRowByName(userId, *pointChangeDto.WheelEffectName)
 
 		if err != nil {
 			return common.SendJSONErrorResponse(ctx, err)
 		}
 
-		effectId = &effect.Id
+		effectId = &wheelRow.Id
 	}
 
 	pointChange := convertDtoToFreePointChange(sourceUserId, pointChangeDto)

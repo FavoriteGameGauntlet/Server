@@ -1,8 +1,8 @@
 allOf:
-  - $ref: "./WheelEffect.yaml"
+  - $ref: "./WheelRow.yaml"
   - type: object
     properties:
-      rollDate:
+      appliedDate:
         type: string
         format: date-time
-    required: [ rollDate ]
+    required: [ appliedDate ]

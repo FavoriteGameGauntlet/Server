@@ -5,7 +5,7 @@ post:
     $ref: "../../../components/requests/WheelEffectRollRequest.yaml"
   responses:
     "200":
-      $ref: "../../../components/responses/RolledWheelEffectsResponse.yaml"
+      $ref: "../../../components/responses/RolledWheelRowsResponse.yaml"
     "401":
       $ref: "../../../components/responses/ErrorResponse.yaml"
     "404":

@@ -16,8 +16,28 @@ import (
 	"github.com/go-co-op/gocron/v2"
 )
 
+// defaultPartyId is a stopgap until real party-context resolution exists (see project plan).
+const defaultPartyId = 1
+
 type IService interface {
 	ForceStopCurrentTimer(userId int) (typetimers.Timer, error)
+}
+
+// toTimer computes the derived Timer view (with RemainingTime) from a raw CurrentTimer DB row.
+func toTimer(currentTimer typetimers.CurrentTimer) typetimers.Timer {
+	remainingTime := currentTimer.Duration - currentTimer.TimeSpent
+
+	if remainingTime < 0 {
+		remainingTime = 0
+	}
+
+	return typetimers.Timer{
+		Id:             currentTimer.Id,
+		Duration:       currentTimer.Duration,
+		RemainingTime:  remainingTime,
+		State:          currentTimer.State,
+		LastActionDate: currentTimer.LastActionDate,
+	}
 }
 
 type Service struct {
@@ -78,7 +98,7 @@ func (s *Service) StartTimerFinisherScheduler() {
 }
 
 func (s *Service) GetOrCreateCurrentTimer(userId int) (timer typetimers.Timer, err error) {
-	games, err := s.GamesDatabase.GetCurrentGameCommand(userId)
+	game, err := s.GamesDatabase.GetCurrentGameCommand(userId, defaultPartyId)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = common.NewCurrentGameNotFoundError()
@@ -89,20 +109,14 @@ func (s *Service) GetOrCreateCurrentTimer(userId int) (timer typetimers.Timer, e
 		return
 	}
 
-	if len(games) == 0 {
-		err = common.NewCurrentGameNotFoundError()
-		return
-	}
-
-	game := games[0]
-
-	timer, err = s.Database.GetCurrentTimerCommand(userId)
+	currentTimer, err := s.Database.GetCurrentTimerCommand(userId, defaultPartyId)
 
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return
 	}
 
 	if !errors.Is(err, sql.ErrNoRows) {
+		timer = toTimer(currentTimer)
 		return
 	}
 
@@ -129,13 +143,19 @@ func (s *Service) GetOrCreateCurrentTimer(userId int) (timer typetimers.Timer, e
 		return
 	}
 
-	err = s.Database.CreateCurrentTimerCommand(userId, game.Id, durationInS)
+	_, err = s.Database.CreateCurrentTimerCommand(userId, defaultPartyId, game.Id, time.Duration(durationInS)*time.Second)
 
 	if err != nil {
 		return
 	}
 
-	timer, err = s.Database.GetCurrentTimerCommand(userId)
+	currentTimer, err = s.Database.GetCurrentTimerCommand(userId, defaultPartyId)
+
+	if err != nil {
+		return
+	}
+
+	timer = toTimer(currentTimer)
 
 	return
 }
@@ -193,7 +213,7 @@ func (s *Service) actCurrentTimer(
 	timerState typetimers.TimerStateType,
 	incorrectStates []typetimers.TimerStateType) (timer typetimers.Timer, err error) {
 
-	timer, err = s.Database.GetCurrentTimerCommand(userId)
+	currentTimer, err := s.Database.GetCurrentTimerCommand(userId, defaultPartyId)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = common.NewCurrentTimerNotFoundError()
@@ -203,6 +223,8 @@ func (s *Service) actCurrentTimer(
 	if err != nil {
 		return
 	}
+
+	timer = toTimer(currentTimer)
 
 	for _, state := range incorrectStates {
 		if timer.State == state {
@@ -225,18 +247,24 @@ func (s *Service) actCurrentTimer(
 		return
 	}
 
-	timer, err = s.Database.GetCurrentTimerCommand(userId)
+	currentTimer, err = s.Database.GetCurrentTimerCommand(userId, defaultPartyId)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = common.NewCurrentTimerNotFoundError()
 		return
 	}
 
+	if err != nil {
+		return
+	}
+
+	timer = toTimer(currentTimer)
+
 	return
 }
 
 func (s *Service) StopAllCompletedTimers() error {
-	userIds, err := s.Database.GetCompletedTimerUsersCommand()
+	endedTimers, err := s.Database.GetCompletedTimerUsersCommand()
 
 	if err != nil {
 		return err
@@ -260,11 +288,11 @@ func (s *Service) StopAllCompletedTimers() error {
 		return err
 	}
 
-	for _, userId := range userIds {
-		_, _ = s.StopCurrentTimer(userId)
-		_ = s.PointsDatabase.ChangeAvailableRollsCommand(userId, availableRollChangeByTimer)
-		_ = s.PointsDatabase.ChangeTerritoryHoursCommand(userId, territoryHourChangeByTimer)
-		_ = s.PointsDatabase.ChangeExperiencePointsCommand(userId, experiencePointChangeByTimer)
+	for _, endedTimer := range endedTimers {
+		_, _ = s.StopCurrentTimer(endedTimer.UserId)
+		_ = s.PointsDatabase.ChangeAvailableRollsCommand(endedTimer.UserId, availableRollChangeByTimer)
+		_ = s.PointsDatabase.ChangeTerritoryHoursCommand(endedTimer.UserId, territoryHourChangeByTimer)
+		_ = s.PointsDatabase.ChangeExperiencePointsCommand(endedTimer.UserId, experiencePointChangeByTimer)
 	}
 
 	return nil

@@ -1,8 +1,11 @@
 package srvwheeleffects
 
 import (
+	"FGG-Service/src/changes/database"
+	srvchanges "FGG-Service/src/changes/service"
+	"FGG-Service/src/changes/types"
 	"FGG-Service/src/common"
-	srvpoints "FGG-Service/src/points/service"
+	"FGG-Service/src/points/service"
 	"FGG-Service/src/points/type"
 	"FGG-Service/src/sysparams/service"
 	"FGG-Service/src/sysparams/types"
@@ -10,29 +13,43 @@ import (
 	"FGG-Service/src/wheeleffects/types"
 	"database/sql"
 	"errors"
+	"math/rand"
+)
+
+// defaultPartyId and defaultCollectionId are stopgaps until real party context and wheel-collection
+// selection exist (see project plan) — every roll is scoped to this one hardcoded party/collection.
+const (
+	defaultPartyId      = 1
+	defaultCollectionId = 1
 )
 
 type IService interface {
-	ApplyWheelEffectRoll(userId int, rollApply typewheeleffects.WheelEffectRollApply) (
-		results typepoints.PointChangeResultByUserIds, err error)
-	GetLastWheelEffectByName(userId int, effectName string) (effect typewheeleffects.RolledWheelEffect, err error)
+	GetAvailableRollsCount(userId int) (count int, err error)
+	GetAvailableWheelRows(userId int) (rows []typewheeleffects.WheelRow, err error)
+	MakeEffectRoll(userId int, isReroll bool) (rolled []typewheeleffects.LastWheelRow, err error)
+	ClearLastWheelEffects(userId int) error
+	GetLastRolledWheelEffects(userId int) (rows []typewheeleffects.LastWheelRow, err error)
+	ApplyWheelEffectRoll(userId int, wheelRowName string, targetUserIds []int) error
+	GetLastWheelRowByName(userId int, wheelRowName string) (row typewheeleffects.LastWheelRow, err error)
+	GetEffectHistory(userId int) (history []typewheeleffects.WheelRowHistory, err error)
+	GetEffectHistoryByEffectName(userId int, effectName string) (history *typewheeleffects.WheelRowHistory, err error)
 }
 
 type Service struct {
 	Database         dbwheeleffects.IDatabase
-	PointService     srvpoints.Service
+	ChangesDatabase  dbchanges.IDatabase
+	ChangesService   srvchanges.IService
+	PointsService    *srvpoints.Service
 	SysParamsService srvsysparams.IService
 }
 
 func NewService() *Service {
-	db := new(dbwheeleffects.Database)
-	ps := srvpoints.NewService()
-	sp := srvsysparams.NewService()
-
 	return &Service{
-		db,
-		*ps,
-		sp,
+		Database:         new(dbwheeleffects.Database),
+		ChangesDatabase:  new(dbchanges.Database),
+		ChangesService:   srvchanges.NewService(),
+		PointsService:    srvpoints.NewService(),
+		SysParamsService: srvsysparams.NewService(),
 	}
 }
 
@@ -40,35 +57,14 @@ func (s *Service) GetAvailableRollsCount(userId int) (count int, err error) {
 	return s.Database.GetAvailableRollsCountCommand(userId)
 }
 
-func (s *Service) GetAvailableEffects(userId int) (typewheeleffects.WheelEffects, error) {
-	return s.Database.GetAvailableEffectsCommand(userId)
+func (s *Service) GetAvailableWheelRows(userId int) (rows []typewheeleffects.WheelRow, err error) {
+	return s.Database.GetAvailableWheelRowsCommand(userId, defaultPartyId, defaultCollectionId)
 }
 
-func (s *Service) GetEffectHistory(userId int) (typewheeleffects.RolledWheelEffectHistories, error) {
-	return s.Database.GetEffectHistoryCommand(userId)
-}
-
-func (s *Service) GetEffectHistoryByEffectName(userId int, effectName string) (effect *typewheeleffects.RolledWheelEffect, err error) {
-	notNilEffect, err := s.Database.GetEffectHistoryByEffectNameCommand(userId, effectName)
-
-	if errors.Is(err, sql.ErrNoRows) {
-		err = nil
-		return
-	}
-
-	if err != nil {
-		return
-	}
-
-	effect = &notNilEffect
-
-	return
-}
-
-func (s *Service) MakeEffectRoll(userId int, isReroll bool) (effects typewheeleffects.WheelEffects, err error) {
+func (s *Service) MakeEffectRoll(userId int, isReroll bool) (rolled []typewheeleffects.LastWheelRow, err error) {
 	if !isReroll {
 		var rollCount int
-		rollCount, err = s.Database.GetAvailableRollsCountCommand(userId)
+		rollCount, err = s.GetAvailableRollsCount(userId)
 
 		if err != nil {
 			return
@@ -87,22 +83,26 @@ func (s *Service) MakeEffectRoll(userId int, isReroll bool) (effects typewheelef
 		}
 	}
 
-	effects, err = s.Database.MakeEffectRollCommand(userId)
+	candidates, err := s.Database.GetAvailableWheelRowsCommand(userId, defaultPartyId, defaultCollectionId)
 
 	if err != nil {
 		return
 	}
 
-	minimumAvailableWheelEffectsForRoll, err := s.SysParamsService.GetInt(typesysparams.ParamMinimumAvailableWheelEffectsForRoll)
+	sampleSize, err := s.SysParamsService.GetInt(typesysparams.ParamMinimumAvailableWheelEffectsForRoll)
 
 	if err != nil {
 		return
 	}
 
-	if len(effects) < minimumAvailableWheelEffectsForRoll {
+	if len(candidates) < sampleSize {
 		err = common.NewNotEnoughAvailableWheelEffectsConflictError()
 		return
 	}
+
+	rand.Shuffle(len(candidates), func(i, j int) {
+		candidates[i], candidates[j] = candidates[j], candidates[i]
+	})
 
 	if !isReroll {
 		var availableRollChangeByRoll int
@@ -112,32 +112,46 @@ func (s *Service) MakeEffectRoll(userId int, isReroll bool) (effects typewheelef
 			return
 		}
 
-		err = s.PointService.ChangeAvailableRolls(userId, availableRollChangeByRoll)
+		err = s.PointsService.ChangePointValueByTypeNameNoHistory(userId, defaultPartyId, typepoints.PointTypeAvailableRolls, availableRollChangeByRoll)
 
 		if err != nil {
 			return
 		}
 	}
 
-	err = s.Database.ClearLastWheelEffectsCommand(userId)
+	err = s.Database.ClearLastWheelEffectsCommand(userId, defaultPartyId)
 
 	if err != nil {
 		return
 	}
 
-	err = s.Database.AddLastRolledWheelEffectsCommand(userId, effects)
+	inputs := make([]typewheeleffects.RolledWheelRowInput, sampleSize)
+	for i := range inputs {
+		inputs[i] = typewheeleffects.RolledWheelRowInput{
+			WheelRowId: candidates[i].Id,
+			Position:   i + 1,
+		}
+	}
+
+	_, err = s.Database.AddLastRolledWheelEffectsCommand(userId, defaultPartyId, inputs)
+
+	if err != nil {
+		return
+	}
+
+	rolled, err = s.Database.GetLastRolledWheelEffectsCommand(userId, defaultPartyId)
 
 	return
 }
 
 func (s *Service) ClearLastWheelEffects(userId int) error {
-	return s.Database.ClearLastWheelEffectsCommand(userId)
+	return s.Database.ClearLastWheelEffectsCommand(userId, defaultPartyId)
 }
 
-func (s *Service) GetLastRolledWheelEffects(userId int) (effects typewheeleffects.RolledWheelEffects, err error) {
-	effects, err = s.Database.GetLastRolledWheelEffectsCommand(userId)
+func (s *Service) GetLastRolledWheelEffects(userId int) (rows []typewheeleffects.LastWheelRow, err error) {
+	rows, err = s.Database.GetLastRolledWheelEffectsCommand(userId, defaultPartyId)
 
-	if err == nil && len(effects) == 0 {
+	if err == nil && len(rows) == 0 {
 		err = common.NewLastWheelEffectsNotFoundError()
 		return
 	}
@@ -145,90 +159,64 @@ func (s *Service) GetLastRolledWheelEffects(userId int) (effects typewheeleffect
 	return
 }
 
-func (s *Service) ApplyWheelEffectRoll(userId int, rollApply typewheeleffects.WheelEffectRollApply) (
-	results typepoints.PointChangeResultByUserIds, err error) {
-
-	effect, err := s.GetLastWheelEffectByName(userId, rollApply.WheelEffectName)
-
-	if err != nil {
-		return
-	}
-
-	err = s.Database.MarkLastWheelEffectAppliedCommand(userId, effect.Id)
+// ApplyWheelEffectRoll applies the named last-rolled wheel row's Change to every user in
+// targetUserIds. This preserves the old feature's ability to apply a roll to users other than the
+// roller: the party-level Change template (WheelRow.ChangeId) has no user of its own, so its entries
+// are copied into a fresh users.Change with each entry stamped to one of targetUserIds before the
+// entries are actually applied.
+func (s *Service) ApplyWheelEffectRoll(userId int, wheelRowName string, targetUserIds []int) (err error) {
+	lastRow, err := s.GetLastWheelRowByName(userId, wheelRowName)
 
 	if err != nil {
 		return
 	}
 
-	var historyId int
-	historyId, err = s.Database.AddWheelEffectHistoryCommand(userId, effect.Id)
+	wheelRow, err := s.Database.GetWheelRowCommand(defaultPartyId, lastRow.Id)
 
 	if err != nil {
 		return
 	}
 
-	results = make(typepoints.PointChangeResultByUserIds, len(rollApply.PointChangeByUserIds))
+	history, err := s.Database.AddWheelEffectHistoryCommand(userId, defaultPartyId, wheelRow.Id, nil)
 
-	for i, pointChange := range rollApply.PointChangeByUserIds {
-		changeResults := typepoints.PointChangeResultByTypes{}
+	if err != nil {
+		return
+	}
 
-		if pointChange.FreePointChange != nil {
-			var freePointsResult typepoints.PointChangeResult
-			freePointsResult, err = s.PointService.ChangeFreePoints(pointChange.UserId, *pointChange.FreePointChange, &historyId)
+	templateEntries, err := s.ChangesDatabase.GetChangeEntriesJsonbCommand(defaultPartyId, wheelRow.ChangeId)
 
-			if err != nil {
-				return
-			}
+	if err != nil {
+		return
+	}
 
-			changeResults[typepoints.PointTypeFreePoints] = freePointsResult
-		}
-
-		if pointChange.AvailableRollChange != nil {
-			if pointChange.AvailableRollChange.DesiredChangeValue < 0 {
-				err = common.NewWrongDesiredChangeValueConflictError(
-					pointChange.AvailableRollChange.ChangeSource,
-					common.ConstraintZeroOrMore)
-				return
-			}
-
-			var currentRolls int
-			currentRolls, err = s.Database.GetAvailableRollsCountCommand(pointChange.UserId)
-
-			if err != nil {
-				return
-			}
-
-			err = s.PointService.ChangeAvailableRolls(pointChange.UserId, pointChange.AvailableRollChange.DesiredChangeValue)
-
-			if err != nil {
-				return
-			}
-
-			changeResults[typepoints.PointTypeAvailableRolls] = typepoints.PointChangeResult{
-				ActualChangeValue:  pointChange.AvailableRollChange.DesiredChangeValue,
-				ChangeSource:       pointChange.AvailableRollChange.ChangeSource,
-				DesiredChangeValue: pointChange.AvailableRollChange.DesiredChangeValue,
-				FinalValue:         currentRolls + pointChange.AvailableRollChange.DesiredChangeValue,
-			}
-		}
-
-		results[i] = typepoints.PointChangeResultByUserId{
-			UserId:        pointChange.UserId,
-			Login:         pointChange.Login,
-			ChangeResults: changeResults,
+	targetedEntries := make([]typechanges.ChangeEntry, 0, len(templateEntries)*len(targetUserIds))
+	for _, targetUserId := range targetUserIds {
+		targetUserId := targetUserId
+		for _, entry := range templateEntries {
+			entry.EntryId = nil
+			entry.UserId = &targetUserId
+			targetedEntries = append(targetedEntries, entry)
 		}
 	}
 
-	return
+	userChange, err := s.ChangesDatabase.CreateUserChangeFromJsonbCommand(defaultPartyId, targetedEntries)
+
+	if err != nil {
+		return
+	}
+
+	return s.ChangesService.ApplyChangeEntries(defaultPartyId, userChange.Entries, history.Id)
 }
 
-func (s *Service) GetLastWheelEffectByName(userId int, effectName string) (
-	effect typewheeleffects.RolledWheelEffect, err error) {
+func (s *Service) GetEffectHistory(userId int) (history []typewheeleffects.WheelRowHistory, err error) {
+	return s.Database.GetEffectHistoryCommand(userId, defaultPartyId)
+}
 
-	lastEffects, err := s.Database.GetLastRolledWheelEffectsCommand(userId)
+func (s *Service) GetEffectHistoryByEffectName(userId int, effectName string) (history *typewheeleffects.WheelRowHistory, err error) {
+	notNilHistory, err := s.Database.GetEffectHistoryByEffectNameCommand(userId, defaultPartyId, effectName)
 
 	if errors.Is(err, sql.ErrNoRows) {
-		err = common.NewLastWheelEffectsNotFoundError()
+		err = nil
 		return
 	}
 
@@ -236,30 +224,46 @@ func (s *Service) GetLastWheelEffectByName(userId int, effectName string) (
 		return
 	}
 
-	if len(lastEffects) == 0 {
-		err = common.NewLastWheelEffectsNotFoundError()
+	history = &notNilHistory
+
+	return
+}
+
+// GetLastWheelRowByName finds the named row among the user's currently rolled-but-unapplied rows,
+// and errors if it was already applied (a WheelRowHistory row exists for it).
+func (s *Service) GetLastWheelRowByName(userId int, wheelRowName string) (row typewheeleffects.LastWheelRow, err error) {
+	lastRows, err := s.Database.GetLastRolledWheelEffectsCommand(userId, defaultPartyId)
+
+	if err != nil {
 		return
 	}
 
-	var foundLastEffect *typewheeleffects.RolledWheelEffect
-	for _, lastEffect := range lastEffects {
-		if lastEffect.Name == effectName {
-			foundLastEffect = &lastEffect
+	found := false
+	for _, lastRow := range lastRows {
+		if lastRow.Name == wheelRowName {
+			row = lastRow
+			found = true
 			break
 		}
 	}
 
-	if foundLastEffect == nil {
+	if !found {
 		err = common.NewWheelEffectNameNotFoundError()
 		return
 	}
 
-	if foundLastEffect.IsApplied {
+	_, err = s.Database.GetEffectHistoryByEffectNameCommand(userId, defaultPartyId, wheelRowName)
+
+	if err == nil {
 		err = common.NewWheelEffectRollAlreadyAppliedConflictError()
 		return
 	}
 
-	effect = *foundLastEffect
+	if !errors.Is(err, sql.ErrNoRows) {
+		return
+	}
+
+	err = nil
 
 	return
 }

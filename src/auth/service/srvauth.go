@@ -112,13 +112,7 @@ func (s *Service) CreateUser(signupUser typeauth.SignupUser) error {
 		return common.NewUserEmailAlreadyExistsConflictError()
 	}
 
-	err = s.Database.CreateUserCommand(signupUser)
-
-	if err != nil {
-		return err
-	}
-
-	err = s.Database.CreateUserStatsCommand(signupUser.Login)
+	_, err = s.Database.CreateUserCommand(signupUser)
 
 	return err
 }

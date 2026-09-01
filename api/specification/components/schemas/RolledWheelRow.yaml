@@ -1,13 +1,11 @@
 allOf:
-  - $ref: "./WheelEffect.yaml"
+  - $ref: "./WheelRow.yaml"
   - type: object
     properties:
       position:
         type: integer
         format: int
-      rollDate:
+      rolledDate:
         type: string
         format: date-time
-      isApplied:
-        type: boolean
-    required: [ position, rollDate, isApplied ]
+    required: [ position, rolledDate ]

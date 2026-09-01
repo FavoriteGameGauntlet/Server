@@ -1,56 +1,12 @@
 package typewheeleffects
 
-import (
-	typepoints "FGG-Service/src/points/type"
-	"time"
-)
+import "time"
 
-type WheelEffect struct {
-	Id          int
-	Name        string
-	Description *string
-}
-
-type WheelEffects = []WheelEffect
-
-type RolledWheelEffect struct {
-	Id          int
-	Name        string
-	Description *string
-	RollDate    time.Time
-	Position    int
-	IsApplied   bool
-}
-
-type RolledWheelEffects = []RolledWheelEffect
-
-type RolledWheelEffectHistory struct {
-	Id          int
-	Name        string
-	Description *string
-	RollDate    time.Time
-}
-
-type RolledWheelEffectHistories = []RolledWheelEffectHistory
-
-type WheelEffectRollApply struct {
-	PointChangeByUserIds typepoints.PointChangeByUserIds
-	WheelEffectName      string
-}
-
-type WheelGroup struct {
-	Id      int
-	PartyId int
-	Name    string
-}
-
-type CreatedWheelRow struct {
-	Id          int
-	PartyId     int
-	Name        string
-	Description string
-	ChangeId    int
-	GroupId     int
+type WheelCollection struct {
+	Id                 int
+	PartyId            int
+	Name               string
+	ShouldCheckHistory bool
 }
 
 type WheelRow struct {
@@ -59,18 +15,24 @@ type WheelRow struct {
 	Name           string
 	Description    string
 	ChangeId       int
-	GroupId        int
+	CollectionId   int
 	IsManualChange bool
 }
 
-type RolledWheelRow struct {
-	Id             int
-	UserId         int
-	PartyId        int
-	WheelRowId     int
-	WheelPosition  int
-	RolledDate     time.Time
-	IsManualChange bool
+type CreatedWheelRow struct {
+	Id           int
+	PartyId      int
+	Name         string
+	Description  string
+	ChangeId     int
+	CollectionId int
+}
+
+// RolledWheelRowInput is one row to persist as a rolled-but-not-yet-applied pick (see
+// AddLastRolledWheelEffectsCommand / create_last_wheel_rows), at the given position in the roll batch.
+type RolledWheelRowInput struct {
+	WheelRowId int
+	Position   int
 }
 
 type CreatedLastWheelRow struct {

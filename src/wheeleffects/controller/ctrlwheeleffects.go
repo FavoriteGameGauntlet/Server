@@ -5,7 +5,6 @@ import (
 	"FGG-Service/api/generated/wheel_effects"
 	"FGG-Service/src/auth/service"
 	"FGG-Service/src/common"
-	"FGG-Service/src/points/type"
 	"FGG-Service/src/wheeleffects/service"
 	"FGG-Service/src/wheeleffects/types"
 	"net/http"
@@ -46,33 +45,46 @@ func (c *Controller) RollAvailableWheelEffects(ctx echo.Context) error {
 
 	isReroll := rollDto.IsReroll != nil && *rollDto.IsReroll
 
-	effects, err := c.Service.MakeEffectRoll(userId, isReroll)
+	rolled, err := c.Service.MakeEffectRoll(userId, isReroll)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	effectsDto := convertWheelEffectsToDto(effects)
-
-	return ctx.JSON(http.StatusOK, effectsDto)
+	return ctx.JSON(http.StatusOK, convertLastWheelRowsToDto(rolled))
 }
 
-func convertWheelEffectsToDto(effects typewheeleffects.WheelEffects) genwheeleffects.WheelEffects {
-	effectsDto := make(genwheeleffects.WheelEffects, len(effects))
+func convertWheelRowsToDto(rows []typewheeleffects.WheelRow) genwheeleffects.WheelRows {
+	rowsDto := make(genwheeleffects.WheelRows, len(rows))
 
-	for i, effect := range effects {
-		effectsDto[i] = genwheeleffects.WheelEffect{
-			Name:        effect.Name,
-			Description: effect.Description,
+	for i, row := range rows {
+		rowsDto[i] = genwheeleffects.WheelRow{
+			Name:        row.Name,
+			Description: &row.Description,
 		}
 	}
 
-	return effectsDto
+	return rowsDto
+}
+
+func convertLastWheelRowsToDto(rows []typewheeleffects.LastWheelRow) genwheeleffects.RolledWheelRows {
+	rowsDto := make(genwheeleffects.RolledWheelRows, len(rows))
+
+	for i, row := range rows {
+		rowsDto[i] = genwheeleffects.RolledWheelRow{
+			Name:        row.Name,
+			Description: &row.Description,
+			Position:    row.WheelPosition,
+			RolledDate:  row.RolledDate,
+		}
+	}
+
+	return rowsDto
 }
 
 // ApplyAvailableWheelEffectRoll (POST /wheel-effects/available/roll/apply)
 func (c *Controller) ApplyAvailableWheelEffectRoll(ctx echo.Context) error {
-	var rollApplyDto genwheeleffects.WheelEffectRollApply
+	var rollApplyDto genwheeleffects.WheelRowApply
 	err := ctx.Bind(&rollApplyDto)
 
 	if err != nil {
@@ -80,94 +92,31 @@ func (c *Controller) ApplyAvailableWheelEffectRoll(ctx echo.Context) error {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	sourceUserId, err := c.AuthService.GetUserId(ctx)
+	userId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	rollApply, err := c.convertDtoToWheelEffectRollApply(sourceUserId, rollApplyDto)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	changeResults, err := c.Service.ApplyWheelEffectRoll(sourceUserId, rollApply)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	changeResultsDto := convertPointChangeResultsToDto(changeResults)
-
-	return ctx.JSON(http.StatusOK, changeResultsDto)
-}
-
-func (c *Controller) convertDtoToWheelEffectRollApply(sourceUserId int, rollApplyDto genwheeleffects.WheelEffectRollApply) (
-	rollApply typewheeleffects.WheelEffectRollApply, err error) {
-
-	pointChanges := make(typepoints.PointChangeByUserIds, len(rollApplyDto.PointChanges))
-
-	for i, pointChangeByLogin := range rollApplyDto.PointChanges {
-		var userId int
-		userId, err = c.AuthService.GetUserIdByLogin(pointChangeByLogin.Login)
+	targetUserIds := make([]int, len(rollApplyDto.TargetLogins))
+	for i, login := range rollApplyDto.TargetLogins {
+		targetUserIds[i], err = c.AuthService.GetUserIdByLogin(login)
 
 		if err != nil {
-			return
-		}
-
-		var availableRollChange *typepoints.PointChange
-		if pointChangeByLogin.AvailableRollChange != nil {
-			availableRollChange = &typepoints.PointChange{
-				ChangeSource:       pointChangeByLogin.AvailableRollChange.ChangeSource,
-				DesiredChangeValue: pointChangeByLogin.AvailableRollChange.DesiredChangeValue,
-			}
-		}
-
-		var freePointChange *typepoints.FreePointChange
-		if pointChangeByLogin.FreePointChange != nil {
-			freePointChange = &typepoints.FreePointChange{
-				SourceUserId:       sourceUserId,
-				ChangeSource:       pointChangeByLogin.FreePointChange.ChangeSource,
-				DesiredChangeValue: pointChangeByLogin.FreePointChange.DesiredChangeValue,
-			}
-		}
-
-		pointChanges[i] = typepoints.PointChangeByUserId{
-			Login:               pointChangeByLogin.Login,
-			UserId:              userId,
-			FreePointChange:     freePointChange,
-			AvailableRollChange: availableRollChange,
+			return common.SendJSONErrorResponse(ctx, err)
 		}
 	}
 
-	rollApply = typewheeleffects.WheelEffectRollApply{
-		PointChangeByUserIds: pointChanges,
-		WheelEffectName:      rollApplyDto.WheelEffectName,
+	err = c.Service.ApplyWheelEffectRoll(userId, rollApplyDto.WheelRowName, targetUserIds)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	return
+	return ctx.NoContent(http.StatusNoContent)
 }
 
-func convertPointChangeResultsToDto(changeResults typepoints.PointChangeResultByUserIds) genwheeleffects.PointChangeResultByLogins {
-	changeResultsDto := make(genwheeleffects.PointChangeResultByLogins, len(changeResults))
-
-	for i, changeResult := range changeResults {
-		changeResultsDto[i].Login = changeResult.Login
-		changeResultsDto[i].ChangeResults = make(genwheeleffects.PointChangeResultByTypes, len(changeResult.ChangeResults))
-
-		for pointType, result := range changeResult.ChangeResults {
-			changeResultsDto[i].ChangeResults[pointType] = genwheeleffects.PointChangeResult{
-				ActualChangeValue: result.ActualChangeValue,
-				FinalValue:        result.FinalValue,
-			}
-		}
-	}
-
-	return changeResultsDto
-}
-
-// GetLastRolledWheelEffects (POST /wheel-effects/available/roll/last)
+// GetLastRolledWheelEffects (GET /wheel-effects/available/roll/last)
 func (c *Controller) GetLastRolledWheelEffects(ctx echo.Context) error {
 	userId, err := c.AuthService.GetUserId(ctx)
 
@@ -175,31 +124,13 @@ func (c *Controller) GetLastRolledWheelEffects(ctx echo.Context) error {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	effects, err := c.Service.GetLastRolledWheelEffects(userId)
+	rows, err := c.Service.GetLastRolledWheelEffects(userId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	effectsDto := convertRolledWheelEffectsToDto(effects)
-
-	return ctx.JSON(http.StatusOK, effectsDto)
-}
-
-func convertRolledWheelEffectsToDto(effects typewheeleffects.RolledWheelEffects) genwheeleffects.RolledWheelEffects {
-	effectsDto := make(genwheeleffects.RolledWheelEffects, len(effects))
-
-	for i, effect := range effects {
-		effectsDto[i] = genwheeleffects.RolledWheelEffect{
-			Name:        effect.Name,
-			Description: effect.Description,
-			RollDate:    effect.RollDate,
-			Position:    effect.Position,
-			IsApplied:   effect.IsApplied,
-		}
-	}
-
-	return effectsDto
+	return ctx.JSON(http.StatusOK, convertLastWheelRowsToDto(rows))
 }
 
 // ClearLastRolledWheelEffects (POST /wheel-effects/available/roll/last/clear)
@@ -244,15 +175,13 @@ func (c *Controller) GetAvailableWheelEffects(ctx echo.Context) error {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	effects, err := c.Service.GetAvailableEffects(userId)
+	rows, err := c.Service.GetAvailableWheelRows(userId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	effectsDto := convertWheelEffectsToDto(effects)
-
-	return ctx.JSON(http.StatusOK, effectsDto)
+	return ctx.JSON(http.StatusOK, convertWheelRowsToDto(rows))
 }
 
 // GetUserWheelEffectHistory (GET /wheel-effects/{login}/history)
@@ -274,27 +203,20 @@ func (c *Controller) GetUserWheelEffectHistory(ctx echo.Context, login gengames.
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	effects, err := c.Service.GetEffectHistory(userId)
+	history, err := c.Service.GetEffectHistory(userId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	effectsDto := convertRolledWheelEffectsToHistoryDto(effects)
-
-	return ctx.JSON(http.StatusOK, effectsDto)
-}
-
-func convertRolledWheelEffectsToHistoryDto(effects typewheeleffects.RolledWheelEffectHistories) genwheeleffects.RolledWheelEffectHistories {
-	effectsDto := make(genwheeleffects.RolledWheelEffectHistories, len(effects))
-
-	for i, effect := range effects {
-		effectsDto[i] = genwheeleffects.RolledWheelEffectHistory{
-			Name:        effect.Name,
-			Description: effect.Description,
-			RollDate:    effect.RollDate,
+	historyDto := make(genwheeleffects.WheelRowHistories, len(history))
+	for i, entry := range history {
+		historyDto[i] = genwheeleffects.WheelRowHistory{
+			Name:        entry.Name,
+			Description: &entry.Description,
+			AppliedDate: entry.AppliedDate,
 		}
 	}
 
-	return effectsDto
+	return ctx.JSON(http.StatusOK, historyDto)
 }

@@ -24,108 +24,76 @@ type Login = string
 // Name defines model for Name.
 type Name = string
 
-// PointChange defines model for PointChange.
-type PointChange struct {
-	ChangeSource       string `json:"changeSource"`
-	DesiredChangeValue int    `json:"desiredChangeValue"`
-}
-
-// PointChangeByLogins defines model for PointChangeByLogins.
-type PointChangeByLogins = []struct {
-	AvailableRollChange *PointChange `json:"availableRollChange,omitempty"`
-	FreePointChange     *PointChange `json:"freePointChange,omitempty"`
-	Login               Login        `json:"login"`
-}
-
-// PointChangeResult defines model for PointChangeResult.
-type PointChangeResult struct {
-	ActualChangeValue int    `json:"actualChangeValue"`
-	FinalValue        Points `json:"finalValue"`
-}
-
-// PointChangeResultByLogins defines model for PointChangeResultByLogins.
-type PointChangeResultByLogins = []struct {
-	ChangeResults PointChangeResultByTypes `json:"changeResults"`
-	Login         Login                    `json:"login"`
-}
-
-// PointChangeResultByTypes defines model for PointChangeResultByTypes.
-type PointChangeResultByTypes map[string]PointChangeResult
-
 // Points defines model for Points.
 type Points = int
 
-// RolledWheelEffect defines model for RolledWheelEffect.
-type RolledWheelEffect struct {
+// RolledWheelRow defines model for RolledWheelRow.
+type RolledWheelRow struct {
 	Description *string   `json:"description,omitempty"`
-	IsApplied   bool      `json:"isApplied"`
 	Name        Name      `json:"name"`
 	Position    int       `json:"position"`
-	RollDate    time.Time `json:"rollDate"`
+	RolledDate  time.Time `json:"rolledDate"`
 }
 
-// RolledWheelEffectHistories defines model for RolledWheelEffectHistories.
-type RolledWheelEffectHistories = []RolledWheelEffectHistory
-
-// RolledWheelEffectHistory defines model for RolledWheelEffectHistory.
-type RolledWheelEffectHistory struct {
-	Description *string   `json:"description,omitempty"`
-	Name        Name      `json:"name"`
-	RollDate    time.Time `json:"rollDate"`
-}
-
-// RolledWheelEffects defines model for RolledWheelEffects.
-type RolledWheelEffects = []RolledWheelEffect
-
-// WheelEffect defines model for WheelEffect.
-type WheelEffect struct {
-	Description *string `json:"description,omitempty"`
-	Name        Name    `json:"name"`
-}
+// RolledWheelRows defines model for RolledWheelRows.
+type RolledWheelRows = []RolledWheelRow
 
 // WheelEffectRoll defines model for WheelEffectRoll.
 type WheelEffectRoll struct {
 	IsReroll *bool `json:"isReroll,omitempty"`
 }
 
-// WheelEffectRollApply defines model for WheelEffectRollApply.
-type WheelEffectRollApply struct {
-	PointChanges    PointChangeByLogins `json:"pointChanges"`
-	WheelEffectName Name                `json:"wheelEffectName"`
+// WheelRow defines model for WheelRow.
+type WheelRow struct {
+	Description *string `json:"description,omitempty"`
+	Name        Name    `json:"name"`
 }
 
-// WheelEffects defines model for WheelEffects.
-type WheelEffects = []WheelEffect
+// WheelRowApply defines model for WheelRowApply.
+type WheelRowApply struct {
+	TargetLogins []Login `json:"targetLogins"`
+	WheelRowName Name    `json:"wheelRowName"`
+}
+
+// WheelRowHistories defines model for WheelRowHistories.
+type WheelRowHistories = []WheelRowHistory
+
+// WheelRowHistory defines model for WheelRowHistory.
+type WheelRowHistory struct {
+	AppliedDate time.Time `json:"appliedDate"`
+	Description *string   `json:"description,omitempty"`
+	Name        Name      `json:"name"`
+}
+
+// WheelRows defines model for WheelRows.
+type WheelRows = []WheelRow
 
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse = Error
 
-// PointChangeResultByLoginsResponse defines model for PointChangeResultByLoginsResponse.
-type PointChangeResultByLoginsResponse = PointChangeResultByLogins
-
 // PointsResponse defines model for PointsResponse.
 type PointsResponse = Points
 
-// RolledWheelEffectHistoriesResponse defines model for RolledWheelEffectHistoriesResponse.
-type RolledWheelEffectHistoriesResponse = RolledWheelEffectHistories
+// RolledWheelRowsResponse defines model for RolledWheelRowsResponse.
+type RolledWheelRowsResponse = RolledWheelRows
 
-// RolledWheelEffectsResponse defines model for RolledWheelEffectsResponse.
-type RolledWheelEffectsResponse = RolledWheelEffects
+// WheelRowHistoriesResponse defines model for WheelRowHistoriesResponse.
+type WheelRowHistoriesResponse = WheelRowHistories
 
-// WheelEffectsResponse defines model for WheelEffectsResponse.
-type WheelEffectsResponse = WheelEffects
-
-// WheelEffectRollApplyRequest defines model for WheelEffectRollApplyRequest.
-type WheelEffectRollApplyRequest = WheelEffectRollApply
+// WheelRowsResponse defines model for WheelRowsResponse.
+type WheelRowsResponse = WheelRows
 
 // WheelEffectRollRequest defines model for WheelEffectRollRequest.
 type WheelEffectRollRequest = WheelEffectRoll
+
+// WheelRowApplyRequest defines model for WheelRowApplyRequest.
+type WheelRowApplyRequest = WheelRowApply
 
 // RollAvailableWheelEffectsJSONRequestBody defines body for RollAvailableWheelEffects for application/json ContentType.
 type RollAvailableWheelEffectsJSONRequestBody = WheelEffectRoll
 
 // ApplyAvailableWheelEffectRollJSONRequestBody defines body for ApplyAvailableWheelEffectRoll for application/json ContentType.
-type ApplyAvailableWheelEffectRollJSONRequestBody = WheelEffectRollApply
+type ApplyAvailableWheelEffectRollJSONRequestBody = WheelRowApply
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {

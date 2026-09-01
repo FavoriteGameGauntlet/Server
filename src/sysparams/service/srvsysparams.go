@@ -22,6 +22,9 @@ type IService interface {
 	ChangeValue(name string, value string) error
 }
 
+// defaultPartyId is a stopgap until real party-context resolution exists (see project plan).
+const defaultPartyId = 1
+
 type Service struct {
 	Database dbsysparams.IDatabase
 }
@@ -35,29 +38,20 @@ func NewService() *Service {
 }
 
 func (s *Service) GetAll() (parameters []typesysparams.SystemParameter, err error) {
-	parameters, err = s.Database.GetAllSystemParametersCommand()
+	parameters, err = s.Database.GetAllSystemParametersCommand(defaultPartyId)
 
 	return
 }
 
+// GetAllApp used to filter to parameters flagged ShouldShowToApp; that flag no longer exists in the
+// schema, so this currently returns every parameter. TODO: reintroduce app-visibility filtering once
+// the schema has a way to express it.
 func (s *Service) GetAllApp() (parameters []typesysparams.SystemParameter, err error) {
-	all, err := s.Database.GetAllSystemParametersCommand()
-
-	if err != nil {
-		return
-	}
-
-	for _, p := range all {
-		if p.ShouldShowToApp {
-			parameters = append(parameters, p)
-		}
-	}
-
-	return
+	return s.Database.GetAllSystemParametersCommand(defaultPartyId)
 }
 
 func (s *Service) GetParameter(name string) (parameter typesysparams.SystemParameter, err error) {
-	parameter, err = s.Database.GetSystemParameterCommand(name)
+	parameter, err = s.Database.GetSystemParameterCommand(defaultPartyId, name)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = common.NewSystemParameterNotFoundError(name)
@@ -67,20 +61,11 @@ func (s *Service) GetParameter(name string) (parameter typesysparams.SystemParam
 	return
 }
 
+// GetAppParameter used to also require ShouldShowToApp; that flag no longer exists in the schema, so
+// this is currently equivalent to GetParameter. TODO: reintroduce app-visibility filtering once the
+// schema has a way to express it.
 func (s *Service) GetAppParameter(name string) (parameter typesysparams.SystemParameter, err error) {
-	parameter, err = s.Database.GetSystemParameterCommand(name)
-
-	if errors.Is(err, sql.ErrNoRows) {
-		err = common.NewSystemParameterNotFoundError(name)
-		return
-	}
-
-	if !parameter.ShouldShowToApp {
-		err = common.NewSystemParameterNotFoundError(name)
-		return
-	}
-
-	return
+	return s.GetParameter(name)
 }
 
 func (s *Service) GetString(name string) (value string, err error) {
@@ -145,13 +130,13 @@ func (s *Service) GetIntSlice(name string) (values []int, err error) {
 }
 
 func (s *Service) ChangeValue(name string, value string) (err error) {
-	_, err = s.GetParameter(name)
+	parameter, err := s.GetParameter(name)
 
 	if err != nil {
 		return
 	}
 
-	err = s.Database.ChangeSystemParameterValueCommand(name, value)
+	err = s.Database.ChangeSystemParameterValueCommand(defaultPartyId, parameter.Id, value)
 
 	return
 }

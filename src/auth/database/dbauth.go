@@ -11,7 +11,6 @@ type IDatabase interface {
 	GetUserByEmailCommand(userEmail string) (typeauth.User, error)
 	GetUserByLoginAndPasswordCommand(loginUser typeauth.LoginUser) (typeauth.User, error)
 	CreateUserCommand(signupUser typeauth.SignupUser) (typeauth.User, error)
-	CreateUserStatsCommand(login string) error
 	GetUserSessionByIdCommand(sessionId string) (typeauth.UserSession, error)
 	CreateUserSessionCommand(userId int) (typeauth.UserSession, error)
 	DeleteUserSessionCommand(sessionId string) error
@@ -78,16 +77,6 @@ func (db *Database) CreateUserCommand(signupUser typeauth.SignupUser) (user type
 	dbaccess.LogDbResult(createUserQuery, user, err)
 
 	return
-}
-
-var createUserStatsQuery = dbaccess.Query{Name: "CreateUserStatsQuery", SQL: `SELECT create_user_stats($1::text)`}
-
-func (db *Database) CreateUserStatsCommand(login string) error {
-	_, err := dbaccess.Exec(createUserStatsQuery, login)
-
-	dbaccess.LogDbResult(createUserStatsQuery, nil, err)
-
-	return err
 }
 
 var getUserSessionByIdQuery = dbaccess.Query{Name: "GetUserSessionByIdQuery", SQL: `SELECT * FROM get_user_session_by_id($1::text)`}

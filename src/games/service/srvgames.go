@@ -10,7 +10,14 @@ import (
 	"database/sql"
 	"errors"
 	"math/rand"
-	"time"
+)
+
+// defaultPartyId and sourceEventIdPlaceholder are stopgaps until real party-context resolution and
+// game-history-event wiring exist (see project plan) — game endpoints are not functionally correct
+// against the new schema yet, this only gets them compiling.
+const (
+	defaultPartyId         = 1
+	sourceEventIdPlaceholder = 0
 )
 
 type IService interface {
@@ -45,17 +52,7 @@ func NewService(ts srvtimers.IService) *Service {
 }
 
 func (s *Service) AddWishlistGame(userId int, wishlistGame typegames.WishlistGame) error {
-	doesExist, err := s.Database.DoesWishlistGameExistCommand(userId, wishlistGame.Name)
-
-	if err != nil {
-		return err
-	}
-
-	if doesExist {
-		return common.NewWishlistGameAlreadyExistsConflictError(wishlistGame.Name)
-	}
-
-	doesExist, err = s.Database.DoesGameExistCommand(wishlistGame.Name)
+	doesGameExist, err := s.Database.DoesGameExistCommand(defaultPartyId, wishlistGame.Name)
 
 	if err != nil {
 		return err
@@ -63,7 +60,7 @@ func (s *Service) AddWishlistGame(userId int, wishlistGame typegames.WishlistGam
 
 	game := typegames.WishlistGame{}
 
-	if doesExist {
+	if doesGameExist {
 		game, err = s.Database.GetWishlistGameCommand(wishlistGame.Name)
 	} else {
 		game, err = s.createAndGetGame(wishlistGame)
@@ -73,7 +70,17 @@ func (s *Service) AddWishlistGame(userId int, wishlistGame typegames.WishlistGam
 		return err
 	}
 
-	err = s.Database.CreateWishlistGameCommand(userId, game.GameId)
+	doesWishlistGameExist, err := s.Database.DoesWishlistGameExistCommand(userId, defaultPartyId, game.GameId)
+
+	if err != nil {
+		return err
+	}
+
+	if doesWishlistGameExist {
+		return common.NewWishlistGameAlreadyExistsConflictError(wishlistGame.Name)
+	}
+
+	_, err = s.Database.CreateWishlistGameCommand(userId, defaultPartyId, game.GameId)
 
 	return err
 }
@@ -83,7 +90,7 @@ func (s *Service) GetUnplayedGames(userId int) (typegames.WishlistGames, error) 
 }
 
 func (s *Service) createAndGetGame(wishlistGame typegames.WishlistGame) (game typegames.WishlistGame, err error) {
-	err = s.Database.CreateGameCommand(wishlistGame.Name)
+	_, err = s.Database.CreateGameCommand(defaultPartyId, wishlistGame.Name)
 
 	if err != nil {
 		return
@@ -111,7 +118,7 @@ func (s *Service) CancelCurrentGame(userId int) error {
 		return err
 	}
 
-	err = s.Database.CancelCurrentGameCommand(userId, game.Id)
+	err = s.Database.CancelCurrentGameCommand(userId, defaultPartyId, game.Id, sourceEventIdPlaceholder)
 
 	if err != nil {
 		return err
@@ -137,7 +144,7 @@ func (s *Service) FinishCurrentGame(userId int) error {
 		return err
 	}
 
-	err = s.Database.FinishCurrentGameCommand(userId, game.Id)
+	err = s.Database.FinishCurrentGameCommand(userId, defaultPartyId, game.Id, sourceEventIdPlaceholder)
 
 	if err != nil {
 		return err
@@ -147,17 +154,27 @@ func (s *Service) FinishCurrentGame(userId int) error {
 }
 
 func (s *Service) GetGameHistory(userId int) (games typegames.CurrentGames, err error) {
-	games, err = s.Database.GetGameHistoryCommand(userId)
+	entries, err := s.Database.GetGameHistoryCommand(userId, defaultPartyId)
 
-	for i := range games {
-		var timeSpent time.Duration
-		timeSpent, err = s.Database.GetGameTimeSpentCommand(userId, games[i].Id)
+	if err != nil {
+		return
+	}
 
-		if err != nil {
-			return
+	games = make(typegames.CurrentGames, len(entries))
+
+	for i, entry := range entries {
+		game := typegames.CurrentGame{
+			Id:        entry.GameId,
+			Name:      entry.Name,
+			TimeSpent: entry.TimeSpent,
+			StartDate: entry.CreatedDate,
 		}
 
-		games[i].TimeSpent = timeSpent
+		if entry.EndState != nil {
+			game.State = typegames.CurrentGameState(*entry.EndState)
+		}
+
+		games[i] = game
 	}
 
 	return
@@ -196,13 +213,13 @@ func (s *Service) MakeGameRoll(userId int) (game typegames.CurrentGame, err erro
 	randomNumber := rand.Intn(len(unplayedGames))
 	randomUnplayedGame := unplayedGames[randomNumber]
 
-	err = s.Database.CreateCurrentGameCommand(userId, randomUnplayedGame.GameId)
+	_, err = s.Database.CreateCurrentGameCommand(userId, defaultPartyId, randomUnplayedGame.GameId, sourceEventIdPlaceholder)
 
 	if err != nil {
 		return
 	}
 
-	err = s.Database.DeleteUnplayedGameCommand(userId, randomUnplayedGame.GameId)
+	err = s.Database.DeleteUnplayedGameCommand(userId, defaultPartyId, randomUnplayedGame.GameId)
 
 	if err != nil {
 		return
@@ -216,10 +233,27 @@ func (s *Service) MakeGameRoll(userId int) (game typegames.CurrentGame, err erro
 }
 
 func (s *Service) GetAllCurrentGames() (games []typegames.CurrentGameWithLogin, err error) {
-	games, err = s.Database.GetAllCurrentGamesCommand()
+	userGames, err := s.Database.GetAllCurrentGamesCommand(defaultPartyId)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = nil
+	}
+
+	if err != nil {
+		return
+	}
+
+	games = make([]typegames.CurrentGameWithLogin, len(userGames))
+
+	for i, userGame := range userGames {
+		games[i] = typegames.CurrentGameWithLogin{
+			Login: userGame.Login,
+			Game: typegames.CurrentGame{
+				Id:        userGame.Id,
+				Name:      userGame.Name,
+				TimeSpent: userGame.TimeSpent,
+			},
+		}
 	}
 
 	return

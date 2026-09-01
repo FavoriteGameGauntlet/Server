@@ -26,7 +26,7 @@ func NewGettingService() IGettingService {
 }
 
 func (s *GettingService) GetCurrentGame(userId int) (game typegames.CurrentGame, err error) {
-	games, err := s.Database.GetCurrentGameCommand(userId)
+	userGame, err := s.Database.GetCurrentGameCommand(userId, defaultPartyId)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = common.NewCurrentGameNotFoundError()
@@ -37,24 +37,15 @@ func (s *GettingService) GetCurrentGame(userId int) (game typegames.CurrentGame,
 		return
 	}
 
-	if len(games) == 0 {
-		err = common.NewCurrentGameNotFoundError()
-		return
+	game = typegames.CurrentGame{
+		Id:        userGame.Id,
+		Name:      userGame.Name,
+		TimeSpent: userGame.TimeSpent,
 	}
-
-	game = games[0]
-
-	timeSpent, err := s.Database.GetGameTimeSpentCommand(userId, game.Id)
-
-	if err != nil {
-		return
-	}
-
-	game.TimeSpent = timeSpent
 
 	return
 }
 
 func (s *GettingService) GetWishlistGames(userId int) (typegames.WishlistGames, error) {
-	return s.Database.GetWishlistGamesCommand(userId)
+	return s.Database.GetWishlistGamesCommand(userId, defaultPartyId)
 }
