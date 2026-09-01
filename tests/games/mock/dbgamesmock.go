@@ -11,16 +11,23 @@ type DatabaseMock struct {
 	mock.Mock
 }
 
-func (m *DatabaseMock) DoesWishlistGameExistCommand(userId int, name string) (doesExist bool, err error) {
-	args := m.Called(userId, name)
+func (m *DatabaseMock) DoesGameExistCommand(partyId int, name string) (doesExist bool, err error) {
+	args := m.Called(partyId, name)
 	doesExist = args.Get(0).(bool)
 	err = args.Error(1)
 	return
 }
 
-func (m *DatabaseMock) DoesGameExistCommand(name string) (doesExist bool, err error) {
-	args := m.Called(name)
-	doesExist = args.Get(0).(bool)
+func (m *DatabaseMock) CreateGameCommand(partyId int, name string) (game typegames.Game, err error) {
+	args := m.Called(partyId, name)
+	game = args.Get(0).(typegames.Game)
+	err = args.Error(1)
+	return
+}
+
+func (m *DatabaseMock) GetGameCommand(partyId int, gameId int) (game typegames.Game, err error) {
+	args := m.Called(partyId, gameId)
+	game = args.Get(0).(typegames.Game)
 	err = args.Error(1)
 	return
 }
@@ -32,36 +39,49 @@ func (m *DatabaseMock) GetWishlistGameCommand(name string) (game typegames.Wishl
 	return
 }
 
-func (m *DatabaseMock) CreateWishlistGameCommand(userId int, gameId int) error {
-	args := m.Called(userId, gameId)
+func (m *DatabaseMock) DoesWishlistGameExistCommand(userId int, partyId int, gameId int) (doesExist bool, err error) {
+	args := m.Called(userId, partyId, gameId)
+	doesExist = args.Get(0).(bool)
+	err = args.Error(1)
+	return
+}
+
+func (m *DatabaseMock) CreateWishlistGameCommand(userId int, partyId int, gameId int) (game typegames.CreatedWishlistGame, err error) {
+	args := m.Called(userId, partyId, gameId)
+	game = args.Get(0).(typegames.CreatedWishlistGame)
+	err = args.Error(1)
+	return
+}
+
+func (m *DatabaseMock) DeleteUnplayedGameCommand(userId int, partyId int, gameId int) error {
+	args := m.Called(userId, partyId, gameId)
 	return args.Error(0)
 }
 
-func (m *DatabaseMock) CreateGameCommand(name string) error {
-	args := m.Called(name)
-	return args.Error(0)
-}
-
-func (m *DatabaseMock) DeleteUnplayedGameCommand(userId int, gameId int) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (m *DatabaseMock) GetWishlistGamesCommand(userId int) (games typegames.WishlistGames, err error) {
-	args := m.Called(userId)
+func (m *DatabaseMock) GetWishlistGamesCommand(userId int, partyId int) (games typegames.WishlistGames, err error) {
+	args := m.Called(userId, partyId)
 	games = args.Get(0).(typegames.WishlistGames)
 	err = args.Error(1)
 	return
 }
 
-func (m *DatabaseMock) CreateCurrentGameCommand(userId int, gameId int) error {
-	//TODO implement me
-	panic("implement me")
+func (m *DatabaseMock) CreateCurrentGameCommand(userId int, partyId int, gameId int, sourceEventId int) (game typegames.CreatedUserGame, err error) {
+	args := m.Called(userId, partyId, gameId, sourceEventId)
+	game = args.Get(0).(typegames.CreatedUserGame)
+	err = args.Error(1)
+	return
 }
 
-func (m *DatabaseMock) GetCurrentGameCommand(userId int) (games typegames.CurrentGames, err error) {
-	args := m.Called(userId)
-	games = args.Get(0).(typegames.CurrentGames)
+func (m *DatabaseMock) GetCurrentGameCommand(userId int, partyId int) (game typegames.UserGame, err error) {
+	args := m.Called(userId, partyId)
+	game = args.Get(0).(typegames.UserGame)
+	err = args.Error(1)
+	return
+}
+
+func (m *DatabaseMock) DoesUserGameExistCommand(userId int, partyId int) (doesExist bool, err error) {
+	args := m.Called(userId, partyId)
+	doesExist = args.Get(0).(bool)
 	err = args.Error(1)
 	return
 }
@@ -73,26 +93,43 @@ func (m *DatabaseMock) GetGameTimeSpentCommand(userId int, gameId int) (timeSpen
 	return
 }
 
-func (m *DatabaseMock) CancelCurrentGameCommand(userId int, gameId int) error {
-	args := m.Called(userId, gameId)
+func (m *DatabaseMock) ChangeGameTimeSpentCommand(userId int, partyId int, gameId int, changeValue time.Duration, sourceEventId int) error {
+	args := m.Called(userId, partyId, gameId, changeValue, sourceEventId)
 	return args.Error(0)
 }
 
-func (m *DatabaseMock) FinishCurrentGameCommand(userId int, gameId int) error {
-	//TODO implement me
-	panic("implement me")
+func (m *DatabaseMock) CancelCurrentGameCommand(userId int, partyId int, gameId int, sourceEventId int) error {
+	args := m.Called(userId, partyId, gameId, sourceEventId)
+	return args.Error(0)
 }
 
-func (m *DatabaseMock) GetAllCurrentGamesCommand() (games []typegames.CurrentGameWithLogin, err error) {
-	args := m.Called()
-	games = args.Get(0).([]typegames.CurrentGameWithLogin)
+func (m *DatabaseMock) FinishCurrentGameCommand(userId int, partyId int, gameId int, sourceEventId int) error {
+	args := m.Called(userId, partyId, gameId, sourceEventId)
+	return args.Error(0)
+}
+
+func (m *DatabaseMock) RateGameCommand(userId int, partyId int, gameId int, rating int, reviewComment *string, sourceEventId int) error {
+	args := m.Called(userId, partyId, gameId, rating, reviewComment, sourceEventId)
+	return args.Error(0)
+}
+
+func (m *DatabaseMock) GetGameReviewCommand(userId int, partyId int, gameId int) (reviewComment *string, err error) {
+	args := m.Called(userId, partyId, gameId)
+	reviewComment, _ = args.Get(0).(*string)
 	err = args.Error(1)
 	return
 }
 
-func (m *DatabaseMock) GetGameHistoryCommand(userId int) (games typegames.CurrentGames, err error) {
-	args := m.Called(userId)
-	games = args.Get(0).(typegames.CurrentGames)
+func (m *DatabaseMock) GetGameHistoryCommand(userId int, partyId int) (games []typegames.GameHistoryEntry, err error) {
+	args := m.Called(userId, partyId)
+	games = args.Get(0).([]typegames.GameHistoryEntry)
+	err = args.Error(1)
+	return
+}
+
+func (m *DatabaseMock) GetAllCurrentGamesCommand(partyId int) (games []typegames.UserGameWithLogin, err error) {
+	args := m.Called(partyId)
+	games = args.Get(0).([]typegames.UserGameWithLogin)
 	err = args.Error(1)
 	return
 }

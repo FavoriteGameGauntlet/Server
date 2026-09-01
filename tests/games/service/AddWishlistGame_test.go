@@ -21,40 +21,6 @@ type AddWishlistGameTestCase struct {
 
 var AddWishlistGameTestCases = []AddWishlistGameTestCase{
 	{
-		// DoesWishlistGameExistCommand returns true. The WishlistGameAlreadyExistsConflictError will return.
-		Name:         "AlreadyExists",
-		UserId:       1,
-		WishlistGame: typegames.WishlistGame{GameId: 1, Name: "Half-Life 1"},
-		SetupMock: func() *dbgamesmock.DatabaseMock {
-			databaseMock := new(dbgamesmock.DatabaseMock)
-
-			databaseMock.
-				On("DoesWishlistGameExistCommand",
-					1, "Half-Life 1").
-				Return(true, nil)
-
-			return databaseMock
-		},
-		ExpectedErrorAs: new(common.ConflictError),
-	},
-	{
-		// DoesWishlistGameExistCommand returns a database error. The error will return.
-		Name:         "DoesWishlistGameExist_DatabaseError",
-		UserId:       1,
-		WishlistGame: typegames.WishlistGame{GameId: 1, Name: "Half-Life 1"},
-		SetupMock: func() *dbgamesmock.DatabaseMock {
-			databaseMock := new(dbgamesmock.DatabaseMock)
-
-			databaseMock.
-				On("DoesWishlistGameExistCommand",
-					1, "Half-Life 1").
-				Return(false, dbError)
-
-			return databaseMock
-		},
-		ExpectedErrorIs: dbError,
-	},
-	{
 		// DoesGameExistCommand returns a database error. The error will return.
 		Name:         "DoesGameExist_DatabaseError",
 		UserId:       1,
@@ -63,12 +29,7 @@ var AddWishlistGameTestCases = []AddWishlistGameTestCase{
 			databaseMock := new(dbgamesmock.DatabaseMock)
 
 			databaseMock.
-				On("DoesWishlistGameExistCommand",
-					1, "Half-Life 1").
-				Return(false, nil)
-			databaseMock.
-				On("DoesGameExistCommand",
-					"Half-Life 1").
+				On("DoesGameExistCommand", 1, "Half-Life 1").
 				Return(false, dbError)
 
 			return databaseMock
@@ -84,16 +45,10 @@ var AddWishlistGameTestCases = []AddWishlistGameTestCase{
 			databaseMock := new(dbgamesmock.DatabaseMock)
 
 			databaseMock.
-				On("DoesWishlistGameExistCommand",
-					1, "Half-Life 1").
-				Return(false, nil)
-			databaseMock.
-				On("DoesGameExistCommand",
-					"Half-Life 1").
+				On("DoesGameExistCommand", 1, "Half-Life 1").
 				Return(true, nil)
 			databaseMock.
-				On("GetWishlistGameCommand",
-					"Half-Life 1").
+				On("GetWishlistGameCommand", "Half-Life 1").
 				Return(typegames.WishlistGame{}, dbError)
 
 			return databaseMock
@@ -109,17 +64,11 @@ var AddWishlistGameTestCases = []AddWishlistGameTestCase{
 			databaseMock := new(dbgamesmock.DatabaseMock)
 
 			databaseMock.
-				On("DoesWishlistGameExistCommand",
-					1, "Half-Life 1").
+				On("DoesGameExistCommand", 1, "Half-Life 1").
 				Return(false, nil)
 			databaseMock.
-				On("DoesGameExistCommand",
-					"Half-Life 1").
-				Return(false, nil)
-			databaseMock.
-				On("CreateGameCommand",
-					"Half-Life 1").
-				Return(dbError)
+				On("CreateGameCommand", 1, "Half-Life 1").
+				Return(typegames.Game{}, dbError)
 
 			return databaseMock
 		},
@@ -134,25 +83,62 @@ var AddWishlistGameTestCases = []AddWishlistGameTestCase{
 			databaseMock := new(dbgamesmock.DatabaseMock)
 
 			databaseMock.
-				On("DoesWishlistGameExistCommand",
-					1, "Half-Life 1").
+				On("DoesGameExistCommand", 1, "Half-Life 1").
 				Return(false, nil)
 			databaseMock.
-				On("DoesGameExistCommand",
-					"Half-Life 1").
-				Return(false, nil)
+				On("CreateGameCommand", 1, "Half-Life 1").
+				Return(typegames.Game{Id: 1, PartyId: 1, Name: "Half-Life 1"}, nil)
 			databaseMock.
-				On("CreateGameCommand",
-					"Half-Life 1").
-				Return(nil)
-			databaseMock.
-				On("GetWishlistGameCommand",
-					"Half-Life 1").
+				On("GetWishlistGameCommand", "Half-Life 1").
 				Return(typegames.WishlistGame{}, dbError)
 
 			return databaseMock
 		},
 		ExpectedErrorIs: dbError,
+	},
+	{
+		// DoesWishlistGameExistCommand returns a database error. The error will return.
+		Name:         "DoesWishlistGameExist_DatabaseError",
+		UserId:       1,
+		WishlistGame: typegames.WishlistGame{GameId: 1, Name: "Half-Life 1"},
+		SetupMock: func() *dbgamesmock.DatabaseMock {
+			databaseMock := new(dbgamesmock.DatabaseMock)
+
+			databaseMock.
+				On("DoesGameExistCommand", 1, "Half-Life 1").
+				Return(true, nil)
+			databaseMock.
+				On("GetWishlistGameCommand", "Half-Life 1").
+				Return(typegames.WishlistGame{GameId: 1, Name: "Half-Life 1"}, nil)
+			databaseMock.
+				On("DoesWishlistGameExistCommand", 1, 1, 1).
+				Return(false, dbError)
+
+			return databaseMock
+		},
+		ExpectedErrorIs: dbError,
+	},
+	{
+		// DoesWishlistGameExistCommand returns true. The WishlistGameAlreadyExistsConflictError will return.
+		Name:         "AlreadyExists",
+		UserId:       1,
+		WishlistGame: typegames.WishlistGame{GameId: 1, Name: "Half-Life 1"},
+		SetupMock: func() *dbgamesmock.DatabaseMock {
+			databaseMock := new(dbgamesmock.DatabaseMock)
+
+			databaseMock.
+				On("DoesGameExistCommand", 1, "Half-Life 1").
+				Return(true, nil)
+			databaseMock.
+				On("GetWishlistGameCommand", "Half-Life 1").
+				Return(typegames.WishlistGame{GameId: 1, Name: "Half-Life 1"}, nil)
+			databaseMock.
+				On("DoesWishlistGameExistCommand", 1, 1, 1).
+				Return(true, nil)
+
+			return databaseMock
+		},
+		ExpectedErrorAs: new(common.ConflictError),
 	},
 	{
 		// CreateWishlistGameCommand returns a database error. The error will return.
@@ -163,28 +149,24 @@ var AddWishlistGameTestCases = []AddWishlistGameTestCase{
 			databaseMock := new(dbgamesmock.DatabaseMock)
 
 			databaseMock.
-				On("DoesWishlistGameExistCommand",
-					1, "Half-Life 1").
-				Return(false, nil)
-			databaseMock.
-				On("DoesGameExistCommand",
-					"Half-Life 1").
+				On("DoesGameExistCommand", 1, "Half-Life 1").
 				Return(true, nil)
 			databaseMock.
-				On("GetWishlistGameCommand",
-					"Half-Life 1").
+				On("GetWishlistGameCommand", "Half-Life 1").
 				Return(typegames.WishlistGame{GameId: 1, Name: "Half-Life 1"}, nil)
 			databaseMock.
-				On("CreateWishlistGameCommand",
-					1, 1).
-				Return(dbError)
+				On("DoesWishlistGameExistCommand", 1, 1, 1).
+				Return(false, nil)
+			databaseMock.
+				On("CreateWishlistGameCommand", 1, 1, 1).
+				Return(typegames.CreatedWishlistGame{}, dbError)
 
 			return databaseMock
 		},
 		ExpectedErrorIs: dbError,
 	},
 	{
-		// The game exists. The wishlist will be returned successfully.
+		// The game exists. The wishlist entry will be created successfully.
 		Name:         "SuccessReturn",
 		UserId:       1,
 		WishlistGame: typegames.WishlistGame{GameId: 1, Name: "Half-Life 1"},
@@ -192,27 +174,23 @@ var AddWishlistGameTestCases = []AddWishlistGameTestCase{
 			databaseMock := new(dbgamesmock.DatabaseMock)
 
 			databaseMock.
-				On("DoesWishlistGameExistCommand",
-					1, "Half-Life 1").
-				Return(false, nil)
-			databaseMock.
-				On("DoesGameExistCommand",
-					"Half-Life 1").
+				On("DoesGameExistCommand", 1, "Half-Life 1").
 				Return(true, nil)
 			databaseMock.
-				On("GetWishlistGameCommand",
-					"Half-Life 1").
+				On("GetWishlistGameCommand", "Half-Life 1").
 				Return(typegames.WishlistGame{GameId: 1, Name: "Half-Life 1"}, nil)
 			databaseMock.
-				On("CreateWishlistGameCommand",
-					1, 1).
-				Return(nil)
+				On("DoesWishlistGameExistCommand", 1, 1, 1).
+				Return(false, nil)
+			databaseMock.
+				On("CreateWishlistGameCommand", 1, 1, 1).
+				Return(typegames.CreatedWishlistGame{Id: 1, UserId: 1, PartyId: 1, GameId: 1}, nil)
 
 			return databaseMock
 		},
 	},
 	{
-		// The game doesn't exist. The game will be created and returned successfully.
+		// The game doesn't exist. The game will be created and the wishlist entry created successfully.
 		Name:         "SuccessCreateAndReturn",
 		UserId:       1,
 		WishlistGame: typegames.WishlistGame{GameId: 1, Name: "Half-Life 1"},
@@ -220,25 +198,20 @@ var AddWishlistGameTestCases = []AddWishlistGameTestCase{
 			databaseMock := new(dbgamesmock.DatabaseMock)
 
 			databaseMock.
-				On("DoesWishlistGameExistCommand",
-					1, "Half-Life 1").
+				On("DoesGameExistCommand", 1, "Half-Life 1").
 				Return(false, nil)
 			databaseMock.
-				On("DoesGameExistCommand",
-					"Half-Life 1").
-				Return(false, nil)
+				On("CreateGameCommand", 1, "Half-Life 1").
+				Return(typegames.Game{Id: 1, PartyId: 1, Name: "Half-Life 1"}, nil)
 			databaseMock.
-				On("CreateGameCommand",
-					"Half-Life 1").
-				Return(nil)
-			databaseMock.
-				On("GetWishlistGameCommand",
-					"Half-Life 1").
+				On("GetWishlistGameCommand", "Half-Life 1").
 				Return(typegames.WishlistGame{GameId: 1, Name: "Half-Life 1"}, nil)
 			databaseMock.
-				On("CreateWishlistGameCommand",
-					1, 1).
-				Return(nil)
+				On("DoesWishlistGameExistCommand", 1, 1, 1).
+				Return(false, nil)
+			databaseMock.
+				On("CreateWishlistGameCommand", 1, 1, 1).
+				Return(typegames.CreatedWishlistGame{Id: 1, UserId: 1, PartyId: 1, GameId: 1}, nil)
 
 			return databaseMock
 		},

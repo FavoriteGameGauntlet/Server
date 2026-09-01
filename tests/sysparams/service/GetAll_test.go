@@ -24,7 +24,7 @@ var GetAllTestCases = []GetAllTestCase{
 			databaseMock := new(dbsysparamsmock.DatabaseMock)
 
 			databaseMock.
-				On("GetAllSystemParametersCommand").
+				On("GetAllSystemParametersCommand", 1).
 				Return([]typesysparams.SystemParameter{}, dbError)
 
 			return databaseMock
@@ -38,7 +38,7 @@ var GetAllTestCases = []GetAllTestCase{
 			databaseMock := new(dbsysparamsmock.DatabaseMock)
 
 			databaseMock.
-				On("GetAllSystemParametersCommand").
+				On("GetAllSystemParametersCommand", 1).
 				Return([]typesysparams.SystemParameter{}, nil)
 
 			return databaseMock
@@ -52,7 +52,7 @@ var GetAllTestCases = []GetAllTestCase{
 			databaseMock := new(dbsysparamsmock.DatabaseMock)
 
 			databaseMock.
-				On("GetAllSystemParametersCommand").
+				On("GetAllSystemParametersCommand", 1).
 				Return([]typesysparams.SystemParameter{
 					{Id: 1, Name: "DefaultTimerDurationInS", Value: "30"},
 					{Id: 2, Name: "DefaultTerritoryHoursIncreasing", Value: "2"},

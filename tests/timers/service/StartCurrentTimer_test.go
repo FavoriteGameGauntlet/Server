@@ -23,11 +23,29 @@ type StartCurrentTimerTestCase struct {
 	ExpectedErrorIs error
 }
 
+var createdCurrentTimer = typetimers.CurrentTimer{
+	Id:             1,
+	GameId:         1,
+	State:          typetimers.TimerStateCreated,
+	Duration:       2 * time.Hour,
+	TimeSpent:      0,
+	LastActionDate: time.Now(),
+}
+
 var createdTimer = typetimers.Timer{
 	Id:             1,
 	Duration:       2 * time.Hour,
 	RemainingTime:  2 * time.Hour,
 	State:          typetimers.TimerStateCreated,
+	LastActionDate: createdCurrentTimer.LastActionDate,
+}
+
+var runningCurrentTimerResult = typetimers.CurrentTimer{
+	Id:             1,
+	GameId:         1,
+	State:          typetimers.TimerStateRunning,
+	Duration:       2 * time.Hour,
+	TimeSpent:      0,
 	LastActionDate: time.Now(),
 }
 
@@ -36,7 +54,7 @@ var runningTimerResult = typetimers.Timer{
 	Duration:       2 * time.Hour,
 	RemainingTime:  2 * time.Hour,
 	State:          typetimers.TimerStateRunning,
-	LastActionDate: time.Now(),
+	LastActionDate: runningCurrentTimerResult.LastActionDate,
 }
 
 var StartCurrentTimerTestCases = []StartCurrentTimerTestCase{
@@ -49,7 +67,7 @@ var StartCurrentTimerTestCases = []StartCurrentTimerTestCase{
 			gamesDb := new(dbgamesmock.DatabaseMock)
 			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
 
-			timerDb.On("GetCurrentTimerCommand", 1).Return(typetimers.Timer{}, sql.ErrNoRows)
+			timerDb.On("GetCurrentTimerCommand", 1, 1).Return(typetimers.CurrentTimer{}, sql.ErrNoRows)
 
 			return timerDb, gamesDb, wheelDb
 		},
@@ -64,7 +82,7 @@ var StartCurrentTimerTestCases = []StartCurrentTimerTestCase{
 			gamesDb := new(dbgamesmock.DatabaseMock)
 			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
 
-			timerDb.On("GetCurrentTimerCommand", 1).Return(typetimers.Timer{}, dbError)
+			timerDb.On("GetCurrentTimerCommand", 1, 1).Return(typetimers.CurrentTimer{}, dbError)
 
 			return timerDb, gamesDb, wheelDb
 		},
@@ -79,8 +97,8 @@ var StartCurrentTimerTestCases = []StartCurrentTimerTestCase{
 			gamesDb := new(dbgamesmock.DatabaseMock)
 			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
 
-			timerDb.On("GetCurrentTimerCommand", 1).Return(
-				typetimers.Timer{State: typetimers.TimerStateRunning}, nil)
+			timerDb.On("GetCurrentTimerCommand", 1, 1).Return(
+				typetimers.CurrentTimer{State: typetimers.TimerStateRunning}, nil)
 
 			return timerDb, gamesDb, wheelDb
 		},
@@ -95,8 +113,8 @@ var StartCurrentTimerTestCases = []StartCurrentTimerTestCase{
 			gamesDb := new(dbgamesmock.DatabaseMock)
 			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
 
-			timerDb.On("GetCurrentTimerCommand", 1).Return(
-				typetimers.Timer{State: typetimers.TimerStateFinished}, nil)
+			timerDb.On("GetCurrentTimerCommand", 1, 1).Return(
+				typetimers.CurrentTimer{State: typetimers.TimerStateFinished}, nil)
 
 			return timerDb, gamesDb, wheelDb
 		},
@@ -111,7 +129,7 @@ var StartCurrentTimerTestCases = []StartCurrentTimerTestCase{
 			gamesDb := new(dbgamesmock.DatabaseMock)
 			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
 
-			timerDb.On("GetCurrentTimerCommand", 1).Return(createdTimer, nil)
+			timerDb.On("GetCurrentTimerCommand", 1, 1).Return(createdCurrentTimer, nil)
 			timerDb.On("ActTimerCommand", 1, typetimers.TimerStateRunning, createdTimer.RemainingTime).
 				Return(dbError)
 
@@ -129,10 +147,10 @@ var StartCurrentTimerTestCases = []StartCurrentTimerTestCase{
 			gamesDb := new(dbgamesmock.DatabaseMock)
 			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
 
-			timerDb.On("GetCurrentTimerCommand", 1).Once().Return(createdTimer, nil)
+			timerDb.On("GetCurrentTimerCommand", 1, 1).Once().Return(createdCurrentTimer, nil)
 			timerDb.On("ActTimerCommand", 1, typetimers.TimerStateRunning, createdTimer.RemainingTime).
 				Return(nil)
-			timerDb.On("GetCurrentTimerCommand", 1).Once().Return(runningTimerResult, nil)
+			timerDb.On("GetCurrentTimerCommand", 1, 1).Once().Return(runningCurrentTimerResult, nil)
 
 			return timerDb, gamesDb, wheelDb
 		},
@@ -148,16 +166,16 @@ var StartCurrentTimerTestCases = []StartCurrentTimerTestCase{
 			gamesDb := new(dbgamesmock.DatabaseMock)
 			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
 
-			pausedTimer := typetimers.Timer{
-				Id:            1,
-				Duration:      2 * time.Hour,
-				RemainingTime: 45 * time.Minute,
-				State:         typetimers.TimerStatePaused,
+			pausedCurrentTimerLocal := typetimers.CurrentTimer{
+				Id:        1,
+				Duration:  2 * time.Hour,
+				TimeSpent: 75 * time.Minute,
+				State:     typetimers.TimerStatePaused,
 			}
-			timerDb.On("GetCurrentTimerCommand", 1).Once().Return(pausedTimer, nil)
-			timerDb.On("ActTimerCommand", 1, typetimers.TimerStateRunning, pausedTimer.RemainingTime).
+			timerDb.On("GetCurrentTimerCommand", 1, 1).Once().Return(pausedCurrentTimerLocal, nil)
+			timerDb.On("ActTimerCommand", 1, typetimers.TimerStateRunning, 45*time.Minute).
 				Return(nil)
-			timerDb.On("GetCurrentTimerCommand", 1).Once().Return(runningTimerResult, nil)
+			timerDb.On("GetCurrentTimerCommand", 1, 1).Once().Return(runningCurrentTimerResult, nil)
 
 			return timerDb, gamesDb, wheelDb
 		},

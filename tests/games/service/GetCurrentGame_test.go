@@ -31,24 +31,8 @@ var GetCurrentGameTestCases = []GetCurrentGameTestCase{
 
 			databaseMock.
 				On("GetCurrentGameCommand",
-					1).
-				Return(typegames.CurrentGames{}, sql.ErrNoRows)
-
-			return databaseMock
-		},
-		ExpectedErrorAs: new(common.NotFoundError),
-	},
-	{
-		// GetCurrentGameCommand returns an empty list. The CurrentGameNotFoundError will return.
-		Name:   "NotFound_EmptyList",
-		UserId: 1,
-		SetupMock: func() *dbgamesmock.DatabaseMock {
-			databaseMock := new(dbgamesmock.DatabaseMock)
-
-			databaseMock.
-				On("GetCurrentGameCommand",
-					1).
-				Return(typegames.CurrentGames{}, nil)
+					1, 1).
+				Return(typegames.UserGame{}, sql.ErrNoRows)
 
 			return databaseMock
 		},
@@ -63,45 +47,15 @@ var GetCurrentGameTestCases = []GetCurrentGameTestCase{
 
 			databaseMock.
 				On("GetCurrentGameCommand",
-					1).
-				Return(typegames.CurrentGames{
-					typegames.CurrentGame{
-						Id:    1,
-						Name:  "Half-Life 1",
-						State: typegames.GameStateStarted}},
-					dbError)
-
-			return databaseMock
-		},
-		ExpectedErrorIs: dbError,
-	},
-	{
-		// GetCurrentGameCommand succeeds. GetGameTimeSpentCommand returns a database error. The error will return.
-		Name:   "TimeSpentDatabaseError",
-		UserId: 1,
-		SetupMock: func() *dbgamesmock.DatabaseMock {
-			databaseMock := new(dbgamesmock.DatabaseMock)
-
-			databaseMock.
-				On("GetCurrentGameCommand",
-					1).
-				Return(typegames.CurrentGames{
-					typegames.CurrentGame{
-						Id:    1,
-						Name:  "Half-Life 1",
-						State: typegames.GameStateStarted}},
-					nil)
-			databaseMock.
-				On("GetGameTimeSpentCommand",
 					1, 1).
-				Return(time.Duration(0), dbError)
+				Return(typegames.UserGame{}, dbError)
 
 			return databaseMock
 		},
 		ExpectedErrorIs: dbError,
 	},
 	{
-		// GetCurrentGameCommand and GetGameTimeSpentCommand succeed. The current game with TimeSpent will return.
+		// GetCurrentGameCommand succeeds. The current game (with TimeSpent already scanned) will return.
 		Name:   "SuccessReturn",
 		UserId: 1,
 		SetupMock: func() *dbgamesmock.DatabaseMock {
@@ -109,24 +63,17 @@ var GetCurrentGameTestCases = []GetCurrentGameTestCase{
 
 			databaseMock.
 				On("GetCurrentGameCommand",
-					1).
-				Return(typegames.CurrentGames{
-					typegames.CurrentGame{
-						Id:    1,
-						Name:  "Half-Life 1",
-						State: typegames.GameStateStarted}},
-					nil)
-			databaseMock.
-				On("GetGameTimeSpentCommand",
 					1, 1).
-				Return(2*time.Hour, nil)
+				Return(typegames.UserGame{
+					Id:        1,
+					Name:      "Half-Life 1",
+					TimeSpent: 2 * time.Hour}, nil)
 
 			return databaseMock
 		},
 		ExpectedGame: &typegames.CurrentGame{
 			Id:        1,
 			Name:      "Half-Life 1",
-			State:     typegames.GameStateStarted,
 			TimeSpent: 2 * time.Hour},
 	},
 }

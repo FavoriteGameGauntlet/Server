@@ -23,7 +23,7 @@ var ClearLastWheelEffectsTestCases = []ClearLastWheelEffectsTestCase{
 		SetupMock: func() *dbwheeleffectsmock.DatabaseMock {
 			databaseMock := new(dbwheeleffectsmock.DatabaseMock)
 
-			databaseMock.On("ClearLastWheelEffectsCommand", 1).Return(nil)
+			databaseMock.On("ClearLastWheelEffectsCommand", 1, 1).Return(nil)
 
 			return databaseMock
 		},
@@ -35,7 +35,7 @@ var ClearLastWheelEffectsTestCases = []ClearLastWheelEffectsTestCase{
 		SetupMock: func() *dbwheeleffectsmock.DatabaseMock {
 			databaseMock := new(dbwheeleffectsmock.DatabaseMock)
 
-			databaseMock.On("ClearLastWheelEffectsCommand", 1).Return(dbError)
+			databaseMock.On("ClearLastWheelEffectsCommand", 1, 1).Return(dbError)
 
 			return databaseMock
 		},

@@ -30,7 +30,7 @@ var ChangeValueTestCases = []ChangeValueTestCase{
 			databaseMock := new(dbsysparamsmock.DatabaseMock)
 
 			databaseMock.
-				On("GetSystemParameterCommand", "DefaultTimerDurationInS").
+				On("GetSystemParameterCommand", 1, "DefaultTimerDurationInS").
 				Return(typesysparams.SystemParameter{}, sql.ErrNoRows)
 
 			return databaseMock
@@ -46,7 +46,7 @@ var ChangeValueTestCases = []ChangeValueTestCase{
 			databaseMock := new(dbsysparamsmock.DatabaseMock)
 
 			databaseMock.
-				On("GetSystemParameterCommand", "DefaultTimerDurationInS").
+				On("GetSystemParameterCommand", 1, "DefaultTimerDurationInS").
 				Return(typesysparams.SystemParameter{}, dbError)
 
 			return databaseMock
@@ -62,11 +62,11 @@ var ChangeValueTestCases = []ChangeValueTestCase{
 			databaseMock := new(dbsysparamsmock.DatabaseMock)
 
 			databaseMock.
-				On("GetSystemParameterCommand", "DefaultTimerDurationInS").
+				On("GetSystemParameterCommand", 1, "DefaultTimerDurationInS").
 				Return(typesysparams.SystemParameter{Id: 1, Name: "DefaultTimerDurationInS", Value: "30"}, nil)
 
 			databaseMock.
-				On("ChangeSystemParameterValueCommand", "DefaultTimerDurationInS", "60").
+				On("ChangeSystemParameterValueCommand", 1, 1, "60").
 				Return(dbError)
 
 			return databaseMock
@@ -82,11 +82,11 @@ var ChangeValueTestCases = []ChangeValueTestCase{
 			databaseMock := new(dbsysparamsmock.DatabaseMock)
 
 			databaseMock.
-				On("GetSystemParameterCommand", "DefaultTimerDurationInS").
+				On("GetSystemParameterCommand", 1, "DefaultTimerDurationInS").
 				Return(typesysparams.SystemParameter{Id: 1, Name: "DefaultTimerDurationInS", Value: "30"}, nil)
 
 			databaseMock.
-				On("ChangeSystemParameterValueCommand", "DefaultTimerDurationInS", "60").
+				On("ChangeSystemParameterValueCommand", 1, 1, "60").
 				Return(nil)
 
 			return databaseMock

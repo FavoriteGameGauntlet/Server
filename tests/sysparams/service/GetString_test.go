@@ -31,7 +31,7 @@ var GetStringTestCases = []GetStringTestCase{
 			databaseMock := new(dbsysparamsmock.DatabaseMock)
 
 			databaseMock.
-				On("GetSystemParameterCommand", "DefaultTimerDurationInS").
+				On("GetSystemParameterCommand", 1, "DefaultTimerDurationInS").
 				Return(typesysparams.SystemParameter{}, sql.ErrNoRows)
 
 			return databaseMock
@@ -46,7 +46,7 @@ var GetStringTestCases = []GetStringTestCase{
 			databaseMock := new(dbsysparamsmock.DatabaseMock)
 
 			databaseMock.
-				On("GetSystemParameterCommand", "DefaultTimerDurationInS").
+				On("GetSystemParameterCommand", 1, "DefaultTimerDurationInS").
 				Return(typesysparams.SystemParameter{}, dbError)
 
 			return databaseMock
@@ -61,7 +61,7 @@ var GetStringTestCases = []GetStringTestCase{
 			databaseMock := new(dbsysparamsmock.DatabaseMock)
 
 			databaseMock.
-				On("GetSystemParameterCommand", "DefaultTimerDurationInS").
+				On("GetSystemParameterCommand", 1, "DefaultTimerDurationInS").
 				Return(typesysparams.SystemParameter{Id: 1, Name: "DefaultTimerDurationInS", Value: "30"}, nil)
 
 			return databaseMock

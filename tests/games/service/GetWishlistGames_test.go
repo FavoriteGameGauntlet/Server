@@ -27,7 +27,7 @@ var GetWishlistGamesTestCases = []GetWishlistGamesTestCase{
 
 			databaseMock.
 				On("GetWishlistGamesCommand",
-					1).
+					1, 1).
 				Return(typegames.WishlistGames{}, dbError)
 
 			return databaseMock
@@ -43,7 +43,7 @@ var GetWishlistGamesTestCases = []GetWishlistGamesTestCase{
 
 			databaseMock.
 				On("GetWishlistGamesCommand",
-					1).
+					1, 1).
 				Return(typegames.WishlistGames{}, nil)
 
 			return databaseMock
@@ -59,7 +59,7 @@ var GetWishlistGamesTestCases = []GetWishlistGamesTestCase{
 
 			databaseMock.
 				On("GetWishlistGamesCommand",
-					1).
+					1, 1).
 				Return(typegames.WishlistGames{
 					{Id: 1, GameId: 10, Name: "Half-Life 1"},
 					{Id: 2, GameId: 11, Name: "Half-Life 2"},
