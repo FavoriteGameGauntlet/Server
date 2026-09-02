@@ -1,0 +1,308 @@
+openapi: 3.0.4
+info:
+  title: Favorite Game Gauntlet
+  version: 0.15.0
+paths:
+  /items/catalog:
+    get:
+      operationId: getItems
+      tags:
+        - Items
+      responses:
+        '200':
+          $ref: '#/components/responses/ItemsResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    post:
+      operationId: createItem
+      tags:
+        - Items
+      requestBody:
+        $ref: '#/components/requestBodies/ItemCreateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/ItemResponse'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /items/catalog/removed:
+    get:
+      operationId: getRemovedItems
+      tags:
+        - Items
+      responses:
+        '200':
+          $ref: '#/components/responses/ItemsResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /items/catalog/{name}:
+    delete:
+      operationId: removeItem
+      tags:
+        - Items
+      parameters:
+        - $ref: '#/components/parameters/Name'
+      responses:
+        '204':
+          description: Success.
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /items/{login}:
+    get:
+      operationId: getUserItems
+      tags:
+        - Items
+      parameters:
+        - $ref: '#/components/parameters/Login'
+      responses:
+        '200':
+          $ref: '#/components/responses/UserItemsResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /items/{login}/history:
+    get:
+      operationId: getUserItemHistory
+      tags:
+        - Items
+      parameters:
+        - $ref: '#/components/parameters/Login'
+      responses:
+        '200':
+          $ref: '#/components/responses/ItemHistoriesResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /items/{login}/{name}:
+    delete:
+      operationId: discardUserItem
+      tags:
+        - Items
+      parameters:
+        - $ref: '#/components/parameters/Login'
+        - $ref: '#/components/parameters/Name'
+      responses:
+        '204':
+          description: Success.
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '409':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /items/{login}/{name}/use:
+    post:
+      operationId: useUserItem
+      tags:
+        - Items
+      parameters:
+        - $ref: '#/components/parameters/Login'
+        - $ref: '#/components/parameters/Name'
+      responses:
+        '204':
+          description: Success.
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '409':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+components:
+  schemas:
+    Name:
+      type: string
+      pattern: ^.+$
+      minLength: 1
+      maxLength: 70
+    Item:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/Name'
+        description:
+          type: string
+        useCount:
+          type: integer
+          format: int
+      required:
+        - name
+        - description
+        - useCount
+    Items:
+      type: array
+      items:
+        $ref: '#/components/schemas/Item'
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+    ChangeEntryInput:
+      type: object
+      description: |
+        Names one thing a change grants. Exactly one of pointTypeName, itemName, perkName or effectName has to be set. The amount carries the sign it is applied with, so a cost is negative.
+      properties:
+        pointTypeName:
+          $ref: '#/components/schemas/Name'
+        itemName:
+          $ref: '#/components/schemas/Name'
+        perkName:
+          $ref: '#/components/schemas/Name'
+        effectName:
+          $ref: '#/components/schemas/Name'
+        amount:
+          type: integer
+          format: int
+      required:
+        - amount
+    ChangeEntryInputs:
+      type: array
+      items:
+        $ref: '#/components/schemas/ChangeEntryInput'
+    ItemCreate:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/Name'
+        description:
+          type: string
+        useCount:
+          type: integer
+          format: int
+        entries:
+          $ref: '#/components/schemas/ChangeEntryInputs'
+      required:
+        - name
+        - description
+        - useCount
+        - entries
+    Login:
+      type: string
+      pattern: ^\w+$
+      minLength: 3
+      maxLength: 35
+    UserItem:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/Name'
+        description:
+          type: string
+        usesLeft:
+          type: integer
+          format: int
+        receivedDate:
+          type: string
+          format: date-time
+      required:
+        - name
+        - description
+        - usesLeft
+        - receivedDate
+    UserItems:
+      type: array
+      items:
+        $ref: '#/components/schemas/UserItem'
+    ItemHistoryEntry:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/Name'
+        action:
+          type: string
+        usesLeft:
+          type: integer
+          format: int
+        createdDate:
+          type: string
+          format: date-time
+      required:
+        - name
+        - action
+        - usesLeft
+        - createdDate
+    ItemHistoryEntries:
+      type: array
+      items:
+        $ref: '#/components/schemas/ItemHistoryEntry'
+  responses:
+    ItemsResponse:
+      description: Success.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Items'
+    ErrorResponse:
+      description: Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ItemResponse:
+      description: Success.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Item'
+    UserItemsResponse:
+      description: Success.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UserItems'
+    ItemHistoriesResponse:
+      description: Success.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ItemHistoryEntries'
+  requestBodies:
+    ItemCreateRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ItemCreate'
+  parameters:
+    Name:
+      name: name
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Name'
+    Login:
+      name: login
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Login'

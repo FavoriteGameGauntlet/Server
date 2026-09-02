@@ -3,6 +3,7 @@ package main
 import (
 	genauth "FGG-Service/api/generated/auth"
 	gengames "FGG-Service/api/generated/games"
+	genitems "FGG-Service/api/generated/items"
 	genpoints "FGG-Service/api/generated/points"
 	gensysparams "FGG-Service/api/generated/system_parameters"
 	gentimers "FGG-Service/api/generated/timers"
@@ -11,6 +12,7 @@ import (
 	ctrlauth "FGG-Service/src/auth/controller"
 	"FGG-Service/src/dbaccess"
 	ctrlgames "FGG-Service/src/games/controller"
+	ctrlitems "FGG-Service/src/items/controller"
 	ctrlpoints "FGG-Service/src/points/controller"
 	ctrlsysparams "FGG-Service/src/sysparams/controller"
 	ctrltimers "FGG-Service/src/timers/controller"
@@ -65,6 +67,7 @@ func registerHandlers(e *echo.Echo) {
 
 	genauth.RegisterHandlers(e, ctrlauth.NewController())
 	gengames.RegisterHandlers(e, ctrlgames.NewController(ts))
+	genitems.RegisterHandlers(e, ctrlitems.NewController())
 	genpoints.RegisterHandlers(e, ctrlpoints.NewController())
 	gensysparams.RegisterHandlers(e, ctrlsysparams.NewController())
 	gentimers.RegisterHandlers(e, ctrltimers.NewController(ts))

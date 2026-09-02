@@ -16,10 +16,10 @@ type IDatabase interface {
 	CreateUserItemCommand(userId int, partyId int, itemId int, sourceEventId int) (userItem typeitems.UserItem, err error)
 	GetUserItemCommand(userId int, partyId int, itemId int) (userItem typeitems.UserItem, err error)
 	GetUserItemsCommand(userId int, partyId int) (userItems []typeitems.UserItem, err error)
-	ChangeUserItemUsesLeftCommand(userId int, partyId int, itemId int, usesLeft int) error
-	CreateItemHistoryCommand(userId int, partyId int, itemId int, usesLeft int, sourceEventId int) (entry typeitems.ItemHistoryEntry, err error)
+	ChangeUserItemUsesLeftCommand(userId int, partyId int, itemId int, usesLeft int, sourceEventId int) error
+	CreateItemHistoryCommand(userId int, partyId int, itemId int, usesLeft int, sourceEventId *int) (entry typeitems.ItemHistoryEntry, err error)
 	GetItemHistoryCommand(userId int, partyId int) (history []typeitems.ItemHistory, err error)
-	DeleteUserItemCommand(userId int, partyId int, itemId int, sourceEventId int) error
+	DeleteUserItemCommand(userId int, partyId int, itemId int, sourceEventId *int) error
 }
 
 type Database struct{}
@@ -159,10 +159,10 @@ func (db *Database) GetUserItemsCommand(userId int, partyId int) (userItems []ty
 	return
 }
 
-var changeUserItemUsesLeftQuery = dbaccess.Query{Name: "ChangeUserItemUsesLeftQuery", SQL: `SELECT change_user_item_uses_left($1::integer, $2::integer, $3::integer, $4::integer)`}
+var changeUserItemUsesLeftQuery = dbaccess.Query{Name: "ChangeUserItemUsesLeftQuery", SQL: `SELECT change_user_item_uses_left($1::integer, $2::integer, $3::integer, $4::integer, $5::integer)`}
 
-func (db *Database) ChangeUserItemUsesLeftCommand(userId int, partyId int, itemId int, usesLeft int) error {
-	_, err := dbaccess.Exec(changeUserItemUsesLeftQuery, userId, partyId, itemId, usesLeft)
+func (db *Database) ChangeUserItemUsesLeftCommand(userId int, partyId int, itemId int, usesLeft int, sourceEventId int) error {
+	_, err := dbaccess.Exec(changeUserItemUsesLeftQuery, userId, partyId, itemId, usesLeft, sourceEventId)
 
 	dbaccess.LogDbResult(changeUserItemUsesLeftQuery, nil, err)
 
@@ -171,7 +171,7 @@ func (db *Database) ChangeUserItemUsesLeftCommand(userId int, partyId int, itemI
 
 var createItemHistoryQuery = dbaccess.Query{Name: "CreateItemHistoryQuery", SQL: `SELECT * FROM create_item_history($1::integer, $2::integer, $3::integer, $4::integer, $5::integer)`}
 
-func (db *Database) CreateItemHistoryCommand(userId int, partyId int, itemId int, usesLeft int, sourceEventId int) (entry typeitems.ItemHistoryEntry, err error) {
+func (db *Database) CreateItemHistoryCommand(userId int, partyId int, itemId int, usesLeft int, sourceEventId *int) (entry typeitems.ItemHistoryEntry, err error) {
 	row := dbaccess.QueryRow(createItemHistoryQuery, userId, partyId, itemId, usesLeft, sourceEventId)
 
 	err = row.Scan(&entry.Id, &entry.UserId, &entry.PartyId, &entry.ItemId, &entry.UsesLeft, &entry.UsedDate)
@@ -210,7 +210,7 @@ func (db *Database) GetItemHistoryCommand(userId int, partyId int) (history []ty
 
 var deleteUserItemQuery = dbaccess.Query{Name: "DeleteUserItemQuery", SQL: `SELECT delete_user_item($1::integer, $2::integer, $3::integer, $4::integer)`}
 
-func (db *Database) DeleteUserItemCommand(userId int, partyId int, itemId int, sourceEventId int) error {
+func (db *Database) DeleteUserItemCommand(userId int, partyId int, itemId int, sourceEventId *int) error {
 	_, err := dbaccess.Exec(deleteUserItemQuery, userId, partyId, itemId, sourceEventId)
 
 	dbaccess.LogDbResult(deleteUserItemQuery, nil, err)

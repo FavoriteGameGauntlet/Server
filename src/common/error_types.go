@@ -219,6 +219,104 @@ func NewNotSharedPointTypeConflictError(name string) error {
 		},
 	}
 }
+func NewItemNotFoundError(name string) error {
+	message := fmt.Sprintf(
+		"The item \"%s\" wasn't found.",
+		name)
+
+	return &NotFoundError{
+		&BaseError{
+			Code:    "ITEM_NOT_FOUND",
+			Message: message,
+		},
+	}
+}
+
+func NewPerkNotFoundError(name string) error {
+	message := fmt.Sprintf(
+		"The perk \"%s\" wasn't found.",
+		name)
+
+	return &NotFoundError{
+		&BaseError{
+			Code:    "PERK_NOT_FOUND",
+			Message: message,
+		},
+	}
+}
+
+func NewEffectNotFoundError(name string) error {
+	message := fmt.Sprintf(
+		"The effect \"%s\" wasn't found.",
+		name)
+
+	return &NotFoundError{
+		&BaseError{
+			Code:    "EFFECT_NOT_FOUND",
+			Message: message,
+		},
+	}
+}
+
+func NewChangeEntryUnprocessableError() error {
+	return &UnprocessableError{
+		&BaseError{
+			Code:    "CHANGE_ENTRY_WITHOUT_TARGET",
+			Message: "A change entry has to name exactly one point type, item, perk or effect.",
+		},
+	}
+}
+func NewItemNotOwnedConflictError(name string) error {
+	message := fmt.Sprintf(
+		"The item \"%s\" isn't owned.",
+		name)
+
+	return &ConflictError{
+		&BaseError{
+			Code:    "ITEM_NOT_OWNED",
+			Message: message,
+		},
+	}
+}
+
+func NewItemUsedUpConflictError(name string) error {
+	message := fmt.Sprintf(
+		"The item \"%s\" has no uses left.",
+		name)
+
+	return &ConflictError{
+		&BaseError{
+			Code:    "ITEM_USED_UP",
+			Message: message,
+		},
+	}
+}
+
+func NewEffectNotActiveConflictError(name string) error {
+	message := fmt.Sprintf(
+		"The effect \"%s\" isn't active.",
+		name)
+
+	return &ConflictError{
+		&BaseError{
+			Code:    "EFFECT_NOT_ACTIVE",
+			Message: message,
+		},
+	}
+}
+
+func NewEffectUsedUpConflictError(name string) error {
+	message := fmt.Sprintf(
+		"The effect \"%s\" has no uses left.",
+		name)
+
+	return &ConflictError{
+		&BaseError{
+			Code:    "EFFECT_USED_UP",
+			Message: message,
+		},
+	}
+}
 func NewWheelEffectNameNotFoundError() error {
 	return &NotFoundError{
 		&BaseError{

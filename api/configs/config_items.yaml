@@ -1,0 +1,5 @@
+package: genitems
+output: generated/items/items.gen.go
+generate:
+  echo-server: true
+  models: true

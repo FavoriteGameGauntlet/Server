@@ -65,12 +65,12 @@ func (m *DatabaseMock) GetUserItemsCommand(userId int, partyId int) (userItems [
 	return
 }
 
-func (m *DatabaseMock) ChangeUserItemUsesLeftCommand(userId int, partyId int, itemId int, usesLeft int) error {
-	args := m.Called(userId, partyId, itemId, usesLeft)
+func (m *DatabaseMock) ChangeUserItemUsesLeftCommand(userId int, partyId int, itemId int, usesLeft int, sourceEventId int) error {
+	args := m.Called(userId, partyId, itemId, usesLeft, sourceEventId)
 	return args.Error(0)
 }
 
-func (m *DatabaseMock) CreateItemHistoryCommand(userId int, partyId int, itemId int, usesLeft int, sourceEventId int) (entry typeitems.ItemHistoryEntry, err error) {
+func (m *DatabaseMock) CreateItemHistoryCommand(userId int, partyId int, itemId int, usesLeft int, sourceEventId *int) (entry typeitems.ItemHistoryEntry, err error) {
 	args := m.Called(userId, partyId, itemId, usesLeft, sourceEventId)
 	entry = args.Get(0).(typeitems.ItemHistoryEntry)
 	err = args.Error(1)
@@ -84,7 +84,7 @@ func (m *DatabaseMock) GetItemHistoryCommand(userId int, partyId int) (history [
 	return
 }
 
-func (m *DatabaseMock) DeleteUserItemCommand(userId int, partyId int, itemId int, sourceEventId int) error {
+func (m *DatabaseMock) DeleteUserItemCommand(userId int, partyId int, itemId int, sourceEventId *int) error {
 	args := m.Called(userId, partyId, itemId, sourceEventId)
 	return args.Error(0)
 }

@@ -64,7 +64,7 @@ func (m *DatabaseMock) GetUserPerksCommand(userId int, partyId int) (userPerks [
 	return
 }
 
-func (m *DatabaseMock) DeleteUserPerkCommand(userId int, partyId int, perkId int, sourceEventId int) error {
+func (m *DatabaseMock) DeleteUserPerkCommand(userId int, partyId int, perkId int, sourceEventId *int) error {
 	args := m.Called(userId, partyId, perkId, sourceEventId)
 	return args.Error(0)
 }

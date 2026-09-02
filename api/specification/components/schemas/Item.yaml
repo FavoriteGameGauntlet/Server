@@ -1,0 +1,10 @@
+type: object
+properties:
+  name:
+    $ref: "./Name.yaml"
+  description:
+    type: string
+  useCount:
+    type: integer
+    format: int
+required: [ name, description, useCount ]
