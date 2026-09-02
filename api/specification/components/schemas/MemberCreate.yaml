@@ -1,0 +1,9 @@
+type: object
+properties:
+  login:
+    $ref: "./Login.yaml"
+  displayName:
+    $ref: "./Name.yaml"
+  isAdmin:
+    type: boolean
+required: [ login, displayName, isAdmin ]

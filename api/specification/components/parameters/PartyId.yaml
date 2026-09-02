@@ -1,0 +1,6 @@
+name: partyId
+in: path
+required: true
+schema:
+  type: integer
+  format: int

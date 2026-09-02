@@ -1,90 +1,92 @@
 package srvusers_test
 
 import (
-	"FGG-Service/src/users/service"
-	"FGG-Service/src/users/types"
-	"FGG-Service/tests/users/mock"
+	typeparties "FGG-Service/src/parties/types"
+	srvusers "FGG-Service/src/users/service"
+	typeusers "FGG-Service/src/users/types"
+	dbpartiesmock "FGG-Service/tests/parties/mock"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
 
 type GetAllUserNamesTestCase struct {
 	Name            string
-	SetupMock       func() *dbusersmock.DatabaseMock
+	SetupMock       func() *dbpartiesmock.DatabaseMock
 	ExpectedUsers   typeusers.Users
 	ExpectedErrorIs error
 }
 
 func ptr(s string) *string { return &s }
 
+var leftDate = time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+
 var GetAllUserNamesTestCases = []GetAllUserNamesTestCase{
 	{
-		// GetAllUserNamesCommand returns a database error. The error will return.
+		// Reading the members fails. The error returns.
 		Name: "DatabaseError",
-		SetupMock: func() *dbusersmock.DatabaseMock {
-			databaseMock := new(dbusersmock.DatabaseMock)
+		SetupMock: func() *dbpartiesmock.DatabaseMock {
+			databaseMock := new(dbpartiesmock.DatabaseMock)
 
 			databaseMock.
-				On("GetAllUserNamesCommand").
-				Return(typeusers.Users{}, dbError)
+				On("GetMembersCommand", 1).
+				Return([]typeparties.MemberWithLogin{}, dbError)
 
 			return databaseMock
 		},
 		ExpectedErrorIs: dbError,
 	},
 	{
-		// GetAllUserNamesCommand returns an empty list. An empty list will return.
+		// The party has no members. An empty list returns.
 		Name: "EmptyList",
-		SetupMock: func() *dbusersmock.DatabaseMock {
-			databaseMock := new(dbusersmock.DatabaseMock)
+		SetupMock: func() *dbpartiesmock.DatabaseMock {
+			databaseMock := new(dbpartiesmock.DatabaseMock)
 
 			databaseMock.
-				On("GetAllUserNamesCommand").
-				Return(typeusers.Users{}, nil)
+				On("GetMembersCommand", 1).
+				Return([]typeparties.MemberWithLogin{}, nil)
 
 			return databaseMock
 		},
-		ExpectedUsers: typeusers.Users{},
 	},
 	{
-		// GetAllUserNamesCommand returns users without display names. The list will return.
-		Name: "SuccessNoDisplayNames",
-		SetupMock: func() *dbusersmock.DatabaseMock {
-			databaseMock := new(dbusersmock.DatabaseMock)
+		// Every current member is listed by login and display name.
+		Name: "Success",
+		SetupMock: func() *dbpartiesmock.DatabaseMock {
+			databaseMock := new(dbpartiesmock.DatabaseMock)
 
 			databaseMock.
-				On("GetAllUserNamesCommand").
-				Return(typeusers.Users{
-					{Login: "alice"},
-					{Login: "bob"},
-				}, nil)
-
-			return databaseMock
-		},
-		ExpectedUsers: typeusers.Users{
-			{Login: "alice"},
-			{Login: "bob"},
-		},
-	},
-	{
-		// GetAllUserNamesCommand returns users with display names. The list will return.
-		Name: "SuccessWithDisplayNames",
-		SetupMock: func() *dbusersmock.DatabaseMock {
-			databaseMock := new(dbusersmock.DatabaseMock)
-
-			databaseMock.
-				On("GetAllUserNamesCommand").
-				Return(typeusers.Users{
-					{Login: "alice", DisplayName: ptr("Alice")},
-					{Login: "bob"},
+				On("GetMembersCommand", 1).
+				Return([]typeparties.MemberWithLogin{
+					{Login: "alice", DisplayName: "Alice"},
+					{Login: "bob", DisplayName: "Bob"},
 				}, nil)
 
 			return databaseMock
 		},
 		ExpectedUsers: typeusers.Users{
 			{Login: "alice", DisplayName: ptr("Alice")},
-			{Login: "bob"},
+			{Login: "bob", DisplayName: ptr("Bob")},
+		},
+	},
+	{
+		// A member who has left the party is not listed.
+		Name: "LeftMemberSkipped",
+		SetupMock: func() *dbpartiesmock.DatabaseMock {
+			databaseMock := new(dbpartiesmock.DatabaseMock)
+
+			databaseMock.
+				On("GetMembersCommand", 1).
+				Return([]typeparties.MemberWithLogin{
+					{Login: "alice", DisplayName: "Alice"},
+					{Login: "gone", DisplayName: "Gone", LeftDate: &leftDate},
+				}, nil)
+
+			return databaseMock
+		},
+		ExpectedUsers: typeusers.Users{
+			{Login: "alice", DisplayName: ptr("Alice")},
 		},
 	},
 }
@@ -94,7 +96,7 @@ func TestSrvUsers_GetAllUserNames(test *testing.T) {
 		test.Run(testCase.Name, func(test *testing.T) {
 			// Arrange
 			databaseMock := testCase.SetupMock()
-			sut := srvusers.Service{Database: databaseMock}
+			sut := srvusers.Service{PartiesDatabase: databaseMock}
 
 			// Act
 			users, err := sut.GetAllUserNames()
@@ -102,9 +104,7 @@ func TestSrvUsers_GetAllUserNames(test *testing.T) {
 			// Assert
 			if testCase.ExpectedErrorIs != nil {
 				require.ErrorIs(test, err, testCase.ExpectedErrorIs)
-			}
-
-			if testCase.ExpectedUsers != nil {
+			} else {
 				require.NoError(test, err)
 				require.Equal(test, testCase.ExpectedUsers, users)
 			}

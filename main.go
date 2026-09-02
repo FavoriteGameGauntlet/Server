@@ -8,6 +8,7 @@ import (
 	gengrants "FGG-Service/api/generated/grants"
 	genitems "FGG-Service/api/generated/items"
 	genperks "FGG-Service/api/generated/perks"
+	genparties "FGG-Service/api/generated/parties"
 	genpoints "FGG-Service/api/generated/points"
 	gensysparams "FGG-Service/api/generated/system_parameters"
 	gentimers "FGG-Service/api/generated/timers"
@@ -21,6 +22,7 @@ import (
 	ctrlhistory "FGG-Service/src/history/controller"
 	ctrlitems "FGG-Service/src/items/controller"
 	ctrlperks "FGG-Service/src/perks/controller"
+	ctrlparties "FGG-Service/src/parties/controller"
 	ctrlpoints "FGG-Service/src/points/controller"
 	ctrlsysparams "FGG-Service/src/sysparams/controller"
 	ctrltimers "FGG-Service/src/timers/controller"
@@ -80,6 +82,7 @@ func registerHandlers(e *echo.Echo) {
 	genperks.RegisterHandlers(e, ctrlperks.NewController())
 	genexchanges.RegisterHandlers(e, ctrlexchanges.NewController())
 	gengrants.RegisterHandlers(e, ctrlhistory.NewController())
+	genparties.RegisterHandlers(e, ctrlparties.NewController())
 	genpoints.RegisterHandlers(e, ctrlpoints.NewController())
 	gensysparams.RegisterHandlers(e, ctrlsysparams.NewController())
 	gentimers.RegisterHandlers(e, ctrltimers.NewController(ts))

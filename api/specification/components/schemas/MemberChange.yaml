@@ -1,0 +1,7 @@
+type: object
+description: Updates whichever of the two is given.
+properties:
+  displayName:
+    $ref: "./Name.yaml"
+  isAdmin:
+    type: boolean

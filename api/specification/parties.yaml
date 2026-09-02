@@ -1,0 +1,328 @@
+openapi: 3.0.4
+info:
+  title: Favorite Game Gauntlet
+  version: 0.15.0
+paths:
+  /parties:
+    get:
+      operationId: getParties
+      tags:
+        - Parties
+      responses:
+        '200':
+          $ref: '#/components/responses/PartiesResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    post:
+      operationId: createParty
+      tags:
+        - Parties
+      requestBody:
+        $ref: '#/components/requestBodies/PartyCreateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/PartyResponse'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /parties/{partyId}:
+    get:
+      operationId: getParty
+      tags:
+        - Parties
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+      responses:
+        '200':
+          $ref: '#/components/responses/PartyResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    patch:
+      operationId: changeParty
+      tags:
+        - Parties
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+      requestBody:
+        $ref: '#/components/requestBodies/PartyChangeRequest'
+      responses:
+        '204':
+          description: Success.
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    delete:
+      operationId: deleteParty
+      tags:
+        - Parties
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+      responses:
+        '204':
+          description: Success.
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /parties/{partyId}/members:
+    get:
+      operationId: getMembers
+      tags:
+        - Parties
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+      responses:
+        '200':
+          $ref: '#/components/responses/MembersResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    post:
+      operationId: addMember
+      tags:
+        - Parties
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+      requestBody:
+        $ref: '#/components/requestBodies/MemberCreateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/MemberResponse'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '409':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /parties/{partyId}/members/{login}:
+    patch:
+      operationId: changeMember
+      tags:
+        - Parties
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+        - $ref: '#/components/parameters/Login'
+      requestBody:
+        $ref: '#/components/requestBodies/MemberChangeRequest'
+      responses:
+        '204':
+          description: Success.
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    delete:
+      operationId: removeMember
+      tags:
+        - Parties
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+        - $ref: '#/components/parameters/Login'
+      responses:
+        '204':
+          description: Success.
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+components:
+  schemas:
+    Name:
+      type: string
+      pattern: ^.+$
+      minLength: 1
+      maxLength: 70
+    Party:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int
+        name:
+          $ref: '#/components/schemas/Name'
+        createdDate:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - createdDate
+    Parties:
+      type: array
+      items:
+        $ref: '#/components/schemas/Party'
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+    PartyCreate:
+      type: object
+      description: |
+        Creates a party. The user creating it joins as its first admin under the given display name.
+      properties:
+        name:
+          $ref: '#/components/schemas/Name'
+        displayName:
+          $ref: '#/components/schemas/Name'
+      required:
+        - name
+        - displayName
+    PartyChange:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/Name'
+      required:
+        - name
+    Login:
+      type: string
+      pattern: ^\w+$
+      minLength: 3
+      maxLength: 35
+    Member:
+      type: object
+      properties:
+        login:
+          $ref: '#/components/schemas/Login'
+        displayName:
+          $ref: '#/components/schemas/Name'
+        isAdmin:
+          type: boolean
+        joinedDate:
+          type: string
+          format: date-time
+      required:
+        - login
+        - displayName
+        - isAdmin
+        - joinedDate
+    Members:
+      type: array
+      items:
+        $ref: '#/components/schemas/Member'
+    MemberCreate:
+      type: object
+      properties:
+        login:
+          $ref: '#/components/schemas/Login'
+        displayName:
+          $ref: '#/components/schemas/Name'
+        isAdmin:
+          type: boolean
+      required:
+        - login
+        - displayName
+        - isAdmin
+    MemberChange:
+      type: object
+      description: Updates whichever of the two is given.
+      properties:
+        displayName:
+          $ref: '#/components/schemas/Name'
+        isAdmin:
+          type: boolean
+  responses:
+    PartiesResponse:
+      description: Success.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Parties'
+    ErrorResponse:
+      description: Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    PartyResponse:
+      description: Success.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Party'
+    MembersResponse:
+      description: Success.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Members'
+    MemberResponse:
+      description: Success.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Member'
+  requestBodies:
+    PartyCreateRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PartyCreate'
+    PartyChangeRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PartyChange'
+    MemberCreateRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MemberCreate'
+    MemberChangeRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MemberChange'
+  parameters:
+    PartyId:
+      name: partyId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int
+    Login:
+      name: login
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Login'

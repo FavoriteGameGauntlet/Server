@@ -355,6 +355,36 @@ func NewNotEnoughPointsConflictError(pointTypeName string, requiredPoints int) e
 		},
 	}
 }
+func NewPartyNotFoundError(partyId int) error {
+	message := fmt.Sprintf(
+		"The party %d wasn't found.",
+		partyId)
+
+	return &NotFoundError{
+		&BaseError{
+			Code:    "PARTY_NOT_FOUND",
+			Message: message,
+		},
+	}
+}
+
+func NewMemberNotFoundError() error {
+	return &NotFoundError{
+		&BaseError{
+			Code:    "MEMBER_NOT_FOUND",
+			Message: "This user isn't a member of the party.",
+		},
+	}
+}
+
+func NewMemberAlreadyExistsConflictError() error {
+	return &ConflictError{
+		&BaseError{
+			Code:    "MEMBER_ALREADY_EXISTS",
+			Message: "This user is already a member of the party.",
+		},
+	}
+}
 func NewWheelEffectNameNotFoundError() error {
 	return &NotFoundError{
 		&BaseError{

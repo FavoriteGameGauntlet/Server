@@ -1,0 +1,34 @@
+patch:
+  operationId: changeMember
+  tags: [ Parties ]
+  parameters:
+    - $ref: "../../../../components/parameters/PartyId.yaml"
+    - $ref: "../../../../components/parameters/Login.yaml"
+  requestBody:
+    $ref: "../../../../components/requests/MemberChangeRequest.yaml"
+  responses:
+    "204":
+      description: Success.
+    "400":
+      $ref: "../../../../components/responses/ErrorResponse.yaml"
+    "401":
+      $ref: "../../../../components/responses/ErrorResponse.yaml"
+    "404":
+      $ref: "../../../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../../../components/responses/ErrorResponse.yaml"
+delete:
+  operationId: removeMember
+  tags: [ Parties ]
+  parameters:
+    - $ref: "../../../../components/parameters/PartyId.yaml"
+    - $ref: "../../../../components/parameters/Login.yaml"
+  responses:
+    "204":
+      description: Success.
+    "401":
+      $ref: "../../../../components/responses/ErrorResponse.yaml"
+    "404":
+      $ref: "../../../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../../../components/responses/ErrorResponse.yaml"
