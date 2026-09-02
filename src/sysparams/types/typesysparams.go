@@ -21,6 +21,7 @@ const (
 
 	ParamTimerDurationInS                  = "TimerDurationInS"
 	ParamTimerFinisherSchedulerIntervalInS = "TimerFinisherSchedulerIntervalInS"
+	ParamEffectFinisherSchedulerIntervalInS = "EffectFinisherSchedulerIntervalInS"
 	ParamMaximumAvailableRollCountForTimer = "MaximumAvailableRollCountForTimer"
 
 	ParamAvailableRollChangeByTimer       = "AvailableRollChangeByTimer"

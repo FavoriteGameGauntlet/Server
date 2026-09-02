@@ -1,0 +1,9 @@
+type: object
+description: A point change the effect applies passively while it is active.
+properties:
+  pointTypeName:
+    $ref: "./Name.yaml"
+  amount:
+    type: integer
+    format: int
+required: [ pointTypeName, amount ]

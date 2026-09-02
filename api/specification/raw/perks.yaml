@@ -1,0 +1,22 @@
+openapi: 3.0.4
+info:
+  title: Favorite Game Gauntlet
+  version: 0.15.0
+paths:
+  /perks/catalog:
+    $ref: "../paths/perks/catalog.yaml"
+
+  /perks/catalog/removed:
+    $ref: "../paths/perks/catalog/removed.yaml"
+
+  /perks/catalog/{name}:
+    $ref: "../paths/perks/catalog/name.yaml"
+
+  /perks/{login}:
+    $ref: "../paths/perks/login.yaml"
+
+  /perks/{login}/history:
+    $ref: "../paths/perks/login/history.yaml"
+
+  /perks/{login}/{name}:
+    $ref: "../paths/perks/login/name.yaml"

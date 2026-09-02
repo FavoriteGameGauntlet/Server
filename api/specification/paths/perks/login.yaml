@@ -1,0 +1,14 @@
+get:
+  operationId: getUserPerks
+  tags: [ Perks ]
+  parameters:
+    - $ref: "../../components/parameters/Login.yaml"
+  responses:
+    "200":
+      $ref: "../../components/responses/UserPerksResponse.yaml"
+    "401":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "404":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../components/responses/ErrorResponse.yaml"

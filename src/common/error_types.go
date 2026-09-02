@@ -317,6 +317,18 @@ func NewEffectUsedUpConflictError(name string) error {
 		},
 	}
 }
+func NewPerkNotOwnedConflictError(name string) error {
+	message := fmt.Sprintf(
+		"The perk \"%s\" isn't owned.",
+		name)
+
+	return &ConflictError{
+		&BaseError{
+			Code:    "PERK_NOT_OWNED",
+			Message: message,
+		},
+	}
+}
 func NewWheelEffectNameNotFoundError() error {
 	return &NotFoundError{
 		&BaseError{

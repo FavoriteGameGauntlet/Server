@@ -1,0 +1,10 @@
+type: object
+properties:
+  name:
+    $ref: "./Name.yaml"
+  action:
+    type: string
+  createdDate:
+    type: string
+    format: date-time
+required: [ name, action, createdDate ]

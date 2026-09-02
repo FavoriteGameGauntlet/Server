@@ -75,3 +75,20 @@ type EndedUserEffect struct {
 	EffectId int
 	UsesLeft int
 }
+
+// PointModifierView is a passive point modifier named the way the API returns it.
+type PointModifierView struct {
+	PointTypeName string
+	Amount        int
+}
+
+// UserEffectView is an active effect of a user, with its passive modifiers named.
+type UserEffectView struct {
+	Name        string
+	Description string
+	UseCount    int
+	UsesLeft    int
+	Duration    *time.Duration
+	StartedDate time.Time
+	Modifiers   []PointModifierView
+}

@@ -1,0 +1,5 @@
+package: geneffects
+output: generated/effects/effects.gen.go
+generate:
+  echo-server: true
+  models: true

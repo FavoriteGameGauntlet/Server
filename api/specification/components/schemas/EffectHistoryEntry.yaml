@@ -1,0 +1,15 @@
+type: object
+properties:
+  name:
+    $ref: "./Name.yaml"
+  description:
+    type: string
+  action:
+    type: string
+  usesLeft:
+    type: integer
+    format: int
+  createdDate:
+    type: string
+    format: date-time
+required: [ name, description, action, usesLeft, createdDate ]

@@ -1,0 +1,22 @@
+type: object
+properties:
+  name:
+    $ref: "./Name.yaml"
+  description:
+    type: string
+  useCount:
+    type: integer
+    format: int
+  usesLeft:
+    type: integer
+    format: int
+  duration:
+    $ref: "./Duration.yaml"
+  startedDate:
+    type: string
+    format: date-time
+  modifiers:
+    type: array
+    items:
+      $ref: "./PointModifier.yaml"
+required: [ name, description, useCount, usesLeft, startedDate, modifiers ]

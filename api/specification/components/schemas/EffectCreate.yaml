@@ -1,0 +1,17 @@
+type: object
+description: >
+  Creates an effect. durationInSeconds is left out for an effect that does not run out on its own.
+properties:
+  name:
+    $ref: "./Name.yaml"
+  description:
+    type: string
+  useCount:
+    type: integer
+    format: int
+  durationInSeconds:
+    type: integer
+    format: int
+  entries:
+    $ref: "./ChangeEntryInputs.yaml"
+required: [ name, description, useCount, entries ]

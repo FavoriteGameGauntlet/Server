@@ -2,23 +2,27 @@ package main
 
 import (
 	genauth "FGG-Service/api/generated/auth"
+	geneffects "FGG-Service/api/generated/effects"
 	gengames "FGG-Service/api/generated/games"
 	genitems "FGG-Service/api/generated/items"
+	genperks "FGG-Service/api/generated/perks"
 	genpoints "FGG-Service/api/generated/points"
 	gensysparams "FGG-Service/api/generated/system_parameters"
 	gentimers "FGG-Service/api/generated/timers"
 	genusers "FGG-Service/api/generated/users"
-	geneffects "FGG-Service/api/generated/wheel_effects"
+	genwheeleffects "FGG-Service/api/generated/wheel_effects"
 	ctrlauth "FGG-Service/src/auth/controller"
 	"FGG-Service/src/dbaccess"
+	ctrleffects "FGG-Service/src/effects/controller"
 	ctrlgames "FGG-Service/src/games/controller"
 	ctrlitems "FGG-Service/src/items/controller"
+	ctrlperks "FGG-Service/src/perks/controller"
 	ctrlpoints "FGG-Service/src/points/controller"
 	ctrlsysparams "FGG-Service/src/sysparams/controller"
 	ctrltimers "FGG-Service/src/timers/controller"
 	srvtimers "FGG-Service/src/timers/service"
 	ctrlusers "FGG-Service/src/users/controller"
-	ctrleffects "FGG-Service/src/wheeleffects/controller"
+	ctrlwheeleffects "FGG-Service/src/wheeleffects/controller"
 	"embed"
 	"log/slog"
 	"net/http"
@@ -68,11 +72,13 @@ func registerHandlers(e *echo.Echo) {
 	genauth.RegisterHandlers(e, ctrlauth.NewController())
 	gengames.RegisterHandlers(e, ctrlgames.NewController(ts))
 	genitems.RegisterHandlers(e, ctrlitems.NewController())
+	geneffects.RegisterHandlers(e, ctrleffects.NewController())
+	genperks.RegisterHandlers(e, ctrlperks.NewController())
 	genpoints.RegisterHandlers(e, ctrlpoints.NewController())
 	gensysparams.RegisterHandlers(e, ctrlsysparams.NewController())
 	gentimers.RegisterHandlers(e, ctrltimers.NewController(ts))
 	genusers.RegisterHandlers(e, ctrlusers.NewController())
-	geneffects.RegisterHandlers(e, ctrleffects.NewController())
+	genwheeleffects.RegisterHandlers(e, ctrlwheeleffects.NewController())
 }
 
 func createFileAndStartLogger() *os.File {

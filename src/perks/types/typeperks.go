@@ -37,3 +37,17 @@ type PerkHistory struct {
 	SourceEventId *int
 	CreatedDate   time.Time
 }
+
+// UserPerkView is a perk a user holds, carrying the catalogue details the API returns with it.
+type UserPerkView struct {
+	Name         string
+	Description  string
+	ReceivedDate time.Time
+}
+
+// PerkHistoryView is one recorded perk event, named by the perk it concerns.
+type PerkHistoryView struct {
+	Name        string
+	Action      string
+	CreatedDate time.Time
+}

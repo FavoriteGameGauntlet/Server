@@ -1,0 +1,346 @@
+openapi: 3.0.4
+info:
+  title: Favorite Game Gauntlet
+  version: 0.15.0
+paths:
+  /effects/catalog:
+    get:
+      operationId: getEffects
+      tags:
+        - Effects
+      responses:
+        '200':
+          $ref: '#/components/responses/EffectsResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    post:
+      operationId: createEffect
+      tags:
+        - Effects
+      requestBody:
+        $ref: '#/components/requestBodies/EffectCreateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/EffectResponse'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /effects/catalog/removed:
+    get:
+      operationId: getRemovedEffects
+      tags:
+        - Effects
+      responses:
+        '200':
+          $ref: '#/components/responses/EffectsResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /effects/catalog/{name}:
+    delete:
+      operationId: removeEffect
+      tags:
+        - Effects
+      parameters:
+        - $ref: '#/components/parameters/Name'
+      responses:
+        '204':
+          description: Success.
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /effects/{login}:
+    get:
+      operationId: getUserEffects
+      tags:
+        - Effects
+      parameters:
+        - $ref: '#/components/parameters/Login'
+      responses:
+        '200':
+          $ref: '#/components/responses/UserEffectsResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /effects/{login}/history:
+    get:
+      operationId: getUserEffectHistory
+      tags:
+        - Effects
+      parameters:
+        - $ref: '#/components/parameters/Login'
+      responses:
+        '200':
+          $ref: '#/components/responses/EffectHistoriesResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /effects/{login}/{name}:
+    delete:
+      operationId: endUserEffect
+      tags:
+        - Effects
+      parameters:
+        - $ref: '#/components/parameters/Login'
+        - $ref: '#/components/parameters/Name'
+      responses:
+        '204':
+          description: Success.
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '409':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /effects/{login}/{name}/use:
+    post:
+      operationId: useUserEffect
+      tags:
+        - Effects
+      parameters:
+        - $ref: '#/components/parameters/Login'
+        - $ref: '#/components/parameters/Name'
+      responses:
+        '204':
+          description: Success.
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '409':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+components:
+  schemas:
+    Name:
+      type: string
+      pattern: ^.+$
+      minLength: 1
+      maxLength: 70
+    Duration:
+      type: string
+      format: duration
+      example: PT2h10m5s
+      description: The duration notation as defined by ISO 8601
+    Effect:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/Name'
+        description:
+          type: string
+        useCount:
+          type: integer
+          format: int
+        duration:
+          $ref: '#/components/schemas/Duration'
+      required:
+        - name
+        - description
+        - useCount
+    Effects:
+      type: array
+      items:
+        $ref: '#/components/schemas/Effect'
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+    ChangeEntryInput:
+      type: object
+      description: |
+        Names one thing a change grants. Exactly one of pointTypeName, itemName, perkName or effectName has to be set. The amount carries the sign it is applied with, so a cost is negative.
+      properties:
+        pointTypeName:
+          $ref: '#/components/schemas/Name'
+        itemName:
+          $ref: '#/components/schemas/Name'
+        perkName:
+          $ref: '#/components/schemas/Name'
+        effectName:
+          $ref: '#/components/schemas/Name'
+        amount:
+          type: integer
+          format: int
+      required:
+        - amount
+    ChangeEntryInputs:
+      type: array
+      items:
+        $ref: '#/components/schemas/ChangeEntryInput'
+    EffectCreate:
+      type: object
+      description: |
+        Creates an effect. durationInSeconds is left out for an effect that does not run out on its own.
+      properties:
+        name:
+          $ref: '#/components/schemas/Name'
+        description:
+          type: string
+        useCount:
+          type: integer
+          format: int
+        durationInSeconds:
+          type: integer
+          format: int
+        entries:
+          $ref: '#/components/schemas/ChangeEntryInputs'
+      required:
+        - name
+        - description
+        - useCount
+        - entries
+    Login:
+      type: string
+      pattern: ^\w+$
+      minLength: 3
+      maxLength: 35
+    PointModifier:
+      type: object
+      description: A point change the effect applies passively while it is active.
+      properties:
+        pointTypeName:
+          $ref: '#/components/schemas/Name'
+        amount:
+          type: integer
+          format: int
+      required:
+        - pointTypeName
+        - amount
+    UserEffect:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/Name'
+        description:
+          type: string
+        useCount:
+          type: integer
+          format: int
+        usesLeft:
+          type: integer
+          format: int
+        duration:
+          $ref: '#/components/schemas/Duration'
+        startedDate:
+          type: string
+          format: date-time
+        modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/PointModifier'
+      required:
+        - name
+        - description
+        - useCount
+        - usesLeft
+        - startedDate
+        - modifiers
+    UserEffects:
+      type: array
+      items:
+        $ref: '#/components/schemas/UserEffect'
+    EffectHistoryEntry:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/Name'
+        description:
+          type: string
+        action:
+          type: string
+        usesLeft:
+          type: integer
+          format: int
+        createdDate:
+          type: string
+          format: date-time
+      required:
+        - name
+        - description
+        - action
+        - usesLeft
+        - createdDate
+    EffectHistoryEntries:
+      type: array
+      items:
+        $ref: '#/components/schemas/EffectHistoryEntry'
+  responses:
+    EffectsResponse:
+      description: Success.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Effects'
+    ErrorResponse:
+      description: Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    EffectResponse:
+      description: Success.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Effect'
+    UserEffectsResponse:
+      description: Success.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UserEffects'
+    EffectHistoriesResponse:
+      description: Success.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EffectHistoryEntries'
+  requestBodies:
+    EffectCreateRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EffectCreate'
+  parameters:
+    Name:
+      name: name
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Name'
+    Login:
+      name: login
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Login'
