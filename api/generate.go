@@ -3,6 +3,7 @@ package api_generating
 //go:generate redocly bundle specification/raw/auth.yaml -o specification/auth.yaml
 //go:generate redocly bundle specification/raw/effects.yaml -o specification/effects.yaml
 //go:generate redocly bundle specification/raw/games.yaml -o specification/games.yaml
+//go:generate redocly bundle specification/raw/exchanges.yaml -o specification/exchanges.yaml
 //go:generate redocly bundle specification/raw/items.yaml -o specification/items.yaml
 //go:generate redocly bundle specification/raw/points.yaml -o specification/points.yaml
 //go:generate redocly bundle specification/raw/perks.yaml -o specification/perks.yaml
@@ -14,6 +15,7 @@ package api_generating
 //go:generate oapi-codegen -config configs/config_auth.yaml specification/auth.yaml
 //go:generate oapi-codegen -config configs/config_effects.yaml specification/effects.yaml
 //go:generate oapi-codegen -config configs/config_games.yaml specification/games.yaml
+//go:generate oapi-codegen -config configs/config_exchanges.yaml specification/exchanges.yaml
 //go:generate oapi-codegen -config configs/config_items.yaml specification/items.yaml
 //go:generate oapi-codegen -config configs/config_points.yaml specification/points.yaml
 //go:generate oapi-codegen -config configs/config_perks.yaml specification/perks.yaml

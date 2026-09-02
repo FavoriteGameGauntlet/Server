@@ -329,6 +329,32 @@ func NewPerkNotOwnedConflictError(name string) error {
 		},
 	}
 }
+func NewExchangeNotFoundError(name string) error {
+	message := fmt.Sprintf(
+		"The exchange \"%s\" wasn't found.",
+		name)
+
+	return &NotFoundError{
+		&BaseError{
+			Code:    "EXCHANGE_NOT_FOUND",
+			Message: message,
+		},
+	}
+}
+
+func NewNotEnoughPointsConflictError(pointTypeName string, requiredPoints int) error {
+	message := fmt.Sprintf(
+		"At least %d of \"%s\" is required.",
+		requiredPoints,
+		pointTypeName)
+
+	return &ConflictError{
+		&BaseError{
+			Code:    "NOT_ENOUGH_POINTS",
+			Message: message,
+		},
+	}
+}
 func NewWheelEffectNameNotFoundError() error {
 	return &NotFoundError{
 		&BaseError{

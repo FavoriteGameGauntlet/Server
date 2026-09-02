@@ -1,0 +1,28 @@
+get:
+  operationId: getExchanges
+  tags: [ Exchanges ]
+  responses:
+    "200":
+      $ref: "../../components/responses/ExchangesResponse.yaml"
+    "401":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+post:
+  operationId: createExchange
+  tags: [ Exchanges ]
+  requestBody:
+    $ref: "../../components/requests/ExchangeCreateRequest.yaml"
+  responses:
+    "200":
+      $ref: "../../components/responses/ExchangeResponse.yaml"
+    "400":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "401":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "404":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "422":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../components/responses/ErrorResponse.yaml"

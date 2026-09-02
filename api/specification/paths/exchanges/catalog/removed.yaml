@@ -1,0 +1,10 @@
+get:
+  operationId: getRemovedExchanges
+  tags: [ Exchanges ]
+  responses:
+    "200":
+      $ref: "../../../components/responses/ExchangesResponse.yaml"
+    "401":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../../components/responses/ErrorResponse.yaml"

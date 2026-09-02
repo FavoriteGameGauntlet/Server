@@ -1,0 +1,19 @@
+openapi: 3.0.4
+info:
+  title: Favorite Game Gauntlet
+  version: 0.15.0
+paths:
+  /exchanges/catalog:
+    $ref: "../paths/exchanges/catalog.yaml"
+
+  /exchanges/catalog/removed:
+    $ref: "../paths/exchanges/catalog/removed.yaml"
+
+  /exchanges/catalog/{name}:
+    $ref: "../paths/exchanges/catalog/name.yaml"
+
+  /exchanges/catalog/{name}/use:
+    $ref: "../paths/exchanges/catalog/name/use.yaml"
+
+  /exchanges/{login}/history:
+    $ref: "../paths/exchanges/login/history.yaml"

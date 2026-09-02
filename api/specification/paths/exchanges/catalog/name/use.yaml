@@ -1,0 +1,20 @@
+post:
+  operationId: useExchange
+  tags: [ Exchanges ]
+  parameters:
+    - $ref: "../../../../components/parameters/Name.yaml"
+  requestBody:
+    $ref: "../../../../components/requests/ExchangeUseRequest.yaml"
+  responses:
+    "204":
+      description: Success.
+    "400":
+      $ref: "../../../../components/responses/ErrorResponse.yaml"
+    "401":
+      $ref: "../../../../components/responses/ErrorResponse.yaml"
+    "404":
+      $ref: "../../../../components/responses/ErrorResponse.yaml"
+    "409":
+      $ref: "../../../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../../../components/responses/ErrorResponse.yaml"

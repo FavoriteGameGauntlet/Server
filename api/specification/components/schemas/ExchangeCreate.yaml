@@ -1,0 +1,14 @@
+type: object
+description: >
+  Creates an exchange. sourceEntries are what it costs and targetEntries are what it gives. Both
+  carry the sign they are applied with, so a cost is negative.
+properties:
+  name:
+    $ref: "./Name.yaml"
+  description:
+    type: string
+  sourceEntries:
+    $ref: "./ChangeEntryInputs.yaml"
+  targetEntries:
+    $ref: "./ChangeEntryInputs.yaml"
+required: [ name, description, sourceEntries, targetEntries ]

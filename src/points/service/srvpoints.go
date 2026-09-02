@@ -304,3 +304,7 @@ func (s *Service) createManualSourceEvent(actorUserId int, userId int, partyId i
 
 	return created[0].Id, nil
 }
+// GetPointTypeById reads a point type by the id a change entry stores.
+func (s *Service) GetPointTypeById(partyId int, pointTypeId int) (pointType typepoints.PointTypeInfo, err error) {
+	return s.Database.GetPointTypeCommand(partyId, pointTypeId)
+}
