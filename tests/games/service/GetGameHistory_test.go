@@ -1,9 +1,9 @@
 package srvgames_test
 
 import (
-	"FGG-Service/src/games/service"
-	"FGG-Service/src/games/types"
-	"FGG-Service/tests/games/mock"
+	srvgames "FGG-Service/src/games/service"
+	typegames "FGG-Service/src/games/types"
+	dbgamesmock "FGG-Service/tests/games/mock"
 	"testing"
 	"time"
 
@@ -19,7 +19,7 @@ type GetGameHistoryTestCase struct {
 	Name            string
 	UserId          int
 	SetupMock       func() *dbgamesmock.DatabaseMock
-	ExpectedGames   typegames.CurrentGames
+	ExpectedHistory []typegames.GameHistoryEntry
 	ExpectedErrorIs error
 }
 
@@ -41,9 +41,9 @@ var GetGameHistoryTestCases = []GetGameHistoryTestCase{
 		ExpectedErrorIs: dbError,
 	},
 	{
-		// GetGameHistoryCommand succeeds for multiple games. Each entry maps to a CurrentGame keyed by
-		// GameId, with TimeSpent/State already carried on the entry (no per-game follow-up query).
-		Name:   "SuccessReturn_MultipleGames",
+		// A history entry carries what happened to the game along with its rating and review, so the
+		// entries return as they are rather than being flattened into the current game shape.
+		Name:   "SuccessReturn_KeepsWhatTheEntryCarries",
 		UserId: 1,
 		SetupMock: func() *dbgamesmock.DatabaseMock {
 			databaseMock := new(dbgamesmock.DatabaseMock)
@@ -55,13 +55,16 @@ var GetGameHistoryTestCases = []GetGameHistoryTestCase{
 					{
 						GameId:      1,
 						Name:        "Half-Life 1",
+						Action:      "finished",
 						TimeSpent:   2 * time.Hour,
+						Rating:      ratingPtr(9),
 						EndState:    gameHistoryStatePtr("finished"),
 						CreatedDate: createdDate1,
 					},
 					{
 						GameId:      2,
 						Name:        "Half-Life 2",
+						Action:      "cancelled",
 						TimeSpent:   30 * time.Minute,
 						EndState:    gameHistoryStatePtr("cancelled"),
 						CreatedDate: createdDate2,
@@ -70,12 +73,29 @@ var GetGameHistoryTestCases = []GetGameHistoryTestCase{
 
 			return databaseMock
 		},
-		ExpectedGames: typegames.CurrentGames{
-			typegames.CurrentGame{Id: 1, Name: "Half-Life 1", State: typegames.GameStateFinished, TimeSpent: 2 * time.Hour, StartDate: createdDate1},
-			typegames.CurrentGame{Id: 2, Name: "Half-Life 2", State: typegames.GameStateCancelled, TimeSpent: 30 * time.Minute, StartDate: createdDate2},
+		ExpectedHistory: []typegames.GameHistoryEntry{
+			{
+				GameId:      1,
+				Name:        "Half-Life 1",
+				Action:      "finished",
+				TimeSpent:   2 * time.Hour,
+				Rating:      ratingPtr(9),
+				EndState:    gameHistoryStatePtr("finished"),
+				CreatedDate: createdDate1,
+			},
+			{
+				GameId:      2,
+				Name:        "Half-Life 2",
+				Action:      "cancelled",
+				TimeSpent:   30 * time.Minute,
+				EndState:    gameHistoryStatePtr("cancelled"),
+				CreatedDate: createdDate2,
+			},
 		},
 	},
 }
+
+func ratingPtr(rating int) *int { return &rating }
 
 func TestSrvGames_GetGameHistory(test *testing.T) {
 	for _, testCase := range GetGameHistoryTestCases {
@@ -85,16 +105,14 @@ func TestSrvGames_GetGameHistory(test *testing.T) {
 			sut := srvgames.Service{Database: databaseMock}
 
 			// Act
-			games, err := sut.GetGameHistory(testCase.UserId)
+			history, err := sut.GetGameHistory(testCase.UserId)
 
 			// Assert
 			if testCase.ExpectedErrorIs != nil {
 				require.ErrorIs(test, err, testCase.ExpectedErrorIs)
-			}
-
-			if testCase.ExpectedGames != nil {
+			} else {
 				require.NoError(test, err)
-				require.Equal(test, testCase.ExpectedGames, games)
+				require.Equal(test, testCase.ExpectedHistory, history)
 			}
 
 			databaseMock.AssertExpectations(test)

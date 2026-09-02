@@ -17,14 +17,14 @@ type IDatabase interface {
 	CreateWishlistGameCommand(userId int, partyId int, gameId int) (game typegames.CreatedWishlistGame, err error)
 	DeleteUnplayedGameCommand(userId int, partyId int, gameId int) error
 	GetWishlistGamesCommand(userId int, partyId int) (games typegames.WishlistGames, err error)
-	CreateCurrentGameCommand(userId int, partyId int, gameId int, sourceEventId int) (game typegames.CreatedUserGame, err error)
+	CreateCurrentGameCommand(userId int, partyId int, gameId int, sourceEventId *int) (game typegames.CreatedUserGame, err error)
 	GetCurrentGameCommand(userId int, partyId int) (game typegames.UserGame, err error)
 	DoesUserGameExistCommand(userId int, partyId int) (doesExist bool, err error)
 	GetGameTimeSpentCommand(userId int, gameId int) (timeSpent time.Duration, err error)
-	ChangeGameTimeSpentCommand(userId int, partyId int, gameId int, changeValue time.Duration, sourceEventId int) error
-	CancelCurrentGameCommand(userId int, partyId int, gameId int, sourceEventId int) error
-	FinishCurrentGameCommand(userId int, partyId int, gameId int, sourceEventId int) error
-	RateGameCommand(userId int, partyId int, gameId int, rating int, reviewComment *string, sourceEventId int) error
+	ChangeGameTimeSpentCommand(userId int, partyId int, gameId int, changeValue time.Duration, sourceEventId *int) error
+	CancelCurrentGameCommand(userId int, partyId int, gameId int, sourceEventId *int) error
+	FinishCurrentGameCommand(userId int, partyId int, gameId int, sourceEventId *int) error
+	RateGameCommand(userId int, partyId int, gameId int, rating int, reviewComment *string, sourceEventId *int) error
 	GetGameReviewCommand(userId int, partyId int, gameId int) (reviewComment *string, err error)
 	GetGameHistoryCommand(userId int, partyId int) (games []typegames.GameHistoryEntry, err error)
 	GetAllCurrentGamesCommand(partyId int) (games []typegames.UserGameWithLogin, err error)
@@ -144,7 +144,7 @@ func (db *Database) GetWishlistGamesCommand(userId int, partyId int) (games type
 
 var createCurrentGameQuery = dbaccess.Query{Name: "CreateCurrentGameQuery", SQL: `SELECT * FROM create_user_game($1::integer, $2::integer, $3::integer, $4::integer)`}
 
-func (db *Database) CreateCurrentGameCommand(userId int, partyId int, gameId int, sourceEventId int) (game typegames.CreatedUserGame, err error) {
+func (db *Database) CreateCurrentGameCommand(userId int, partyId int, gameId int, sourceEventId *int) (game typegames.CreatedUserGame, err error) {
 	row := dbaccess.QueryRow(createCurrentGameQuery, userId, partyId, gameId, sourceEventId)
 
 	var timeSpentRaw string
@@ -218,7 +218,7 @@ func (db *Database) GetGameTimeSpentCommand(userId int, gameId int) (timeSpent t
 
 var changeGameTimeSpentQuery = dbaccess.Query{Name: "ChangeGameTimeSpentQuery", SQL: `SELECT change_game_time_spent($1::integer, $2::integer, $3::integer, $4::interval, $5::integer)`}
 
-func (db *Database) ChangeGameTimeSpentCommand(userId int, partyId int, gameId int, changeValue time.Duration, sourceEventId int) error {
+func (db *Database) ChangeGameTimeSpentCommand(userId int, partyId int, gameId int, changeValue time.Duration, sourceEventId *int) error {
 	_, err := dbaccess.Exec(changeGameTimeSpentQuery, userId, partyId, gameId, changeValue, sourceEventId)
 
 	dbaccess.LogDbResult(changeGameTimeSpentQuery, nil, err)
@@ -228,7 +228,7 @@ func (db *Database) ChangeGameTimeSpentCommand(userId int, partyId int, gameId i
 
 var cancelCurrentGameQuery = dbaccess.Query{Name: "CancelCurrentGameQuery", SQL: `SELECT cancel_user_game($1::integer, $2::integer, $3::integer, $4::integer)`}
 
-func (db *Database) CancelCurrentGameCommand(userId int, partyId int, gameId int, sourceEventId int) error {
+func (db *Database) CancelCurrentGameCommand(userId int, partyId int, gameId int, sourceEventId *int) error {
 	_, err := dbaccess.Exec(cancelCurrentGameQuery, userId, partyId, gameId, sourceEventId)
 
 	dbaccess.LogDbResult(cancelCurrentGameQuery, nil, err)
@@ -238,7 +238,7 @@ func (db *Database) CancelCurrentGameCommand(userId int, partyId int, gameId int
 
 var finishCurrentGameQuery = dbaccess.Query{Name: "FinishCurrentGameQuery", SQL: `SELECT finish_user_game($1::integer, $2::integer, $3::integer, $4::integer)`}
 
-func (db *Database) FinishCurrentGameCommand(userId int, partyId int, gameId int, sourceEventId int) error {
+func (db *Database) FinishCurrentGameCommand(userId int, partyId int, gameId int, sourceEventId *int) error {
 	_, err := dbaccess.Exec(finishCurrentGameQuery, userId, partyId, gameId, sourceEventId)
 
 	dbaccess.LogDbResult(finishCurrentGameQuery, nil, err)
@@ -248,7 +248,7 @@ func (db *Database) FinishCurrentGameCommand(userId int, partyId int, gameId int
 
 var rateGameQuery = dbaccess.Query{Name: "RateGameQuery", SQL: `SELECT rate_game($1::integer, $2::integer, $3::integer, $4::integer, $5::text, $6::integer)`}
 
-func (db *Database) RateGameCommand(userId int, partyId int, gameId int, rating int, reviewComment *string, sourceEventId int) error {
+func (db *Database) RateGameCommand(userId int, partyId int, gameId int, rating int, reviewComment *string, sourceEventId *int) error {
 	_, err := dbaccess.Exec(rateGameQuery, userId, partyId, gameId, rating, reviewComment, sourceEventId)
 
 	dbaccess.LogDbResult(rateGameQuery, nil, err)

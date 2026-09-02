@@ -89,26 +89,21 @@ func (c *Controller) ChangeAdminSystemParameter(ctx echo.Context, name gensyspar
 	return ctx.NoContent(http.StatusNoContent)
 }
 
-// GetAllAppSystemParameters (GET /system-parameters/app/all)
-func (c *Controller) GetAllAppSystemParameters(ctx echo.Context) error {
-	parameters, err := c.Service.GetAllApp()
+// ResetAdminSystemParameter (DELETE /system-parameters/admin/{name})
+func (c *Controller) ResetAdminSystemParameter(ctx echo.Context, name gensysparams.Name) error {
+	err := common.RequireAdmin(ctx, &c.AuthService)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	return ctx.JSON(http.StatusOK, convertParametersToDto(parameters))
-}
-
-// GetAppSystemParameter (GET /system-parameters/app/{name})
-func (c *Controller) GetAppSystemParameter(ctx echo.Context, name gensysparams.Name) error {
-	parameter, err := c.Service.GetAppParameter(name)
+	err = c.Service.ResetParameter(name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	return ctx.JSON(http.StatusOK, convertParameterToDto(parameter))
+	return ctx.NoContent(http.StatusNoContent)
 }
 
 func convertParameterToDto(parameter typesysparams.SystemParameter) gensysparams.SystemParameter {

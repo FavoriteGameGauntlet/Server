@@ -1,7 +1,7 @@
 openapi: 3.0.4
 info:
   title: Favorite Game Gauntlet
-  version: 0.2.0
+  version: 0.3.0
 paths:
   /system-parameters/admin/all:
     get:
@@ -13,16 +13,6 @@ paths:
           $ref: '#/components/responses/SystemParametersResponse'
         '401':
           $ref: '#/components/responses/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/ErrorResponse'
-  /system-parameters/app/all:
-    get:
-      operationId: getAllAppSystemParameters
-      tags:
-        - SystemParameters
-      responses:
-        '200':
-          $ref: '#/components/responses/SystemParametersResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
   /system-parameters/admin/{name}:
@@ -62,17 +52,16 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /system-parameters/app/{name}:
-    get:
-      operationId: getAppSystemParameter
+    delete:
+      operationId: resetAdminSystemParameter
       tags:
         - SystemParameters
       parameters:
         - $ref: '#/components/parameters/Name'
       responses:
-        '200':
-          $ref: '#/components/responses/SystemParameterResponse'
-        '400':
+        '204':
+          description: Success.
+        '401':
           $ref: '#/components/responses/ErrorResponse'
         '404':
           $ref: '#/components/responses/ErrorResponse'

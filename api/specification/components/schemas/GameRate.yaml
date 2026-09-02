@@ -1,0 +1,8 @@
+type: object
+properties:
+  rating:
+    type: integer
+    format: int
+  reviewComment:
+    type: string
+required: [ rating ]

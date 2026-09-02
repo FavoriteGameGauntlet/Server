@@ -15,16 +15,6 @@ func (m *ServiceMock) GetAll() ([]typesysparams.SystemParameter, error) {
 	return args.Get(0).([]typesysparams.SystemParameter), args.Error(1)
 }
 
-func (m *ServiceMock) GetAllApp() ([]typesysparams.SystemParameter, error) {
-	args := m.Called()
-	return args.Get(0).([]typesysparams.SystemParameter), args.Error(1)
-}
-
-func (m *ServiceMock) GetAppParameter(name string) (typesysparams.SystemParameter, error) {
-	args := m.Called(name)
-	return args.Get(0).(typesysparams.SystemParameter), args.Error(1)
-}
-
 func (m *ServiceMock) GetParameter(name string) (typesysparams.SystemParameter, error) {
 	args := m.Called(name)
 	return args.Get(0).(typesysparams.SystemParameter), args.Error(1)
@@ -52,5 +42,10 @@ func (m *ServiceMock) GetIntSlice(name string) ([]int, error) {
 
 func (m *ServiceMock) ChangeValue(name string, value string) error {
 	args := m.Called(name, value)
+	return args.Error(0)
+}
+
+func (m *ServiceMock) ResetParameter(name string) error {
+	args := m.Called(name)
 	return args.Error(0)
 }

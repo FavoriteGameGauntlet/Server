@@ -2,12 +2,19 @@ type: object
 properties:
   name:
     $ref: "./Name.yaml"
-  state:
+  action:
+    type: string
+  endState:
     type: string
     enum: [ "started", "finished", "cancelled" ]
   timeSpent:
     $ref: "./Duration.yaml"
-  startDate:
+  rating:
+    type: integer
+    format: int
+  reviewComment:
+    type: string
+  createdDate:
     type: string
     format: date-time
-required: [ name, state, timeSpent, startDate ]
+required: [ name, action, timeSpent, createdDate ]

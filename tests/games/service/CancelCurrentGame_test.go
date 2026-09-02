@@ -103,7 +103,7 @@ var CancelCurrentGameTestCases = []CancelCurrentGameTestCase{
 				Return(typetimers.Timer{}, nil)
 			databaseMock.
 				On("CancelCurrentGameCommand",
-					1, 1, 1, 0).
+					1, 1, 1, (*int)(nil)).
 				Return(dbError)
 
 			return databaseMock, timerServiceMock, gettingServiceMock
@@ -129,7 +129,7 @@ var CancelCurrentGameTestCases = []CancelCurrentGameTestCase{
 				Return(typetimers.Timer{}, nil)
 			databaseMock.
 				On("CancelCurrentGameCommand",
-					1, 1, 1, 0).
+					1, 1, 1, (*int)(nil)).
 				Return(nil)
 
 			return databaseMock, timerServiceMock, gettingServiceMock

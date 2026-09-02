@@ -65,7 +65,7 @@ func (m *DatabaseMock) GetWishlistGamesCommand(userId int, partyId int) (games t
 	return
 }
 
-func (m *DatabaseMock) CreateCurrentGameCommand(userId int, partyId int, gameId int, sourceEventId int) (game typegames.CreatedUserGame, err error) {
+func (m *DatabaseMock) CreateCurrentGameCommand(userId int, partyId int, gameId int, sourceEventId *int) (game typegames.CreatedUserGame, err error) {
 	args := m.Called(userId, partyId, gameId, sourceEventId)
 	game = args.Get(0).(typegames.CreatedUserGame)
 	err = args.Error(1)
@@ -93,22 +93,22 @@ func (m *DatabaseMock) GetGameTimeSpentCommand(userId int, gameId int) (timeSpen
 	return
 }
 
-func (m *DatabaseMock) ChangeGameTimeSpentCommand(userId int, partyId int, gameId int, changeValue time.Duration, sourceEventId int) error {
+func (m *DatabaseMock) ChangeGameTimeSpentCommand(userId int, partyId int, gameId int, changeValue time.Duration, sourceEventId *int) error {
 	args := m.Called(userId, partyId, gameId, changeValue, sourceEventId)
 	return args.Error(0)
 }
 
-func (m *DatabaseMock) CancelCurrentGameCommand(userId int, partyId int, gameId int, sourceEventId int) error {
+func (m *DatabaseMock) CancelCurrentGameCommand(userId int, partyId int, gameId int, sourceEventId *int) error {
 	args := m.Called(userId, partyId, gameId, sourceEventId)
 	return args.Error(0)
 }
 
-func (m *DatabaseMock) FinishCurrentGameCommand(userId int, partyId int, gameId int, sourceEventId int) error {
+func (m *DatabaseMock) FinishCurrentGameCommand(userId int, partyId int, gameId int, sourceEventId *int) error {
 	args := m.Called(userId, partyId, gameId, sourceEventId)
 	return args.Error(0)
 }
 
-func (m *DatabaseMock) RateGameCommand(userId int, partyId int, gameId int, rating int, reviewComment *string, sourceEventId int) error {
+func (m *DatabaseMock) RateGameCommand(userId int, partyId int, gameId int, rating int, reviewComment *string, sourceEventId *int) error {
 	args := m.Called(userId, partyId, gameId, rating, reviewComment, sourceEventId)
 	return args.Error(0)
 }

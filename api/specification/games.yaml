@@ -112,6 +112,24 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
+  /games/current/rate:
+    post:
+      operationId: rateCurrentGame
+      tags:
+        - Games
+      requestBody:
+        $ref: '#/components/requestBodies/GameRateRequest'
+      responses:
+        '204':
+          description: Success.
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
   /games/{login}/history:
     get:
       operationId: getUserGameHistory
@@ -121,7 +139,7 @@ paths:
         - $ref: '#/components/parameters/Login'
       responses:
         '200':
-          $ref: '#/components/responses/CurrentGamesResponse'
+          $ref: '#/components/responses/GameHistoriesResponse'
         '401':
           $ref: '#/components/responses/ErrorResponse'
         '404':
@@ -182,9 +200,6 @@ components:
         startDate:
           type: string
           format: date-time
-        finishDate:
-          type: string
-          format: date-time
       required:
         - name
         - state
@@ -201,10 +216,48 @@ components:
             $ref: '#/components/schemas/CurrentGame'
         required:
           - login
-    CurrentGames:
+    GameRate:
+      type: object
+      properties:
+        rating:
+          type: integer
+          format: int
+        reviewComment:
+          type: string
+      required:
+        - rating
+    GameHistoryEntry:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/Name'
+        action:
+          type: string
+        endState:
+          type: string
+          enum:
+            - started
+            - finished
+            - cancelled
+        timeSpent:
+          $ref: '#/components/schemas/Duration'
+        rating:
+          type: integer
+          format: int
+        reviewComment:
+          type: string
+        createdDate:
+          type: string
+          format: date-time
+      required:
+        - name
+        - action
+        - timeSpent
+        - createdDate
+    GameHistoryEntries:
       type: array
       items:
-        $ref: '#/components/schemas/CurrentGame'
+        $ref: '#/components/schemas/GameHistoryEntry'
   parameters:
     Login:
       name: login
@@ -237,15 +290,21 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CurrentGameByLogins'
-    CurrentGamesResponse:
+    GameHistoriesResponse:
       description: Success.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/CurrentGames'
+            $ref: '#/components/schemas/GameHistoryEntries'
   requestBodies:
     WishlistGameRequest:
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/WishlistGame'
+    GameRateRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GameRate'

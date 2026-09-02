@@ -60,11 +60,10 @@ func (c *Controller) GetUserCurrentGame(ctx echo.Context, login gengames.Login) 
 
 func convertGameToDto(game typegames.CurrentGame) gengames.CurrentGame {
 	return gengames.CurrentGame{
-		Name:       game.Name,
-		State:      gengames.CurrentGameState(game.State),
-		TimeSpent:  common.DurationToISO8601(game.TimeSpent),
-		StartDate:  game.StartDate,
-		FinishDate: game.FinishDate,
+		Name:      game.Name,
+		State:     gengames.CurrentGameState(game.State),
+		TimeSpent: common.DurationToISO8601(game.TimeSpent),
+		StartDate: game.StartDate,
 	}
 }
 
@@ -140,25 +139,35 @@ func (c *Controller) GetUserGameHistory(ctx echo.Context, login gengames.Login) 
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	games, err := c.Service.GetGameHistory(userId)
+	history, err := c.Service.GetGameHistory(userId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	gamesDto := convertGamesToDto(games)
-
-	return ctx.JSON(http.StatusOK, gamesDto)
+	return ctx.JSON(http.StatusOK, convertGameHistoryToDto(history))
 }
 
-func convertGamesToDto(games typegames.CurrentGames) gengames.CurrentGames {
-	gamesDto := make(gengames.CurrentGames, len(games))
+func convertGameHistoryToDto(history []typegames.GameHistoryEntry) gengames.GameHistoryEntries {
+	historyDto := make(gengames.GameHistoryEntries, len(history))
 
-	for i, game := range games {
-		gamesDto[i] = convertGameToDto(game)
+	for i, entry := range history {
+		historyDto[i] = gengames.GameHistoryEntry{
+			Name:          entry.Name,
+			Action:        entry.Action,
+			TimeSpent:     common.DurationToISO8601(entry.TimeSpent),
+			Rating:        entry.Rating,
+			ReviewComment: entry.ReviewComment,
+			CreatedDate:   entry.CreatedDate,
+		}
+
+		if entry.EndState != nil {
+			endState := gengames.GameHistoryEntryEndState(*entry.EndState)
+			historyDto[i].EndState = &endState
+		}
 	}
 
-	return gamesDto
+	return historyDto
 }
 
 // GetUserWishlistGames (GET /games/{login}/wishlist)
@@ -276,4 +285,29 @@ func convertAllCurrentGamesToDto(games []typegames.CurrentGameWithLogin) gengame
 	}
 
 	return dtos
+}
+
+// RateCurrentGame (POST /games/current/rate)
+func (c *Controller) RateCurrentGame(ctx echo.Context) error {
+	userId, err := c.AuthService.GetUserId(ctx)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	var rateDto gengames.GameRate
+	err = ctx.Bind(&rateDto)
+
+	if err != nil {
+		err = common.NewBadRequestError(err.Error())
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	err = c.Service.RateCurrentGame(userId, rateDto.Rating, rateDto.ReviewComment)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	return ctx.NoContent(http.StatusNoContent)
 }

@@ -1,16 +1,10 @@
 openapi: 3.0.4
 info:
   title: Favorite Game Gauntlet
-  version: 0.2.0
+  version: 0.3.0
 paths:
   /system-parameters/admin/all:
     $ref: "../paths/system-parameters/admin/all.yaml"
 
-  /system-parameters/app/all:
-    $ref: "../paths/system-parameters/app/all.yaml"
-
   /system-parameters/admin/{name}:
     $ref: "../paths/system-parameters/admin/name.yaml"
-
-  /system-parameters/app/{name}:
-    $ref: "../paths/system-parameters/app/name.yaml"

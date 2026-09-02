@@ -1,11 +1,13 @@
-get:
-  operationId: getUserGameHistory
+post:
+  operationId: rateCurrentGame
   tags: [ Games ]
-  parameters:
-    - $ref: "../../../components/parameters/Login.yaml"
+  requestBody:
+    $ref: "../../../components/requests/GameRateRequest.yaml"
   responses:
-    "200":
-      $ref: "../../../components/responses/GameHistoriesResponse.yaml"
+    "204":
+      description: Success.
+    "400":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
     "401":
       $ref: "../../../components/responses/ErrorResponse.yaml"
     "404":

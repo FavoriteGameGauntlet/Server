@@ -21,6 +21,9 @@ paths:
   /games/current/cancel:
     $ref: "../paths/games/current/cancel.yaml"
 
+  /games/current/rate:
+    $ref: "../paths/games/current/rate.yaml"
+
   /games/{login}/history:
     $ref: "../paths/games/login/history.yaml"
   

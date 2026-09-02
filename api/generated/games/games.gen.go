@@ -14,17 +14,23 @@ import (
 
 // Defines values for CurrentGameState.
 const (
-	Cancelled CurrentGameState = "cancelled"
-	Finished  CurrentGameState = "finished"
-	Started   CurrentGameState = "started"
+	CurrentGameStateCancelled CurrentGameState = "cancelled"
+	CurrentGameStateFinished  CurrentGameState = "finished"
+	CurrentGameStateStarted   CurrentGameState = "started"
+)
+
+// Defines values for GameHistoryEntryEndState.
+const (
+	GameHistoryEntryEndStateCancelled GameHistoryEntryEndState = "cancelled"
+	GameHistoryEntryEndStateFinished  GameHistoryEntryEndState = "finished"
+	GameHistoryEntryEndStateStarted   GameHistoryEntryEndState = "started"
 )
 
 // CurrentGame defines model for CurrentGame.
 type CurrentGame struct {
-	FinishDate *time.Time       `json:"finishDate,omitempty"`
-	Name       Name             `json:"name"`
-	StartDate  time.Time        `json:"startDate"`
-	State      CurrentGameState `json:"state"`
+	Name      Name             `json:"name"`
+	StartDate time.Time        `json:"startDate"`
+	State     CurrentGameState `json:"state"`
 
 	// TimeSpent The duration notation as defined by ISO 8601
 	TimeSpent Duration `json:"timeSpent"`
@@ -39,9 +45,6 @@ type CurrentGameByLogins = []struct {
 	Login       Login        `json:"login"`
 }
 
-// CurrentGames defines model for CurrentGames.
-type CurrentGames = []CurrentGame
-
 // Duration The duration notation as defined by ISO 8601
 type Duration = string
 
@@ -49,6 +52,31 @@ type Duration = string
 type Error struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
+}
+
+// GameHistoryEntries defines model for GameHistoryEntries.
+type GameHistoryEntries = []GameHistoryEntry
+
+// GameHistoryEntry defines model for GameHistoryEntry.
+type GameHistoryEntry struct {
+	Action        string                    `json:"action"`
+	CreatedDate   time.Time                 `json:"createdDate"`
+	EndState      *GameHistoryEntryEndState `json:"endState,omitempty"`
+	Name          Name                      `json:"name"`
+	Rating        *int                      `json:"rating,omitempty"`
+	ReviewComment *string                   `json:"reviewComment,omitempty"`
+
+	// TimeSpent The duration notation as defined by ISO 8601
+	TimeSpent Duration `json:"timeSpent"`
+}
+
+// GameHistoryEntryEndState defines model for GameHistoryEntry.EndState.
+type GameHistoryEntryEndState string
+
+// GameRate defines model for GameRate.
+type GameRate struct {
+	Rating        int     `json:"rating"`
+	ReviewComment *string `json:"reviewComment,omitempty"`
 }
 
 // Login defines model for Login.
@@ -71,17 +99,23 @@ type CurrentGameByLoginsResponse = CurrentGameByLogins
 // CurrentGameResponse defines model for CurrentGameResponse.
 type CurrentGameResponse = CurrentGame
 
-// CurrentGamesResponse defines model for CurrentGamesResponse.
-type CurrentGamesResponse = CurrentGames
-
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse = Error
+
+// GameHistoriesResponse defines model for GameHistoriesResponse.
+type GameHistoriesResponse = GameHistoryEntries
 
 // WishlistGamesResponse defines model for WishlistGamesResponse.
 type WishlistGamesResponse = WishlistGames
 
+// GameRateRequest defines model for GameRateRequest.
+type GameRateRequest = GameRate
+
 // WishlistGameRequest defines model for WishlistGameRequest.
 type WishlistGameRequest = WishlistGame
+
+// RateCurrentGameJSONRequestBody defines body for RateCurrentGame for application/json ContentType.
+type RateCurrentGameJSONRequestBody = GameRate
 
 // AddUserWishlistGameJSONRequestBody defines body for AddUserWishlistGame for application/json ContentType.
 type AddUserWishlistGameJSONRequestBody = WishlistGame
@@ -97,6 +131,9 @@ type ServerInterface interface {
 
 	// (POST /games/current/finish)
 	FinishCurrentGame(ctx echo.Context) error
+
+	// (POST /games/current/rate)
+	RateCurrentGame(ctx echo.Context) error
 
 	// (POST /games/current/roll)
 	RollNewCurrentGame(ctx echo.Context) error
@@ -143,6 +180,15 @@ func (w *ServerInterfaceWrapper) FinishCurrentGame(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.FinishCurrentGame(ctx)
+	return err
+}
+
+// RateCurrentGame converts echo context to params.
+func (w *ServerInterfaceWrapper) RateCurrentGame(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.RateCurrentGame(ctx)
 	return err
 }
 
@@ -250,6 +296,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/games/all/current", wrapper.GetAllCurrentGame)
 	router.POST(baseURL+"/games/current/cancel", wrapper.CancelCurrentGame)
 	router.POST(baseURL+"/games/current/finish", wrapper.FinishCurrentGame)
+	router.POST(baseURL+"/games/current/rate", wrapper.RateCurrentGame)
 	router.POST(baseURL+"/games/current/roll", wrapper.RollNewCurrentGame)
 	router.GET(baseURL+"/games/:login/current", wrapper.GetUserCurrentGame)
 	router.GET(baseURL+"/games/:login/history", wrapper.GetUserGameHistory)

@@ -12,20 +12,17 @@ import (
 	"math/rand"
 )
 
-// defaultPartyId and sourceEventIdPlaceholder are stopgaps until real party-context resolution and
-// game-history-event wiring exist (see project plan) — game endpoints are not functionally correct
-// against the new schema yet, this only gets them compiling.
-const (
-	defaultPartyId         = 1
-	sourceEventIdPlaceholder = 0
-)
+// defaultPartyId is a stopgap until real party context exists (see project plan) — every game is
+// scoped to this one hardcoded party.
+const defaultPartyId = 1
 
 type IService interface {
 	GetCurrentGame(userId int) (typegames.CurrentGame, error)
 	CancelCurrentGame(userId int) error
 	FinishCurrentGame(userId int) error
 	MakeGameRoll(userId int) (typegames.CurrentGame, error)
-	GetGameHistory(userId int) (typegames.CurrentGames, error)
+	GetGameHistory(userId int) ([]typegames.GameHistoryEntry, error)
+	RateCurrentGame(userId int, rating int, reviewComment *string) error
 	GetUnplayedGames(userId int) (typegames.WishlistGames, error)
 	AddWishlistGame(userId int, wishlistGame typegames.WishlistGame) error
 	GetAllCurrentGames() ([]typegames.CurrentGameWithLogin, error)
@@ -118,7 +115,7 @@ func (s *Service) CancelCurrentGame(userId int) error {
 		return err
 	}
 
-	err = s.Database.CancelCurrentGameCommand(userId, defaultPartyId, game.Id, sourceEventIdPlaceholder)
+	err = s.Database.CancelCurrentGameCommand(userId, defaultPartyId, game.Id, nil)
 
 	if err != nil {
 		return err
@@ -144,7 +141,7 @@ func (s *Service) FinishCurrentGame(userId int) error {
 		return err
 	}
 
-	err = s.Database.FinishCurrentGameCommand(userId, defaultPartyId, game.Id, sourceEventIdPlaceholder)
+	err = s.Database.FinishCurrentGameCommand(userId, defaultPartyId, game.Id, nil)
 
 	if err != nil {
 		return err
@@ -153,31 +150,21 @@ func (s *Service) FinishCurrentGame(userId int) error {
 	return nil
 }
 
-func (s *Service) GetGameHistory(userId int) (games typegames.CurrentGames, err error) {
-	entries, err := s.Database.GetGameHistoryCommand(userId, defaultPartyId)
+// GetGameHistory returns the recorded game events of a user. A history entry is not a current game:
+// it carries what happened to the game, and the rating and review left for it.
+func (s *Service) GetGameHistory(userId int) (history []typegames.GameHistoryEntry, err error) {
+	return s.Database.GetGameHistoryCommand(userId, defaultPartyId)
+}
+
+// RateCurrentGame records a rating and an optional review for the game the user has going.
+func (s *Service) RateCurrentGame(userId int, rating int, reviewComment *string) (err error) {
+	game, err := s.GettingService.GetCurrentGame(userId)
 
 	if err != nil {
 		return
 	}
 
-	games = make(typegames.CurrentGames, len(entries))
-
-	for i, entry := range entries {
-		game := typegames.CurrentGame{
-			Id:        entry.GameId,
-			Name:      entry.Name,
-			TimeSpent: entry.TimeSpent,
-			StartDate: entry.CreatedDate,
-		}
-
-		if entry.EndState != nil {
-			game.State = typegames.CurrentGameState(*entry.EndState)
-		}
-
-		games[i] = game
-	}
-
-	return
+	return s.Database.RateGameCommand(userId, defaultPartyId, game.Id, rating, reviewComment, nil)
 }
 
 func (s *Service) MakeGameRoll(userId int) (game typegames.CurrentGame, err error) {
@@ -213,7 +200,7 @@ func (s *Service) MakeGameRoll(userId int) (game typegames.CurrentGame, err erro
 	randomNumber := rand.Intn(len(unplayedGames))
 	randomUnplayedGame := unplayedGames[randomNumber]
 
-	_, err = s.Database.CreateCurrentGameCommand(userId, defaultPartyId, randomUnplayedGame.GameId, sourceEventIdPlaceholder)
+	_, err = s.Database.CreateCurrentGameCommand(userId, defaultPartyId, randomUnplayedGame.GameId, nil)
 
 	if err != nil {
 		return

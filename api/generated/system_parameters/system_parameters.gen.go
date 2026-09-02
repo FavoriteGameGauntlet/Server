@@ -55,17 +55,14 @@ type ServerInterface interface {
 	// (GET /system-parameters/admin/all)
 	GetAllAdminSystemParameters(ctx echo.Context) error
 
+	// (DELETE /system-parameters/admin/{name})
+	ResetAdminSystemParameter(ctx echo.Context, name Name) error
+
 	// (GET /system-parameters/admin/{name})
 	GetAdminSystemParameter(ctx echo.Context, name Name) error
 
 	// (POST /system-parameters/admin/{name})
 	ChangeAdminSystemParameter(ctx echo.Context, name Name) error
-
-	// (GET /system-parameters/app/all)
-	GetAllAppSystemParameters(ctx echo.Context) error
-
-	// (GET /system-parameters/app/{name})
-	GetAppSystemParameter(ctx echo.Context, name Name) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -79,6 +76,22 @@ func (w *ServerInterfaceWrapper) GetAllAdminSystemParameters(ctx echo.Context) e
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetAllAdminSystemParameters(ctx)
+	return err
+}
+
+// ResetAdminSystemParameter converts echo context to params.
+func (w *ServerInterfaceWrapper) ResetAdminSystemParameter(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "name" -------------
+	var name Name
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", ctx.Param("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.ResetAdminSystemParameter(ctx, name)
 	return err
 }
 
@@ -114,31 +127,6 @@ func (w *ServerInterfaceWrapper) ChangeAdminSystemParameter(ctx echo.Context) er
 	return err
 }
 
-// GetAllAppSystemParameters converts echo context to params.
-func (w *ServerInterfaceWrapper) GetAllAppSystemParameters(ctx echo.Context) error {
-	var err error
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetAllAppSystemParameters(ctx)
-	return err
-}
-
-// GetAppSystemParameter converts echo context to params.
-func (w *ServerInterfaceWrapper) GetAppSystemParameter(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "name" -------------
-	var name Name
-
-	err = runtime.BindStyledParameterWithOptions("simple", "name", ctx.Param("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetAppSystemParameter(ctx, name)
-	return err
-}
-
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -168,9 +156,8 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	}
 
 	router.GET(baseURL+"/system-parameters/admin/all", wrapper.GetAllAdminSystemParameters)
+	router.DELETE(baseURL+"/system-parameters/admin/:name", wrapper.ResetAdminSystemParameter)
 	router.GET(baseURL+"/system-parameters/admin/:name", wrapper.GetAdminSystemParameter)
 	router.POST(baseURL+"/system-parameters/admin/:name", wrapper.ChangeAdminSystemParameter)
-	router.GET(baseURL+"/system-parameters/app/all", wrapper.GetAllAppSystemParameters)
-	router.GET(baseURL+"/system-parameters/app/:name", wrapper.GetAppSystemParameter)
 
 }
