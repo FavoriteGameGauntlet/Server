@@ -1,0 +1,5 @@
+package: gengrants
+output: generated/grants/grants.gen.go
+generate:
+  echo-server: true
+  models: true

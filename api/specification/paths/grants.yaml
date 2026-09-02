@@ -1,0 +1,18 @@
+post:
+  operationId: grantToUsers
+  tags: [ Grants ]
+  requestBody:
+    $ref: "../components/requests/ManualGrantRequest.yaml"
+  responses:
+    "204":
+      description: Success.
+    "400":
+      $ref: "../components/responses/ErrorResponse.yaml"
+    "401":
+      $ref: "../components/responses/ErrorResponse.yaml"
+    "404":
+      $ref: "../components/responses/ErrorResponse.yaml"
+    "422":
+      $ref: "../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../components/responses/ErrorResponse.yaml"

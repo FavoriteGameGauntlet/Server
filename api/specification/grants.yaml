@@ -1,0 +1,97 @@
+openapi: 3.0.4
+info:
+  title: Favorite Game Gauntlet
+  version: 0.15.0
+paths:
+  /grants:
+    post:
+      operationId: grantToUsers
+      tags:
+        - Grants
+      requestBody:
+        $ref: '#/components/requestBodies/ManualGrantRequest'
+      responses:
+        '204':
+          description: Success.
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+components:
+  schemas:
+    Login:
+      type: string
+      pattern: ^\w+$
+      minLength: 3
+      maxLength: 35
+    Name:
+      type: string
+      pattern: ^.+$
+      minLength: 1
+      maxLength: 70
+    ChangeEntryInput:
+      type: object
+      description: |
+        Names one thing a change grants. Exactly one of pointTypeName, itemName, perkName or effectName has to be set. The amount carries the sign it is applied with, so a cost is negative.
+      properties:
+        pointTypeName:
+          $ref: '#/components/schemas/Name'
+        itemName:
+          $ref: '#/components/schemas/Name'
+        perkName:
+          $ref: '#/components/schemas/Name'
+        effectName:
+          $ref: '#/components/schemas/Name'
+        amount:
+          type: integer
+          format: int
+      required:
+        - amount
+    ChangeEntryInputs:
+      type: array
+      items:
+        $ref: '#/components/schemas/ChangeEntryInput'
+    ManualGrant:
+      type: object
+      description: |
+        Gives each named user what the entries describe, on an administrator's say-so rather than as the outcome of a game action. Entries carry the sign they are applied with, so taking something away is negative.
+      properties:
+        targetLogins:
+          type: array
+          items:
+            $ref: '#/components/schemas/Login'
+        entries:
+          $ref: '#/components/schemas/ChangeEntryInputs'
+      required:
+        - targetLogins
+        - entries
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+  requestBodies:
+    ManualGrantRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ManualGrant'
+  responses:
+    ErrorResponse:
+      description: Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
