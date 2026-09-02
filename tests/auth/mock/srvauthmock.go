@@ -36,3 +36,10 @@ func (m *ServiceMock) IsAdmin(userId int) (isAdmin bool, err error) {
 	err = args.Error(1)
 	return
 }
+
+func (m *ServiceMock) GetLoginByUserId(userId int) (login string, err error) {
+	args := m.Called(userId)
+	login = args.Get(0).(string)
+	err = args.Error(1)
+	return
+}

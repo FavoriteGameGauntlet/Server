@@ -183,7 +183,6 @@ components:
     Points:
       type: integer
       format: int
-      minimum: 0
     WheelRowApply:
       type: object
       properties:

@@ -1,0 +1,9 @@
+type: array
+items:
+  type: object
+  properties:
+    login:
+      $ref: "./Login.yaml"
+    points:
+      $ref: "./UserPoints.yaml"
+  required: [ login, points ]

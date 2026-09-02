@@ -1,0 +1,20 @@
+type: object
+properties:
+  name:
+    $ref: "./Name.yaml"
+  description:
+    type: string
+  startValue:
+    type: integer
+    format: int
+  isPublic:
+    type: boolean
+  isShared:
+    type: boolean
+  minimum:
+    type: integer
+    format: int
+  maximum:
+    type: integer
+    format: int
+required: [ name, description, startValue, isPublic, isShared, minimum, maximum ]

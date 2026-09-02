@@ -1,146 +1,194 @@
 package srvpoints
 
 import (
-	"database/sql"
-	"errors"
-	"fmt"
+	"FGG-Service/src/common"
+	"FGG-Service/src/points/type"
 )
 
-// getPointTypeIdByName resolves a party.PointTypes row's Id from its Name. There is no by-name lookup
-// in the dbaccess layer, so this scans GetPointTypesCommand's result.
-func (s *Service) getPointTypeIdByName(partyId int, name string) (id int, err error) {
-	pointTypes, err := s.Database.GetPointTypesCommand(partyId)
-
-	if err != nil {
-		return
-	}
-
-	for _, pointType := range pointTypes {
-		if pointType.Name == name {
-			return pointType.Id, nil
-		}
-	}
-
-	err = fmt.Errorf("point type %q not found for party %d", name, partyId)
-
-	return
-}
-
-// GetPointValueByTypeName reads a user's current value for the named PointType (e.g.
-// typepoints.PointTypeAvailableRolls). Returns 0 if the user has no row for it yet.
+// GetPointValueByTypeName reads a user's current value for the named point type.
 func (s *Service) GetPointValueByTypeName(userId int, partyId int, pointTypeName string) (value int, err error) {
-	pointTypeId, err := s.getPointTypeIdByName(partyId, pointTypeName)
+	pointType, err := s.GetPointTypeByName(partyId, pointTypeName)
 
 	if err != nil {
 		return
 	}
 
-	point, err := s.Database.GetUserPointCommand(userId, partyId, pointTypeId)
-
-	if errors.Is(err, sql.ErrNoRows) {
-		err = nil
-		return
-	}
-
-	if err != nil {
-		return
-	}
-
-	value = point.Value
-
-	return
+	return s.pointValue(userId, partyId, pointType)
 }
 
-// clampedPointChange computes the value actually applied when changeValue is clamped to the
-// PointType's Minimum/Maximum, and the resulting final value.
-func (s *Service) clampedPointChange(userId int, partyId int, pointTypeId int, changeValue int) (actualChangeValue int, finalValue int, err error) {
-	pointType, err := s.Database.GetPointTypeCommand(partyId, pointTypeId)
+// clampedPointChange computes the value actually applied once changeValue is clamped to the point
+// type's Minimum/Maximum, and the value the point ends up at.
+func (s *Service) clampedPointChange(userId int, partyId int, pointType typepoints.PointTypeInfo, changeValue int) (result typepoints.PointChangeResult, err error) {
+	currentValue, err := s.pointValue(userId, partyId, pointType)
 
 	if err != nil {
 		return
 	}
 
-	currentPoint, err := s.Database.GetUserPointCommand(userId, partyId, pointTypeId)
-
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return
+	result = typepoints.PointChangeResult{
+		DesiredChangeValue: changeValue,
+		ActualChangeValue:  changeValue,
+		FinalValue:         currentValue + changeValue,
 	}
 
-	err = nil
-
-	actualChangeValue = changeValue
-	finalValue = currentPoint.Value + changeValue
-
-	if finalValue < pointType.Minimum {
-		finalValue = pointType.Minimum
-		actualChangeValue = finalValue - currentPoint.Value
+	if result.FinalValue < pointType.Minimum {
+		result.FinalValue = pointType.Minimum
+		result.ActualChangeValue = result.FinalValue - currentValue
 	}
 
-	if finalValue > pointType.Maximum {
-		finalValue = pointType.Maximum
-		actualChangeValue = finalValue - currentPoint.Value
+	if result.FinalValue > pointType.Maximum {
+		result.FinalValue = pointType.Maximum
+		result.ActualChangeValue = result.FinalValue - currentValue
 	}
 
 	return
 }
 
-// ChangePointValueByTypeName changes a user's value for the named PointType, clamped to the type's
-// Minimum/Maximum, and records the change in its history using sourceEventId as the originating
-// HistoryEvents row.
-func (s *Service) ChangePointValueByTypeName(userId int, partyId int, pointTypeName string, changeValue int, sourceEventId int) (err error) {
-	pointTypeId, err := s.getPointTypeIdByName(partyId, pointTypeName)
+// changePointValue applies a clamped change and records it. A shared point type changes the party
+// pool rather than the user's own value. sourceEventId is the history event that caused the change;
+// when it is nil the change is applied without being recorded, for changes with no event behind them.
+func (s *Service) changePointValue(
+	userId int,
+	partyId int,
+	pointType typepoints.PointTypeInfo,
+	sourceUserId int,
+	changeValue int,
+	sourceEventId *int) (result typepoints.PointChangeResult, err error) {
+	result, err = s.clampedPointChange(userId, partyId, pointType, changeValue)
 
 	if err != nil {
 		return
 	}
 
-	return s.ChangeUserPointValueClamped(userId, partyId, pointTypeId, changeValue, sourceEventId)
-}
+	if pointType.IsShared {
+		err = s.Database.ChangePartyPointValueCommand(partyId, pointType.Id, result.ActualChangeValue)
+	} else {
+		err = s.Database.ChangeUserPointValueCommand(userId, partyId, pointType.Id, result.ActualChangeValue)
+	}
 
-// ChangePointValueByTypeNameNoHistory is like ChangePointValueByTypeName but does not record a
-// history entry — for changes with no HistoryEvents row to attach to (e.g. deducting a roll when a
-// wheel roll is initiated, which itself produces no history event).
-func (s *Service) ChangePointValueByTypeNameNoHistory(userId int, partyId int, pointTypeName string, changeValue int) (err error) {
-	pointTypeId, err := s.getPointTypeIdByName(partyId, pointTypeName)
-
-	if err != nil {
+	if err != nil || sourceEventId == nil {
 		return
 	}
 
-	actualChangeValue, _, err := s.clampedPointChange(userId, partyId, pointTypeId, changeValue)
+	if pointType.IsShared {
+		_, err = s.Database.CreatePartyPointHistoryCommand(
+			partyId,
+			pointType.Id,
+			sourceUserId,
+			result.DesiredChangeValue,
+			result.ActualChangeValue,
+			result.FinalValue,
+			*sourceEventId)
 
-	if err != nil {
-		return
-	}
-
-	return s.Database.ChangeUserPointValueCommand(userId, partyId, pointTypeId, actualChangeValue)
-}
-
-// ChangeUserPointValueClamped changes a user's value for the given PointType, clamped to the type's
-// Minimum/Maximum, and records the change in its history using sourceEventId as the originating
-// HistoryEvents row. Used to apply Change entries generically (see srvchanges).
-func (s *Service) ChangeUserPointValueClamped(userId int, partyId int, pointTypeId int, changeValue int, sourceEventId int) (err error) {
-	actualChangeValue, finalValue, err := s.clampedPointChange(userId, partyId, pointTypeId, changeValue)
-
-	if err != nil {
-		return
-	}
-
-	err = s.Database.ChangeUserPointValueCommand(userId, partyId, pointTypeId, actualChangeValue)
-
-	if err != nil {
 		return
 	}
 
 	_, err = s.Database.CreateUserPointHistoryCommand(
 		userId,
 		partyId,
-		pointTypeId,
-		userId,
-		changeValue,
-		actualChangeValue,
-		finalValue,
-		sourceEventId)
+		pointType.Id,
+		sourceUserId,
+		result.DesiredChangeValue,
+		result.ActualChangeValue,
+		result.FinalValue,
+		*sourceEventId)
 
 	return
+}
+
+// ChangePointValueByTypeName changes a user's value for the named point type, clamped to the type's
+// bounds, and records it against the originating history event.
+func (s *Service) ChangePointValueByTypeName(userId int, partyId int, pointTypeName string, changeValue int, sourceEventId int) (err error) {
+	pointType, err := s.GetPointTypeByName(partyId, pointTypeName)
+
+	if err != nil {
+		return
+	}
+
+	_, err = s.changePointValue(userId, partyId, pointType, userId, changeValue, &sourceEventId)
+
+	return
+}
+
+// ChangePointValueByTypeNameNoHistory is ChangePointValueByTypeName without a history entry — for
+// changes with no event to attach to, such as spending a roll to spin the wheel.
+func (s *Service) ChangePointValueByTypeNameNoHistory(userId int, partyId int, pointTypeName string, changeValue int) (err error) {
+	pointType, err := s.GetPointTypeByName(partyId, pointTypeName)
+
+	if err != nil {
+		return
+	}
+
+	_, err = s.changePointValue(userId, partyId, pointType, userId, changeValue, nil)
+
+	return
+}
+
+// ChangeUserPointValueClamped changes a value by point type id, clamped and recorded. Change entries
+// are applied through this (see srvchanges), which is why it takes an id rather than a name.
+func (s *Service) ChangeUserPointValueClamped(userId int, partyId int, pointTypeId int, changeValue int, sourceEventId int) (err error) {
+	pointType, err := s.Database.GetPointTypeCommand(partyId, pointTypeId)
+
+	if err != nil {
+		return
+	}
+
+	_, err = s.changePointValue(userId, partyId, pointType, userId, changeValue, &sourceEventId)
+
+	return
+}
+
+// ChangeUserPointByTypeName applies an administrator's direct change to one user's points, recorded
+// against a manual history entry as its source event.
+func (s *Service) ChangeUserPointByTypeName(
+	actorUserId int,
+	userId int,
+	partyId int,
+	pointTypeName string,
+	changeValue int) (result typepoints.PointChangeResult, err error) {
+	pointType, err := s.GetPointTypeByName(partyId, pointTypeName)
+
+	if err != nil {
+		return
+	}
+
+	if pointType.IsShared {
+		err = common.NewSharedPointTypeConflictError(pointTypeName)
+		return
+	}
+
+	sourceEventId, err := s.createManualSourceEvent(actorUserId, userId, partyId, pointType.Id, changeValue)
+
+	if err != nil {
+		return
+	}
+
+	return s.changePointValue(userId, partyId, pointType, actorUserId, changeValue, &sourceEventId)
+}
+
+// ChangePartyPointByTypeName applies an administrator's direct change to the party pool of a shared
+// point type, recorded against a manual history entry as its source event.
+func (s *Service) ChangePartyPointByTypeName(
+	actorUserId int,
+	partyId int,
+	pointTypeName string,
+	changeValue int) (result typepoints.PointChangeResult, err error) {
+	pointType, err := s.GetPointTypeByName(partyId, pointTypeName)
+
+	if err != nil {
+		return
+	}
+
+	if !pointType.IsShared {
+		err = common.NewNotSharedPointTypeConflictError(pointTypeName)
+		return
+	}
+
+	sourceEventId, err := s.createManualSourceEvent(actorUserId, actorUserId, partyId, pointType.Id, changeValue)
+
+	if err != nil {
+		return
+	}
+
+	return s.changePointValue(actorUserId, partyId, pointType, actorUserId, changeValue, &sourceEventId)
 }

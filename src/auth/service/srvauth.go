@@ -16,6 +16,7 @@ type IService interface {
 	DoesUserSessionExist(ctx echo.Context) (bool, error)
 	GetUserId(ctx echo.Context) (int, error)
 	GetUserIdByLogin(login string) (int, error)
+	GetLoginByUserId(userId int) (string, error)
 	IsAdmin(userId int) (bool, error)
 }
 
@@ -185,4 +186,15 @@ func (s *Service) GetUserIdByLogin(userLogin string) (userId int, err error) {
 
 	userId = user.Id
 	return
+}
+
+// GetLoginByUserId resolves a user id to the login the API names that user by.
+func (s *Service) GetLoginByUserId(userId int) (login string, err error) {
+	user, err := s.Database.GetUserByIdCommand(userId)
+
+	if err != nil {
+		return
+	}
+
+	return user.Login, nil
 }

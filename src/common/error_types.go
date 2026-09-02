@@ -3,7 +3,6 @@ package common
 import (
 	"FGG-Service/src/timers/types"
 	"fmt"
-	"strings"
 )
 
 type AppError interface {
@@ -169,6 +168,57 @@ func NewSystemParameterNotFoundError(name string) error {
 	}
 }
 
+func NewPointTypeNotFoundError(name string) error {
+	message := fmt.Sprintf(
+		"The point type \"%s\" wasn't found.",
+		name)
+
+	return &NotFoundError{
+		&BaseError{
+			Code:    "POINT_TYPE_NOT_FOUND",
+			Message: message,
+		},
+	}
+}
+
+func NewPointTypeAlreadyExistsConflictError(name string) error {
+	message := fmt.Sprintf(
+		"The point type \"%s\" already exists.",
+		name)
+
+	return &ConflictError{
+		&BaseError{
+			Code:    "POINT_TYPE_ALREADY_EXISTS",
+			Message: message,
+		},
+	}
+}
+
+func NewSharedPointTypeConflictError(name string) error {
+	message := fmt.Sprintf(
+		"The point type \"%s\" is shared by the party. Change it through the party points endpoint.",
+		name)
+
+	return &ConflictError{
+		&BaseError{
+			Code:    "SHARED_POINT_TYPE",
+			Message: message,
+		},
+	}
+}
+
+func NewNotSharedPointTypeConflictError(name string) error {
+	message := fmt.Sprintf(
+		"The point type \"%s\" isn't shared by the party. Change it for a user instead.",
+		name)
+
+	return &ConflictError{
+		&BaseError{
+			Code:    "NOT_SHARED_POINT_TYPE",
+			Message: message,
+		},
+	}
+}
 func NewWheelEffectNameNotFoundError() error {
 	return &NotFoundError{
 		&BaseError{
@@ -271,47 +321,6 @@ func NewWheelEffectRollAlreadyAppliedConflictError() error {
 	}
 }
 
-func NewWrongDesiredChangeValueConflictError(changeSource string, changeSourceRule string) error {
-	message := fmt.Sprintf(
-		"The desired change value is invalid. The value for '%s' should be %s.",
-		changeSource,
-		changeSourceRule)
-
-	return &ConflictError{
-		&BaseError{
-			Code:    "WRONG_DESIRED_CHANGE_VALUE",
-			Message: message,
-		},
-	}
-}
-
-func NewNotEnoughCurrentPointsConflictError(changeSource string, requiredPoints int) error {
-	message := fmt.Sprintf(
-		"Not enough points for '%s' change source. It should be at least %d.",
-		changeSource,
-		requiredPoints)
-
-	return &ConflictError{
-		&BaseError{
-			Code:    "NOT_ENOUGH_CURRENT_POINTS",
-			Message: message,
-		},
-	}
-}
-
-func NewCannotTargetSelfConflictError(changeSource string) error {
-	message := fmt.Sprintf(
-		"The target login cannot be your own when doing '%s' change source.",
-		changeSource)
-
-	return &ConflictError{
-		&BaseError{
-			Code:    "CANNOT_TARGET_SELF",
-			Message: message,
-		},
-	}
-}
-
 type UnprocessableError struct {
 	*BaseError
 }
@@ -375,45 +384,6 @@ func NewPasswordUnprocessableError(messageDetails string) error {
 	return &UnprocessableError{
 		&BaseError{
 			Code:    "INCORRECT_PASSWORD_FORMAT",
-			Message: message,
-		},
-	}
-}
-
-func NewChangeSourceUnprocessableError(possibleValues []string) error {
-	message := fmt.Sprintf(
-		"The change source doesn't match any of these: %s.",
-		strings.Join(possibleValues, ", "))
-
-	return &UnprocessableError{
-		&BaseError{
-			Code:    "INCORRECT_CHANGE_SOURCE_VALUE",
-			Message: message,
-		},
-	}
-}
-
-func NewWheelEffectNameRequiredUnprocessableError(changeSource string) error {
-	message := fmt.Sprintf(
-		"A wheel effect name is required to do '%s' change source.",
-		changeSource)
-
-	return &UnprocessableError{
-		&BaseError{
-			Code:    "WHEEL_EFFECT_NAME_REQUIRED",
-			Message: message,
-		},
-	}
-}
-
-func NewTargetLoginRequiredUnprocessableError(changeSource string) error {
-	message := fmt.Sprintf(
-		"A target login is required to do '%s' change source when seizing someone else's territory.",
-		changeSource)
-
-	return &UnprocessableError{
-		&BaseError{
-			Code:    "TARGET_LOGIN_REQUIRED",
 			Message: message,
 		},
 	}

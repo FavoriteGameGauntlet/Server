@@ -1,8 +1,0 @@
-type: array
-items:
-  type: object
-  properties:
-    login:
-      $ref: "./Login.yaml"
-    pointInfo:
-      $ref: "./PointInfo.yaml"

@@ -6,484 +6,405 @@ import (
 	"FGG-Service/src/common"
 	"FGG-Service/src/points/service"
 	"FGG-Service/src/points/type"
-	"FGG-Service/src/wheeleffects/service"
-	"FGG-Service/src/wheeleffects/types"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
 
+// defaultPartyId is a stopgap until real party context exists (see project plan) — every point is
+// scoped to this one hardcoded party.
+const defaultPartyId = 1
+
 type Controller struct {
-	Service            srvpoints.Service
-	AuthService        srvauth.IService
-	WheelEffectService srvwheeleffects.IService
+	Service     srvpoints.Service
+	AuthService srvauth.IService
 }
 
 func NewController() *Controller {
 	s := srvpoints.NewService()
 	as := srvauth.NewService()
-	wes := srvwheeleffects.NewService()
 
 	return &Controller{
 		*s,
 		as,
-		wes,
 	}
 }
 
-// GetExperiencePoints (GET /points/experience-points)
-func (c *Controller) GetExperiencePoints(ctx echo.Context) error {
-	userId, err := c.AuthService.GetUserId(ctx)
+// GetPointTypes (GET /points/types)
+func (c *Controller) GetPointTypes(ctx echo.Context) error {
+	_, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	points, err := c.Service.GetExperiencePoints(userId)
+	pointTypes, err := c.Service.GetPointTypes(defaultPartyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	return ctx.JSON(http.StatusOK, points)
+	return ctx.JSON(http.StatusOK, convertPointTypesToDto(pointTypes))
 }
 
-// ChangeExperiencePoints (POST /points/experience-points)
-func (c *Controller) ChangeExperiencePoints(ctx echo.Context) error {
-	var pointChangeDto genpoints.PointChange
-	err := ctx.Bind(&pointChangeDto)
+// CreatePointType (POST /points/types)
+func (c *Controller) CreatePointType(ctx echo.Context) error {
+	err := common.RequireAdmin(ctx, c.AuthService)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	var pointTypeDto genpoints.PointTypeCreate
+	err = ctx.Bind(&pointTypeDto)
 
 	if err != nil {
 		err = common.NewBadRequestError(err.Error())
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	userId, err := c.AuthService.GetUserId(ctx)
+	created, err := c.Service.CreatePointType(defaultPartyId, typepoints.PointType{
+		Name:        pointTypeDto.Name,
+		Description: pointTypeDto.Description,
+		StartValue:  pointTypeDto.StartValue,
+		IsPublic:    pointTypeDto.IsPublic,
+		IsShared:    pointTypeDto.IsShared,
+		Minimum:     pointTypeDto.Minimum,
+		Maximum:     pointTypeDto.Maximum,
+	})
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	pointChange := convertDtoToPointChange(pointChangeDto)
+	return ctx.JSON(http.StatusOK, genpoints.PointType{
+		Name:        created.Name,
+		Description: created.Description,
+		StartValue:  created.StartValue,
+		IsPublic:    created.IsPublic,
+		IsShared:    created.IsShared,
+		Minimum:     created.Minimum,
+		Maximum:     created.Maximum,
+	})
+}
 
-	changeResult, err := c.Service.ChangeExperiencePoints(userId, pointChange)
+// ChangePointType (PATCH /points/types/{name})
+func (c *Controller) ChangePointType(ctx echo.Context, name genpoints.Name) error {
+	err := common.RequireAdmin(ctx, c.AuthService)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	changeResultDto := convertChangeResultToDto(changeResult)
+	var pointTypeDto genpoints.PointTypeChange
+	err = ctx.Bind(&pointTypeDto)
 
-	return ctx.JSON(http.StatusOK, changeResultDto)
+	if err != nil {
+		err = common.NewBadRequestError(err.Error())
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	err = c.Service.ChangePointType(defaultPartyId, name, typepoints.PointType{
+		Description: pointTypeDto.Description,
+		IsPublic:    pointTypeDto.IsPublic,
+		IsShared:    pointTypeDto.IsShared,
+		Minimum:     pointTypeDto.Minimum,
+		Maximum:     pointTypeDto.Maximum,
+	})
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	return ctx.NoContent(http.StatusNoContent)
 }
 
-func convertDtoToPointChange(pointChangeDto genpoints.PointChange) typepoints.PointChange {
-	return typepoints.PointChange{
-		ChangeSource:       pointChangeDto.ChangeSource,
-		DesiredChangeValue: pointChangeDto.DesiredChangeValue,
+// RemovePointType (DELETE /points/types/{name})
+func (c *Controller) RemovePointType(ctx echo.Context, name genpoints.Name) error {
+	err := common.RequireAdmin(ctx, c.AuthService)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	err = c.Service.RemovePointType(defaultPartyId, name)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	return ctx.NoContent(http.StatusNoContent)
+}
+// GetUserPoints (GET /points/{login})
+func (c *Controller) GetUserPoints(ctx echo.Context, login genpoints.Login) error {
+	userId, err := c.userIdFromLogin(ctx, login)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	values, err := c.Service.GetUserPoints(userId, defaultPartyId)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	return ctx.JSON(http.StatusOK, convertUserPointsToDto(values))
+}
+
+// GetAllUserPoints (GET /points/all)
+func (c *Controller) GetAllUserPoints(ctx echo.Context) error {
+	_, err := c.AuthService.GetUserId(ctx)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	byLogin, err := c.Service.GetAllUserPoints(defaultPartyId)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	byLoginDto := make(genpoints.UserPointsByLogins, len(byLogin))
+	for i, entry := range byLogin {
+		byLoginDto[i].Login = entry.Login
+		byLoginDto[i].Points = convertUserPointsToDto(entry.Points)
+	}
+
+	return ctx.JSON(http.StatusOK, byLoginDto)
+}
+
+// GetUserPointValue (GET /points/{login}/{name})
+func (c *Controller) GetUserPointValue(ctx echo.Context, login genpoints.Login, name genpoints.Name) error {
+	userId, err := c.userIdFromLogin(ctx, login)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	value, err := c.Service.GetPointValueByTypeName(userId, defaultPartyId, name)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	return ctx.JSON(http.StatusOK, value)
+}
+
+// ChangeUserPointValue (POST /points/{login}/{name})
+func (c *Controller) ChangeUserPointValue(ctx echo.Context, login genpoints.Login, name genpoints.Name) error {
+	err := common.RequireAdmin(ctx, c.AuthService)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	actorUserId, err := c.AuthService.GetUserId(ctx)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	var changeDto genpoints.PointChange
+	err = ctx.Bind(&changeDto)
+
+	if err != nil {
+		err = common.NewBadRequestError(err.Error())
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	userId, err := c.AuthService.GetUserIdByLogin(login)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	result, err := c.Service.ChangeUserPointByTypeName(actorUserId, userId, defaultPartyId, name, changeDto.DesiredChangeValue)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	return ctx.JSON(http.StatusOK, convertChangeResultToDto(result))
+}
+
+// GetUserPointHistory (GET /points/{login}/{name}/history)
+func (c *Controller) GetUserPointHistory(ctx echo.Context, login genpoints.Login, name genpoints.Name) error {
+	userId, err := c.userIdFromLogin(ctx, login)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	history, err := c.Service.GetUserPointHistoryByTypeName(userId, defaultPartyId, name)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	historyDto, err := c.convertHistoryToDto(history)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	return ctx.JSON(http.StatusOK, historyDto)
+}
+// GetPartyPointValue (GET /points/party/{name})
+func (c *Controller) GetPartyPointValue(ctx echo.Context, name genpoints.Name) error {
+	_, err := c.AuthService.GetUserId(ctx)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	value, err := c.Service.GetPartyPointValueByTypeName(defaultPartyId, name)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	return ctx.JSON(http.StatusOK, value)
+}
+
+// ChangePartyPointValue (POST /points/party/{name})
+func (c *Controller) ChangePartyPointValue(ctx echo.Context, name genpoints.Name) error {
+	err := common.RequireAdmin(ctx, c.AuthService)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	actorUserId, err := c.AuthService.GetUserId(ctx)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	var changeDto genpoints.PointChange
+	err = ctx.Bind(&changeDto)
+
+	if err != nil {
+		err = common.NewBadRequestError(err.Error())
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	result, err := c.Service.ChangePartyPointByTypeName(actorUserId, defaultPartyId, name, changeDto.DesiredChangeValue)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	return ctx.JSON(http.StatusOK, convertChangeResultToDto(result))
+}
+
+// GetPartyPointHistory (GET /points/party/{name}/history)
+func (c *Controller) GetPartyPointHistory(ctx echo.Context, name genpoints.Name) error {
+	_, err := c.AuthService.GetUserId(ctx)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	history, err := c.Service.GetPartyPointHistoryByTypeName(defaultPartyId, name)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	historyDto, err := c.convertHistoryToDto(history)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	return ctx.JSON(http.StatusOK, historyDto)
+}
+
+// userIdFromLogin resolves a login path parameter, rejecting the request when it carries no session.
+func (c *Controller) userIdFromLogin(ctx echo.Context, login string) (userId int, err error) {
+	_, err = c.AuthService.GetUserId(ctx)
+
+	if err != nil {
+		return
+	}
+
+	return c.AuthService.GetUserIdByLogin(login)
+}
+
+func convertPointTypeToDto(pointType typepoints.PointTypeInfo) genpoints.PointType {
+	return genpoints.PointType{
+		Name:        pointType.Name,
+		Description: pointType.Description,
+		StartValue:  pointType.StartValue,
+		IsPublic:    pointType.IsPublic,
+		IsShared:    pointType.IsShared,
+		Minimum:     pointType.Minimum,
+		Maximum:     pointType.Maximum,
 	}
 }
 
-func convertChangeResultToDto(changeResult typepoints.PointChangeResult) genpoints.PointChangeResult {
+func convertPointTypesToDto(pointTypes []typepoints.PointTypeInfo) genpoints.PointTypes {
+	pointTypesDto := make(genpoints.PointTypes, len(pointTypes))
+
+	for i, pointType := range pointTypes {
+		pointTypesDto[i] = convertPointTypeToDto(pointType)
+	}
+
+	return pointTypesDto
+}
+
+func convertUserPointsToDto(values []typepoints.UserPointValue) genpoints.UserPoints {
+	valuesDto := make(genpoints.UserPoints, len(values))
+
+	for i, value := range values {
+		valuesDto[i] = genpoints.UserPoint{
+			PointType: convertPointTypeToDto(value.PointType),
+			Value:     value.Value,
+		}
+	}
+
+	return valuesDto
+}
+
+func convertChangeResultToDto(result typepoints.PointChangeResult) genpoints.PointChangeResult {
 	return genpoints.PointChangeResult{
-		ActualChangeValue: changeResult.ActualChangeValue,
-		FinalValue:        changeResult.FinalValue,
+		DesiredChangeValue: result.DesiredChangeValue,
+		ActualChangeValue:  result.ActualChangeValue,
+		FinalValue:         result.FinalValue,
 	}
 }
 
-// ChangeFreePoints (POST /points/{login}/free-points)
-func (c *Controller) ChangeFreePoints(ctx echo.Context, login genpoints.Login) error {
-	var pointChangeDto genpoints.FreePointChange
-	err := ctx.Bind(&pointChangeDto)
-
-	if err != nil {
-		err = common.NewBadRequestError(err.Error())
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	sourceUserId, err := c.AuthService.GetUserId(ctx)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	userId, err := c.AuthService.GetUserIdByLogin(login)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	var effectId *int
-	if pointChangeDto.WheelEffectName != nil {
-		var wheelRow typewheeleffects.LastWheelRow
-		wheelRow, err = c.WheelEffectService.GetLastWheelRowByName(userId, *pointChangeDto.WheelEffectName)
-
-		if err != nil {
-			return common.SendJSONErrorResponse(ctx, err)
-		}
-
-		effectId = &wheelRow.Id
-	}
-
-	pointChange := convertDtoToFreePointChange(sourceUserId, pointChangeDto)
-
-	changeResult, err := c.Service.ChangeFreePoints(userId, pointChange, effectId)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	changeResultDto := convertChangeResultToDto(changeResult)
-
-	return ctx.JSON(http.StatusOK, changeResultDto)
-}
-
-func convertDtoToFreePointChange(sourceUserId int, pointChangeDto genpoints.FreePointChange) typepoints.FreePointChange {
-	return typepoints.FreePointChange{
-		SourceUserId:       sourceUserId,
-		ChangeSource:       pointChangeDto.ChangeSource,
-		DesiredChangeValue: pointChangeDto.DesiredChangeValue,
-	}
-}
-
-// GetFreePoints (GET /points/{login}/free-points)
-func (c *Controller) GetFreePoints(ctx echo.Context, login genpoints.Login) error {
-	doesExist, err := c.AuthService.DoesUserSessionExist(ctx)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	if !doesExist {
-		err = common.NewActiveSessionNotFoundUnauthorizedError()
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	userId, err := c.AuthService.GetUserIdByLogin(login)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	points, err := c.Service.GetFreePoints(userId)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	return ctx.JSON(http.StatusOK, points)
-}
-
-// GetUserFreePointHistory (GET /points/{login}/free-points/history)
-func (c *Controller) GetUserFreePointHistory(ctx echo.Context, login genpoints.Login) error {
-	doesExist, err := c.AuthService.DoesUserSessionExist(ctx)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	if !doesExist {
-		err = common.NewActiveSessionNotFoundUnauthorizedError()
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	userId, err := c.AuthService.GetUserIdByLogin(login)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	history, err := c.Service.GetUserFreePointHistory(userId)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	historyDto := convertFreePointChangeHistoriesToDto(history)
-
-	return ctx.JSON(http.StatusOK, historyDto)
-}
-
-func convertFreePointChangeHistoriesToDto(history typepoints.FreePointChangeHistories) genpoints.FreePointChangeHistories {
-	historyDto := make(genpoints.FreePointChangeHistories, len(history))
+// convertHistoryToDto names the user behind each recorded change, resolving each id once.
+func (c *Controller) convertHistoryToDto(history []typepoints.PointHistoryEntry) (genpoints.PointHistoryEntries, error) {
+	historyDto := make(genpoints.PointHistoryEntries, len(history))
+	loginsByUserId := make(map[int]string)
 
 	for i, entry := range history {
-		historyDto[i] = genpoints.FreePointChangeHistory{
-			ActualChangeValue:  entry.ActualChangeValue,
-			ChangeDate:         entry.ChangeDate,
-			ChangeSource:       entry.ChangeSource,
+		login, isKnown := loginsByUserId[entry.SourceUserId]
+
+		if !isKnown {
+			resolved, err := c.AuthService.GetLoginByUserId(entry.SourceUserId)
+
+			if err != nil {
+				return nil, err
+			}
+
+			login = resolved
+			loginsByUserId[entry.SourceUserId] = login
+		}
+
+		sourceLogin := login
+
+		historyDto[i] = genpoints.PointHistoryEntry{
 			DesiredChangeValue: entry.DesiredChangeValue,
-			FinalValue:         entry.FinalValue,
-			SourceLogin:        entry.SourceLogin,
-			WheelEffectName:    entry.WheelEffectName,
-		}
-	}
-
-	return historyDto
-}
-
-// GetUserPointInfo (GET /points/{login}/info)
-func (c *Controller) GetUserPointInfo(ctx echo.Context, login genpoints.Login) error {
-	doesExist, err := c.AuthService.DoesUserSessionExist(ctx)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	if !doesExist {
-		err = common.NewActiveSessionNotFoundUnauthorizedError()
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	userId, err := c.AuthService.GetUserIdByLogin(login)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	info, err := c.Service.GetUserPointInfo(userId)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	return ctx.JSON(http.StatusOK, convertPointInfoToDto(info))
-}
-
-func convertPointInfoToDto(info typepoints.PointInfo) genpoints.PointInfo {
-	return genpoints.PointInfo{
-		TerritoryPoints: info.TerritoryPoints,
-		FreePoints:      info.FreePoints,
-	}
-}
-
-// ChangeUserTerritoryPoints (POST /points/{login}/territory-points)
-func (c *Controller) ChangeUserTerritoryPoints(ctx echo.Context, login genpoints.Login) error {
-	var pointChangeDto genpoints.PointChange
-	err := ctx.Bind(&pointChangeDto)
-
-	if err != nil {
-		err = common.NewBadRequestError(err.Error())
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	sourceUserId, err := c.AuthService.GetUserId(ctx)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	userId, err := c.AuthService.GetUserIdByLogin(login)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	pointChange := convertDtoToTerritoryPointChange(sourceUserId, pointChangeDto)
-
-	changeResult, err := c.Service.ChangeTerritoryPoints(userId, pointChange)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	changeResultDto := convertChangeResultToDto(changeResult)
-
-	return ctx.JSON(http.StatusOK, changeResultDto)
-}
-
-func convertDtoToTerritoryPointChange(sourceUserId int, pointChangeDto genpoints.PointChange) typepoints.TerritoryPointChange {
-	return typepoints.TerritoryPointChange{
-		SourceUserId:       sourceUserId,
-		ChangeSource:       pointChangeDto.ChangeSource,
-		DesiredChangeValue: pointChangeDto.DesiredChangeValue,
-	}
-}
-
-// GetUserTerritoryPoints (GET /points/{login}/territory-points)
-func (c *Controller) GetUserTerritoryPoints(ctx echo.Context, login genpoints.Login) error {
-	doesExist, err := c.AuthService.DoesUserSessionExist(ctx)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	if !doesExist {
-		err = common.NewActiveSessionNotFoundUnauthorizedError()
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	userId, err := c.AuthService.GetUserIdByLogin(login)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	points, err := c.Service.GetTerritoryPoints(userId)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	return ctx.JSON(http.StatusOK, points)
-}
-
-// GetUserTerritoryPointHistory (GET /points/{login}/territory-points/history)
-func (c *Controller) GetUserTerritoryPointHistory(ctx echo.Context, login genpoints.Login) error {
-	doesExist, err := c.AuthService.DoesUserSessionExist(ctx)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	if !doesExist {
-		err = common.NewActiveSessionNotFoundUnauthorizedError()
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	userId, err := c.AuthService.GetUserIdByLogin(login)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	history, err := c.Service.GetUserTerritoryPointHistory(userId)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	historyDto := convertTerritoryPointChangeHistoriesToDto(history)
-
-	return ctx.JSON(http.StatusOK, historyDto)
-}
-
-func convertTerritoryPointChangeHistoriesToDto(history typepoints.TerritoryPointChangeHistories) genpoints.TerritoryPointChangeHistories {
-	historyDto := make(genpoints.TerritoryPointChangeHistories, len(history))
-
-	for i, entry := range history {
-		historyDto[i] = genpoints.TerritoryPointChangeHistory{
 			ActualChangeValue:  entry.ActualChangeValue,
-			ChangeDate:         entry.ChangeDate,
-			ChangeSource:       entry.ChangeSource,
-			DesiredChangeValue: entry.DesiredChangeValue,
 			FinalValue:         entry.FinalValue,
-			SourceLogin:        entry.SourceLogin,
+			SourceLogin:        &sourceLogin,
+			ChangedDate:        entry.ChangedDate,
 		}
 	}
 
-	return historyDto
-}
-
-// ChangeTerritoryHours (POST /points/territory-hours)
-func (c *Controller) ChangeTerritoryHours(ctx echo.Context) error {
-	var pointChangeDto genpoints.TerritoryHourChange
-	err := ctx.Bind(&pointChangeDto)
-
-	if err != nil {
-		err = common.NewBadRequestError(err.Error())
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	userId, err := c.AuthService.GetUserId(ctx)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	pointChange := convertDtoToTerritoryHourChange(pointChangeDto)
-
-	var targetUserId *int
-	if pointChangeDto.Login != nil && *pointChangeDto.Login != "" {
-		var id int
-		id, err = c.AuthService.GetUserIdByLogin(*pointChangeDto.Login)
-
-		if err != nil {
-			return common.SendJSONErrorResponse(ctx, err)
-		}
-
-		targetUserId = &id
-	}
-
-	changeResult, err := c.Service.ChangeTerritoryHours(userId, pointChange, targetUserId)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	changeResultDto := convertPointChangeResultByTypesToDto(changeResult)
-
-	return ctx.JSON(http.StatusOK, changeResultDto)
-}
-
-func convertPointChangeResultByTypesToDto(results typepoints.PointChangeResultByTypes) genpoints.PointChangeResultByTypes {
-	dto := make(genpoints.PointChangeResultByTypes, len(results))
-
-	for pointType, result := range results {
-		dto[pointType] = convertChangeResultToDto(result)
-	}
-
-	return dto
-}
-
-func convertDtoToTerritoryHourChange(dto genpoints.TerritoryHourChange) typepoints.TerritoryHourChange {
-	return typepoints.TerritoryHourChange{
-		ChangeSource:       dto.ChangeSource,
-		DesiredChangeValue: dto.DesiredChangeValue,
-		IsSomeones:         dto.IsSomeones != nil && *dto.IsSomeones,
-	}
-}
-
-// GetTerritoryHours (GET /points/territory-hours)
-func (c *Controller) GetTerritoryHours(ctx echo.Context) error {
-	userId, err := c.AuthService.GetUserId(ctx)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	points, err := c.Service.GetTerritoryHours(userId)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	return ctx.JSON(http.StatusOK, points)
-}
-
-// GetAllPointInfo (GET /points/all/info)
-func (c *Controller) GetAllPointInfo(ctx echo.Context) error {
-	doesExist, err := c.AuthService.DoesUserSessionExist(ctx)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	if !doesExist {
-		err = common.NewActiveSessionNotFoundUnauthorizedError()
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	infos, err := c.Service.GetAllPointInfo()
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	infosDto := convertPointInfoByLoginsToDto(infos)
-
-	return ctx.JSON(http.StatusOK, infosDto)
-}
-
-func convertPointInfoByLoginsToDto(infos typepoints.PointInfoByLogins) genpoints.PointInfoByLogins {
-	infosDto := make(genpoints.PointInfoByLogins, len(infos))
-
-	for i, info := range infos {
-		login := info.Login
-		pointInfo := convertPointInfoToDto(info.PointInfo)
-		infosDto[i].Login = &login
-		infosDto[i].PointInfo = &pointInfo
-	}
-
-	return infosDto
+	return historyDto, nil
 }

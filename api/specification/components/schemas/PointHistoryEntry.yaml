@@ -8,4 +8,9 @@ properties:
     format: int
   finalValue:
     $ref: "./Points.yaml"
-required: [ desiredChangeValue, actualChangeValue, finalValue ]
+  sourceLogin:
+    $ref: "./Login.yaml"
+  changedDate:
+    type: string
+    format: date-time
+required: [ desiredChangeValue, actualChangeValue, finalValue, changedDate ]

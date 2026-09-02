@@ -1,28 +1,28 @@
 openapi: 3.0.4
 info:
   title: Favorite Game Gauntlet
-  version: 0.14.0
+  version: 0.15.0
 paths:
-  /points/{login}/info:
-    $ref: "../paths/points/login/info.yaml"
+  /points/types:
+    $ref: "../paths/points/types.yaml"
 
-  /points/all/info:
-    $ref: "../paths/points/all/info.yaml"
+  /points/types/{name}:
+    $ref: "../paths/points/types/name.yaml"
 
-  /points/{login}/territory-points:
-    $ref: "../paths/points/login/territory-points.yaml"
+  /points/all:
+    $ref: "../paths/points/all.yaml"
 
-  /points/{login}/territory-points/history:
-    $ref: "../paths/points/login/territory-points/history.yaml"
+  /points/party/{name}:
+    $ref: "../paths/points/party/name.yaml"
 
-  /points/{login}/free-points:
-    $ref: "../paths/points/login/free-points.yaml"
+  /points/party/{name}/history:
+    $ref: "../paths/points/party/name/history.yaml"
 
-  /points/{login}/free-points/history:
-    $ref: "../paths/points/login/free-points/history.yaml"
+  /points/{login}:
+    $ref: "../paths/points/login.yaml"
 
-  /points/experience-points:
-    $ref: "../paths/points/experience-points.yaml"
+  /points/{login}/{name}:
+    $ref: "../paths/points/login/name.yaml"
 
-  /points/territory-hours:
-    $ref: "../paths/points/territory-hours.yaml"
+  /points/{login}/{name}/history:
+    $ref: "../paths/points/login/name/history.yaml"

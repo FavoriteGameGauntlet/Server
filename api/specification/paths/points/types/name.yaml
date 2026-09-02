@@ -1,0 +1,32 @@
+patch:
+  operationId: changePointType
+  tags: [ Points ]
+  parameters:
+    - $ref: "../../../components/parameters/Name.yaml"
+  requestBody:
+    $ref: "../../../components/requests/PointTypeChangeRequest.yaml"
+  responses:
+    "204":
+      description: Success.
+    "400":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+    "401":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+    "404":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+delete:
+  operationId: removePointType
+  tags: [ Points ]
+  parameters:
+    - $ref: "../../../components/parameters/Name.yaml"
+  responses:
+    "204":
+      description: Success.
+    "401":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+    "404":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../../components/responses/ErrorResponse.yaml"

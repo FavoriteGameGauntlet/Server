@@ -1,8 +1,6 @@
 type: object
 properties:
-  changeSource:
-    type: string
   desiredChangeValue:
     type: integer
     format: int
-required: [ changeSource, desiredChangeValue ]
+required: [ desiredChangeValue ]

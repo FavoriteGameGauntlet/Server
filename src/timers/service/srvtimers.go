@@ -3,7 +3,8 @@ package srvtimers
 import (
 	"FGG-Service/src/common"
 	"FGG-Service/src/games/database"
-	"FGG-Service/src/points/database"
+	"FGG-Service/src/points/service"
+	"FGG-Service/src/points/type"
 	"FGG-Service/src/sysparams/service"
 	"FGG-Service/src/sysparams/types"
 	"FGG-Service/src/timers/database"
@@ -43,7 +44,7 @@ func toTimer(currentTimer typetimers.CurrentTimer) typetimers.Timer {
 type Service struct {
 	Database               dbtimers.IDatabase
 	GamesDatabase          dbgames.IDatabase
-	PointsDatabase         dbpoints.IDatabase
+	PointsService          *srvpoints.Service
 	WheelEffectsDatabase   dbwheeleffects.IDatabase
 	SysParamsService       srvsysparams.IService
 	TimerFinisherScheduler gocron.Scheduler
@@ -52,14 +53,14 @@ type Service struct {
 func NewService() *Service {
 	db := new(dbtimers.Database)
 	gdb := new(dbgames.Database)
-	pdb := new(dbpoints.Database)
+	ps := srvpoints.NewService()
 	wedb := new(dbwheeleffects.Database)
 	sp := srvsysparams.NewService()
 
 	s := &Service{
 		Database:             db,
 		GamesDatabase:        gdb,
-		PointsDatabase:       pdb,
+		PointsService:        ps,
 		WheelEffectsDatabase: wedb,
 		SysParamsService:     sp,
 	}
@@ -290,9 +291,9 @@ func (s *Service) StopAllCompletedTimers() error {
 
 	for _, endedTimer := range endedTimers {
 		_, _ = s.StopCurrentTimer(endedTimer.UserId)
-		_ = s.PointsDatabase.ChangeAvailableRollsCommand(endedTimer.UserId, availableRollChangeByTimer)
-		_ = s.PointsDatabase.ChangeTerritoryHoursCommand(endedTimer.UserId, territoryHourChangeByTimer)
-		_ = s.PointsDatabase.ChangeExperiencePointsCommand(endedTimer.UserId, experiencePointChangeByTimer)
+		_ = s.PointsService.ChangePointValueByTypeNameNoHistory(endedTimer.UserId, defaultPartyId, typepoints.PointTypeAvailableRolls, availableRollChangeByTimer)
+		_ = s.PointsService.ChangePointValueByTypeNameNoHistory(endedTimer.UserId, defaultPartyId, typepoints.PointTypeTerritoryHours, territoryHourChangeByTimer)
+		_ = s.PointsService.ChangePointValueByTypeNameNoHistory(endedTimer.UserId, defaultPartyId, typepoints.PointTypeExperiencePoints, experiencePointChangeByTimer)
 	}
 
 	return nil

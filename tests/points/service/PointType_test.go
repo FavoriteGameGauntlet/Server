@@ -273,7 +273,6 @@ func TestSrvPoints_ChangePointValueByTypeNameNoHistory(test *testing.T) {
 	test.Run("Success_NoHistoryRecorded", func(test *testing.T) {
 		databaseMock := new(dbpointsmock.DatabaseMock)
 		databaseMock.On("GetPointTypesCommand", 1).Return([]typepoints.PointTypeInfo{availableRollsType}, nil)
-		databaseMock.On("GetPointTypeCommand", 1, availableRollsType.Id).Return(availableRollsType, nil)
 		databaseMock.On("GetUserPointCommand", 2, 1, availableRollsType.Id).
 			Return(typepoints.UserPoint{Value: 5}, nil)
 		databaseMock.On("ChangeUserPointValueCommand", 2, 1, availableRollsType.Id, -1).Return(nil)

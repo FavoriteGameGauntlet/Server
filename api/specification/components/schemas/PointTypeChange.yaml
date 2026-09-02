@@ -1,0 +1,15 @@
+type: object
+properties:
+  description:
+    type: string
+  isPublic:
+    type: boolean
+  isShared:
+    type: boolean
+  minimum:
+    type: integer
+    format: int
+  maximum:
+    type: integer
+    format: int
+required: [ description, isPublic, isShared, minimum, maximum ]

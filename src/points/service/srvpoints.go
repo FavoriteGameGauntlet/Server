@@ -1,361 +1,124 @@
 package srvpoints
 
 import (
+	"FGG-Service/src/changes/types"
 	"FGG-Service/src/common"
+	"FGG-Service/src/history/database"
+	"FGG-Service/src/parties/database"
 	"FGG-Service/src/points/database"
 	"FGG-Service/src/points/type"
-	"FGG-Service/src/sysparams/service"
-	typesysparams "FGG-Service/src/sysparams/types"
-	"slices"
-	"strconv"
+	"database/sql"
+	"errors"
 )
 
 type Service struct {
-	Database         dbpoints.IDatabase
-	SysParamsService srvsysparams.IService
+	Database        dbpoints.IDatabase
+	PartiesDatabase dbparties.IDatabase
+	HistoryDatabase dbhistory.IDatabase
 }
 
 func NewService() *Service {
-	pdb := new(dbpoints.Database)
-	sps := srvsysparams.NewService()
-
 	return &Service{
-		Database:         pdb,
-		SysParamsService: sps,
+		Database:        new(dbpoints.Database),
+		PartiesDatabase: new(dbparties.Database),
+		HistoryDatabase: new(dbhistory.Database),
 	}
 }
 
-func (s *Service) ChangeAvailableRolls(userId int, changeValue int) error {
-	return s.Database.ChangeAvailableRollsCommand(userId, changeValue)
+func (s *Service) GetPointTypes(partyId int) (pointTypes []typepoints.PointTypeInfo, err error) {
+	return s.Database.GetPointTypesCommand(partyId)
 }
 
-func (s *Service) GetExperiencePoints(userId int) (int, error) {
-	return s.Database.GetExperiencePointsCommand(userId)
-}
-
-func (s *Service) GetFreePoints(userId int) (int, error) {
-	return s.Database.GetFreePointsCommand(userId)
-}
-
-func (s *Service) GetUserFreePointHistory(userId int) (typepoints.FreePointChangeHistories, error) {
-	return s.Database.GetFreePointHistoryCommand(userId)
-}
-
-func (s *Service) GetTerritoryHours(userId int) (int, error) {
-	return s.Database.GetTerritoryHoursCommand(userId)
-}
-
-func (s *Service) GetTerritoryPoints(userId int) (int, error) {
-	return s.Database.GetTerritoryPointsCommand(userId)
-}
-
-func (s *Service) GetUserTerritoryPointHistory(userId int) (typepoints.TerritoryPointChangeHistories, error) {
-	return s.Database.GetTerritoryPointHistoryCommand(userId)
-}
-
-func (s *Service) GetUserPointInfo(userId int) (typepoints.PointInfo, error) {
-	return s.Database.GetPointInfoCommand(userId)
-}
-
-func (s *Service) GetAllPointInfo() (typepoints.PointInfoByLogins, error) {
-	return s.Database.GetAllPointInfoCommand()
-}
-
-func (s *Service) ChangeFreePoints(userId int, pointChange typepoints.FreePointChange, effectId *int) (
-	result typepoints.PointChangeResult, err error) {
-
-	if !slices.Contains(typepoints.FreePointsChangeSourceSlice, pointChange.ChangeSource) {
-		err = common.NewChangeSourceUnprocessableError(typepoints.FreePointsChangeSourceSlice)
-		return
-	}
-
-	if pointChange.ChangeSource == typepoints.FreePointsChangeSourceWheelEffect {
-		err = validateWheelEffectChange(pointChange, effectId)
-
-		if err != nil {
-			return
-		}
-	}
-
-	if pointChange.ChangeSource == typepoints.FreePointsChangeSourceBaseTeleport {
-		var freePointChangeByBaseTeleport int
-		freePointChangeByBaseTeleport, err = s.SysParamsService.GetInt(typesysparams.ParamFreePointChangeByBaseTeleport)
-
-		if err != nil {
-			return
-		}
-
-		err = validateBaseTeleportChange(pointChange, freePointChangeByBaseTeleport)
-
-		if err != nil {
-			return
-		}
-	}
-
-	if pointChange.ChangeSource == typepoints.FreePointsChangeSourceSandStorm {
-		var freePointChangeBySandstorm int
-		freePointChangeBySandstorm, err = s.SysParamsService.GetInt(typesysparams.ParamFreePointChangeBySandstorm)
-
-		if err != nil {
-			return
-		}
-
-		err = validateSandstormChange(pointChange, freePointChangeBySandstorm)
-
-		if err != nil {
-			return
-		}
-	}
-
-	currentPoints, err := s.Database.GetFreePointsCommand(userId)
+// CreatePointType adds a point type to the party. Names identify point types across the API, so a
+// duplicate is rejected rather than silently shadowing the existing one.
+func (s *Service) CreatePointType(partyId int, pointType typepoints.PointType) (created typepoints.PointType, err error) {
+	doesExist, err := s.Database.DoesPointTypeExistCommand(partyId, pointType.Name)
 
 	if err != nil {
 		return
 	}
 
-	freePointMinimum, err := s.SysParamsService.GetInt(typesysparams.ParamFreePointsMinimum)
+	if doesExist {
+		err = common.NewPointTypeAlreadyExistsConflictError(pointType.Name)
+		return
+	}
+
+	return s.Database.CreatePointTypeCommand(
+		partyId,
+		pointType.Name,
+		pointType.Description,
+		pointType.StartValue,
+		pointType.IsPublic,
+		pointType.IsShared,
+		pointType.Minimum,
+		pointType.Maximum)
+}
+
+// ChangePointType updates the named point type. The name itself is the API identity of the type and
+// is not editable.
+func (s *Service) ChangePointType(partyId int, name string, pointType typepoints.PointType) (err error) {
+	current, err := s.GetPointTypeByName(partyId, name)
 
 	if err != nil {
 		return
 	}
 
-	shouldLimitFreePoints, err := s.SysParamsService.GetBool(typesysparams.ParamShouldLimitFreePoints)
+	return s.Database.ChangePointTypeCommand(
+		partyId,
+		current.Id,
+		name,
+		pointType.Description,
+		pointType.IsPublic,
+		pointType.IsShared,
+		pointType.Minimum,
+		pointType.Maximum)
+}
+
+func (s *Service) RemovePointType(partyId int, name string) (err error) {
+	pointType, err := s.GetPointTypeByName(partyId, name)
 
 	if err != nil {
 		return
 	}
 
-	// We assume that the current points are greater and subtract the smaller from the larger
-	finalValue := currentPoints + pointChange.DesiredChangeValue
-	changeValue := pointChange.DesiredChangeValue
-	if shouldLimitFreePoints {
-		if finalValue < freePointMinimum {
-			finalValue = freePointMinimum
-			// The current points are not enough, we calculate how many points are between the current and the minimum
-			changeValue = freePointMinimum - currentPoints
+	return s.Database.RemovePointTypeCommand(partyId, pointType.Id)
+}
+
+// GetPointTypeByName resolves a point type from the name the API addresses it by.
+func (s *Service) GetPointTypeByName(partyId int, name string) (pointType typepoints.PointTypeInfo, err error) {
+	pointTypes, err := s.Database.GetPointTypesCommand(partyId)
+
+	if err != nil {
+		return
+	}
+
+	for _, candidate := range pointTypes {
+		if candidate.Name == name {
+			return candidate, nil
 		}
 	}
 
-	err = s.Database.ChangeFreePointsCommand(userId, changeValue)
-
-	if err != nil {
-		return
-	}
-
-	err = s.Database.AddFreePointHistoryCommand(
-		userId,
-		pointChange.SourceUserId,
-		pointChange.ChangeSource,
-		pointChange.DesiredChangeValue,
-		changeValue,
-		finalValue,
-		effectId)
-
-	if err != nil {
-		return
-	}
-
-	result = typepoints.PointChangeResult{
-		ActualChangeValue:  changeValue,
-		ChangeSource:       pointChange.ChangeSource,
-		DesiredChangeValue: pointChange.DesiredChangeValue,
-		FinalValue:         finalValue,
-	}
+	err = common.NewPointTypeNotFoundError(name)
 
 	return
 }
-
-func validateWheelEffectChange(pointChange typepoints.FreePointChange, effectId *int) error {
-	if effectId == nil {
-		return common.NewWheelEffectNameRequiredUnprocessableError(pointChange.ChangeSource)
-	}
-
-	return nil
-}
-
-func validateBaseTeleportChange(pointChange typepoints.FreePointChange, expectedChangeValue int) error {
-	if pointChange.DesiredChangeValue != expectedChangeValue {
-		return common.NewWrongDesiredChangeValueConflictError(
-			pointChange.ChangeSource,
-			strconv.Itoa(expectedChangeValue))
-	}
-
-	return nil
-}
-
-func validateSandstormChange(pointChange typepoints.FreePointChange, expectedChangeValue int) error {
-	if pointChange.DesiredChangeValue != expectedChangeValue {
-		return common.NewWrongDesiredChangeValueConflictError(
-			pointChange.ChangeSource,
-			strconv.Itoa(expectedChangeValue))
-	}
-
-	return nil
-}
-
-func (s *Service) ChangeTerritoryHours(userId int, pointChange typepoints.TerritoryHourChange, targetUserId *int) (
-	result typepoints.PointChangeResultByTypes, err error) {
-
-	if !slices.Contains(typepoints.TerritoryHourChangeSourceSlice, pointChange.ChangeSource) {
-		err = common.NewChangeSourceUnprocessableError(typepoints.TerritoryHourChangeSourceSlice)
-		return
-	}
-
-	isSeize := pointChange.ChangeSource == typepoints.TerritoryHourChangeSourceSeize
-
-	seizeIndex := -1
-	var territoryPointChangeBySeizeSlice []int
-
-	if isSeize {
-		seizeIndex, territoryPointChangeBySeizeSlice, err = s.resolveSeizeConversion(userId, pointChange, targetUserId)
-		if err != nil {
-			return
-		}
-	}
-
-	currentHours, actualHoursChange, err := s.getTerritoryHoursBalance(userId, pointChange, isSeize)
-	if err != nil {
-		return
-	}
-
-	currentPoints, territoryPointsGranted, targetCurrentPoints, err := s.resolveTerritoryPointsGrant(
-		userId,
-		targetUserId,
-		pointChange,
-		isSeize,
-		seizeIndex,
-		territoryPointChangeBySeizeSlice)
+// SeedUserPoints gives a user a starting value for every point type of the party. The schema no
+// longer seeds points on signup, so this runs when a user joins a party.
+func (s *Service) SeedUserPoints(userId int, partyId int) (err error) {
+	pointTypes, err := s.Database.GetPointTypesCommand(partyId)
 
 	if err != nil {
 		return
 	}
 
-	err = s.Database.ChangeTerritoryHoursCommand(userId, actualHoursChange)
-	if err != nil {
-		return
-	}
-
-	result = typepoints.PointChangeResultByTypes{
-		typepoints.PointTypeTerritoryHours: typepoints.PointChangeResult{
-			ActualChangeValue:  actualHoursChange,
-			ChangeSource:       pointChange.ChangeSource,
-			DesiredChangeValue: pointChange.DesiredChangeValue,
-			FinalValue:         currentHours + actualHoursChange,
-		},
-	}
-
-	if isSeize {
-		var pointsResult typepoints.PointChangeResult
-		pointsResult, err = s.applyTerritorySeize(
-			userId,
-			targetUserId,
-			pointChange,
-			currentPoints,
-			territoryPointsGranted,
-			targetCurrentPoints)
-
-		if err != nil {
-			return
+	for _, pointType := range pointTypes {
+		if pointType.IsShared {
+			continue
 		}
 
-		result[typepoints.PointTypeTerritoryPoints] = pointsResult
-	}
+		_, err = s.Database.CreateUserPointCommand(userId, partyId, pointType.Id, pointType.StartValue)
 
-	return
-}
-
-// resolveSeizeConversion validates the requested hour amount against the seize sysparams and
-// returns the matching index into, and value of, the territory-points-by-seize sysparam.
-func (s *Service) resolveSeizeConversion(userId int, pointChange typepoints.TerritoryHourChange, targetUserId *int) (
-	seizeIndex int, territoryPointChangeBySeizeSlice []int, err error) {
-
-	territoryHourChangeBySeizeSlice, err := s.SysParamsService.GetIntSlice(typesysparams.ParamTerritoryHourChangeBySeizeSlice)
-	if err != nil {
-		return
-	}
-
-	seizePenaltyPoints, err := s.SysParamsService.GetInt(typesysparams.ParamSeizePenaltyPoints)
-	if err != nil {
-		return
-	}
-
-	seizeIndex, err = validateSeizeChange(pointChange, territoryHourChangeBySeizeSlice, seizePenaltyPoints)
-	if err != nil {
-		return
-	}
-
-	if pointChange.IsSomeones && targetUserId == nil {
-		err = common.NewTargetLoginRequiredUnprocessableError(pointChange.ChangeSource)
-		return
-	}
-
-	if pointChange.IsSomeones && *targetUserId == userId {
-		err = common.NewCannotTargetSelfConflictError(pointChange.ChangeSource)
-		return
-	}
-
-	territoryPointChangeBySeizeSlice, err = s.SysParamsService.GetIntSlice(typesysparams.ParamTerritoryPointChangeBySeizeSlice)
-	if err != nil {
-		return
-	}
-
-	if seizeIndex >= len(territoryPointChangeBySeizeSlice) {
-		err = common.NewSystemParameterNotFoundError(typesysparams.ParamTerritoryPointChangeBySeizeSlice)
-		return
-	}
-
-	return
-}
-
-// getTerritoryHoursBalance fetches the user's current hours and, for seize, validates there are enough.
-func (s *Service) getTerritoryHoursBalance(userId int, pointChange typepoints.TerritoryHourChange, isSeize bool) (
-	currentHours, actualHoursChange int, err error) {
-
-	currentHours, err = s.Database.GetTerritoryHoursCommand(userId)
-	if err != nil {
-		return
-	}
-
-	if isSeize && currentHours+pointChange.DesiredChangeValue < 0 {
-		err = common.NewNotEnoughCurrentPointsConflictError(
-			pointChange.ChangeSource,
-			-pointChange.DesiredChangeValue)
-		return
-	}
-
-	actualHoursChange = max(pointChange.DesiredChangeValue, -currentHours)
-	return
-}
-
-// resolveTerritoryPointsGrant is a no-op unless seizing: it fetches the user's current points,
-// computes the granted amount, and validates the target has enough points to lose when seizing
-// someone else's territory.
-func (s *Service) resolveTerritoryPointsGrant(
-	userId int, targetUserId *int, pointChange typepoints.TerritoryHourChange,
-	isSeize bool, seizeIndex int, territoryPointChangeBySeizeSlice []int) (
-	currentPoints, territoryPointsGranted, targetCurrentPoints int, err error) {
-
-	if !isSeize {
-		return
-	}
-
-	currentPoints, err = s.Database.GetTerritoryPointsCommand(userId)
-	if err != nil {
-		return
-	}
-
-	territoryPointsGranted = territoryPointChangeBySeizeSlice[seizeIndex]
-
-	if pointChange.IsSomeones {
-		targetCurrentPoints, err = s.Database.GetTerritoryPointsCommand(*targetUserId)
 		if err != nil {
-			return
-		}
-
-		if targetCurrentPoints < territoryPointsGranted {
-			err = common.NewNotEnoughCurrentPointsConflictError(
-				typepoints.TerritoryPointChangeSourceLoss,
-				territoryPointsGranted)
 			return
 		}
 	}
@@ -363,237 +126,181 @@ func (s *Service) resolveTerritoryPointsGrant(
 	return
 }
 
-// applyTerritorySeize writes the self points gain (and, when seizing someone else's territory, the
-// target's points loss) and returns the caller's territoryPoints result.
-func (s *Service) applyTerritorySeize(
-	userId int, targetUserId *int, pointChange typepoints.TerritoryHourChange,
-	currentPoints, territoryPointsGranted, targetCurrentPoints int) (
-	pointsResult typepoints.PointChangeResult, err error) {
-
-	newSelfFinal := currentPoints + territoryPointsGranted
-
-	err = s.Database.ChangeTerritoryPointsCommand(userId, territoryPointsGranted)
-	if err != nil {
-		return
-	}
-
-	err = s.Database.AddTerritoryPointHistoryCommand(
-		userId,
-		userId,
-		typepoints.TerritoryPointChangeSourceObtaining,
-		territoryPointsGranted,
-		territoryPointsGranted,
-		newSelfFinal)
-	if err != nil {
-		return
-	}
-
-	pointsResult = typepoints.PointChangeResult{
-		ActualChangeValue:  territoryPointsGranted,
-		ChangeSource:       typepoints.TerritoryPointChangeSourceObtaining,
-		DesiredChangeValue: territoryPointsGranted,
-		FinalValue:         newSelfFinal,
-	}
-
-	if !pointChange.IsSomeones {
-		return
-	}
-
-	targetFinal := targetCurrentPoints - territoryPointsGranted
-
-	err = s.Database.ChangeTerritoryPointsCommand(*targetUserId, -territoryPointsGranted)
-	if err != nil {
-		return
-	}
-
-	err = s.Database.AddTerritoryPointHistoryCommand(
-		*targetUserId,
-		userId,
-		typepoints.TerritoryPointChangeSourceLoss,
-		-territoryPointsGranted,
-		-territoryPointsGranted,
-		targetFinal)
-	if err != nil {
-		return
-	}
-
-	return
-}
-
-func (s *Service) ChangeTerritoryPoints(userId int, pointChange typepoints.TerritoryPointChange) (
-	changeResult typepoints.PointChangeResult, err error) {
-
-	if !slices.Contains(typepoints.TerritoryPointChangeSourceSlice, pointChange.ChangeSource) {
-		err = common.NewChangeSourceUnprocessableError(typepoints.TerritoryPointChangeSourceSlice)
-		return
-	}
-
-	if pointChange.ChangeSource == typepoints.TerritoryPointChangeSourceObtaining {
-		err = validateTerritoryObtainingChange(pointChange)
-
-		if err != nil {
-			return
-		}
-	}
-
-	if pointChange.ChangeSource == typepoints.TerritoryPointChangeSourceLoss {
-		err = validateTerritoryLossChange(pointChange)
-
-		if err != nil {
-			return
-		}
-	}
-
-	currentPoints, err := s.Database.GetTerritoryPointsCommand(userId)
+// GetUserPoints lists every point type of the party with the value this user holds for it. A shared
+// point type carries the party-wide value, and a type the user has no row for yet reads as its
+// starting value.
+func (s *Service) GetUserPoints(userId int, partyId int) (values []typepoints.UserPointValue, err error) {
+	pointTypes, err := s.Database.GetPointTypesCommand(partyId)
 
 	if err != nil {
 		return
 	}
 
-	actualChangeValue := max(pointChange.DesiredChangeValue, -currentPoints)
-	finalValue := currentPoints + actualChangeValue
+	values = make([]typepoints.UserPointValue, 0, len(pointTypes))
 
-	err = s.Database.ChangeTerritoryPointsCommand(userId, actualChangeValue)
-
-	if err != nil {
-		return
-	}
-
-	err = s.Database.AddTerritoryPointHistoryCommand(
-		userId,
-		pointChange.SourceUserId,
-		pointChange.ChangeSource,
-		pointChange.DesiredChangeValue,
-		actualChangeValue,
-		finalValue)
-
-	if err != nil {
-		return
-	}
-
-	changeResult = typepoints.PointChangeResult{
-		ActualChangeValue:  actualChangeValue,
-		ChangeSource:       pointChange.ChangeSource,
-		DesiredChangeValue: pointChange.DesiredChangeValue,
-		FinalValue:         finalValue,
-	}
-
-	return
-}
-
-func validateTerritoryObtainingChange(pointChange typepoints.TerritoryPointChange) error {
-	if pointChange.DesiredChangeValue < 0 {
-		return common.NewWrongDesiredChangeValueConflictError(
-			pointChange.ChangeSource,
-			common.ConstraintZeroOrMore)
-	}
-
-	return nil
-}
-
-func validateTerritoryLossChange(pointChange typepoints.TerritoryPointChange) error {
-	if pointChange.DesiredChangeValue > 0 {
-		return common.NewWrongDesiredChangeValueConflictError(
-			pointChange.ChangeSource,
-			common.ConstraintZeroOrLess)
-	}
-
-	return nil
-}
-
-func validateSeizeChange(pointChange typepoints.TerritoryHourChange, seizeDecreaseSlice []int, penaltyPoints int) (index int, err error) {
-	index = -1
-
-	if pointChange.DesiredChangeValue > 0 {
-		err = common.NewWrongDesiredChangeValueConflictError(
-			pointChange.ChangeSource,
-			common.ConstraintZeroOrLess)
-		return
-	}
-
-	if !pointChange.IsSomeones {
-		penaltyPoints = 0
-	}
-
-	decreaseSlice := make([]int, len(seizeDecreaseSlice))
-	for i, v := range seizeDecreaseSlice {
-		decreaseSlice[i] = v + penaltyPoints
-	}
-
-	index = slices.Index(decreaseSlice, pointChange.DesiredChangeValue)
-
-	if index == -1 {
-		err = common.NewWrongDesiredChangeValueConflictError(
-			pointChange.ChangeSource,
-			"one of: "+common.ConvertIntSliceToString(decreaseSlice))
-	}
-
-	return
-}
-
-func (s *Service) ChangeExperiencePoints(userId int, pointChange typepoints.PointChange) (
-	changeResult typepoints.PointChangeResult, err error) {
-
-	if !slices.Contains(typepoints.ExperienceChangeSourceSlice, pointChange.ChangeSource) {
-		err = common.NewChangeSourceUnprocessableError(typepoints.ExperienceChangeSourceSlice)
-		return
-	}
-
-	var experiencePointByLevelUp int
-	if pointChange.ChangeSource == typepoints.ExperienceChangeSourceLevelUp {
-		experiencePointByLevelUp, err = s.SysParamsService.GetInt(typesysparams.ParamExperiencePointByLevelUp)
+	for _, pointType := range pointTypes {
+		var value int
+		value, err = s.pointValue(userId, partyId, pointType)
 
 		if err != nil {
 			return
 		}
 
-		err = validateLevelUpChange(pointChange, experiencePointByLevelUp)
-
-		if err != nil {
-			return
-		}
-	}
-
-	currentPoints, err := s.Database.GetExperiencePointsCommand(userId)
-
-	if err != nil {
-		return
-	}
-
-	actualChangeValue := max(pointChange.DesiredChangeValue, -currentPoints)
-
-	if pointChange.ChangeSource == typepoints.ExperienceChangeSourceLevelUp &&
-		currentPoints-pointChange.DesiredChangeValue < 0 {
-
-		err = common.NewNotEnoughCurrentPointsConflictError(
-			pointChange.ChangeSource,
-			-experiencePointByLevelUp)
-		return
-	}
-
-	err = s.Database.ChangeExperiencePointsCommand(userId, actualChangeValue)
-
-	if err != nil {
-		return
-	}
-
-	finalValue := currentPoints + actualChangeValue
-	changeResult = typepoints.PointChangeResult{
-		ActualChangeValue:  actualChangeValue,
-		ChangeSource:       pointChange.ChangeSource,
-		DesiredChangeValue: pointChange.DesiredChangeValue,
-		FinalValue:         finalValue,
+		values = append(values, typepoints.UserPointValue{PointType: pointType, Value: value})
 	}
 
 	return
 }
 
-func validateLevelUpChange(pointChange typepoints.PointChange, experiencePointsLevelUp int) error {
-	if pointChange.DesiredChangeValue != experiencePointsLevelUp {
-		return common.NewWrongDesiredChangeValueConflictError(
-			pointChange.ChangeSource,
-			strconv.Itoa(experiencePointsLevelUp))
+// GetAllUserPoints lists the points of every current member of the party.
+func (s *Service) GetAllUserPoints(partyId int) (byLogin []typepoints.UserPointValuesByLogin, err error) {
+	members, err := s.PartiesDatabase.GetMembersCommand(partyId)
+
+	if err != nil {
+		return
 	}
 
-	return nil
+	byLogin = make([]typepoints.UserPointValuesByLogin, 0, len(members))
+
+	for _, member := range members {
+		if member.LeftDate != nil {
+			continue
+		}
+
+		var values []typepoints.UserPointValue
+		values, err = s.GetUserPoints(member.UserId, partyId)
+
+		if err != nil {
+			return
+		}
+
+		byLogin = append(byLogin, typepoints.UserPointValuesByLogin{Login: member.Login, Points: values})
+	}
+
+	return
+}
+
+// pointValue reads the value held for one point type, from the party pool when the type is shared.
+func (s *Service) pointValue(userId int, partyId int, pointType typepoints.PointTypeInfo) (value int, err error) {
+	if pointType.IsShared {
+		var partyPoint typepoints.PartyPoint
+		partyPoint, err = s.Database.GetPartyPointCommand(partyId, pointType.Id)
+
+		if errors.Is(err, sql.ErrNoRows) {
+			return pointType.StartValue, nil
+		}
+
+		return partyPoint.Value, err
+	}
+
+	point, err := s.Database.GetUserPointCommand(userId, partyId, pointType.Id)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return pointType.StartValue, nil
+	}
+
+	return point.Value, err
+}
+
+func (s *Service) GetPartyPointValueByTypeName(partyId int, name string) (value int, err error) {
+	pointType, err := s.GetPointTypeByName(partyId, name)
+
+	if err != nil {
+		return
+	}
+
+	partyPoint, err := s.Database.GetPartyPointCommand(partyId, pointType.Id)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return pointType.StartValue, nil
+	}
+
+	return partyPoint.Value, err
+}
+// GetUserPointHistoryByTypeName returns the recorded changes to a user's value for one point type.
+func (s *Service) GetUserPointHistoryByTypeName(userId int, partyId int, name string) (history []typepoints.PointHistoryEntry, err error) {
+	pointType, err := s.GetPointTypeByName(partyId, name)
+
+	if err != nil {
+		return
+	}
+
+	entries, err := s.Database.GetUserPointHistoryCommand(userId, partyId)
+
+	if err != nil {
+		return
+	}
+
+	history = make([]typepoints.PointHistoryEntry, 0, len(entries))
+
+	for _, entry := range entries {
+		if entry.PointTypeId != pointType.Id {
+			continue
+		}
+
+		history = append(history, typepoints.PointHistoryEntry{
+			DesiredChangeValue: entry.DesiredChangeValue,
+			ActualChangeValue:  entry.ActualChangeValue,
+			FinalValue:         entry.FinalValue,
+			SourceUserId:       entry.SourceUserId,
+			ChangedDate:        entry.ChangedDate,
+		})
+	}
+
+	return
+}
+
+// GetPartyPointHistoryByTypeName returns the recorded changes to the party pool for one point type.
+func (s *Service) GetPartyPointHistoryByTypeName(partyId int, name string) (history []typepoints.PointHistoryEntry, err error) {
+	pointType, err := s.GetPointTypeByName(partyId, name)
+
+	if err != nil {
+		return
+	}
+
+	entries, err := s.Database.GetPartyPointHistoryCommand(partyId)
+
+	if err != nil {
+		return
+	}
+
+	history = make([]typepoints.PointHistoryEntry, 0, len(entries))
+
+	for _, entry := range entries {
+		if entry.PointTypeId != pointType.Id {
+			continue
+		}
+
+		history = append(history, typepoints.PointHistoryEntry{
+			DesiredChangeValue: entry.DesiredChangeValue,
+			ActualChangeValue:  entry.ActualChangeValue,
+			FinalValue:         entry.FinalValue,
+			SourceUserId:       entry.SourceUserId,
+			ChangedDate:        entry.ChangedDate,
+		})
+	}
+
+	return
+}
+
+// createManualSourceEvent records a direct point change by an administrator as a manual history
+// entry, whose id becomes the source event of the point history the change produces. Every recorded
+// point change names the event that caused it, and a direct change has no other event behind it.
+func (s *Service) createManualSourceEvent(actorUserId int, userId int, partyId int, pointTypeId int, changeValue int) (sourceEventId int, err error) {
+	entries := []typechanges.ChangeEntry{
+		{Amount: changeValue, PointTypeId: &pointTypeId, UserId: &userId},
+	}
+
+	created, err := s.HistoryDatabase.CreateManualHistoryCommand(partyId, actorUserId, entries, nil)
+
+	if err != nil {
+		return
+	}
+
+	if len(created) == 0 {
+		err = errors.New("manual history recorded no entries")
+		return
+	}
+
+	return created[0].Id, nil
 }

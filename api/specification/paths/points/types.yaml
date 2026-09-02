@@ -1,0 +1,26 @@
+get:
+  operationId: getPointTypes
+  tags: [ Points ]
+  responses:
+    "200":
+      $ref: "../../components/responses/PointTypesResponse.yaml"
+    "401":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+post:
+  operationId: createPointType
+  tags: [ Points ]
+  requestBody:
+    $ref: "../../components/requests/PointTypeCreateRequest.yaml"
+  responses:
+    "200":
+      $ref: "../../components/responses/PointTypeResponse.yaml"
+    "400":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "401":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "409":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../components/responses/ErrorResponse.yaml"

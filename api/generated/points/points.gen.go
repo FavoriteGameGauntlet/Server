@@ -18,27 +18,6 @@ type Error struct {
 	Message string `json:"message"`
 }
 
-// FreePointChange defines model for FreePointChange.
-type FreePointChange struct {
-	ChangeSource       string `json:"changeSource"`
-	DesiredChangeValue int    `json:"desiredChangeValue"`
-	WheelEffectName    *Name  `json:"wheelEffectName"`
-}
-
-// FreePointChangeHistories defines model for FreePointChangeHistories.
-type FreePointChangeHistories = []FreePointChangeHistory
-
-// FreePointChangeHistory defines model for FreePointChangeHistory.
-type FreePointChangeHistory struct {
-	ActualChangeValue  int         `json:"actualChangeValue"`
-	ChangeDate         time.Time   `json:"changeDate"`
-	ChangeSource       interface{} `json:"changeSource"`
-	DesiredChangeValue int         `json:"desiredChangeValue"`
-	FinalValue         Points      `json:"finalValue"`
-	SourceLogin        *Login      `json:"sourceLogin"`
-	WheelEffectName    *Name       `json:"wheelEffectName"`
-}
-
 // Login defines model for Login.
 type Login = string
 
@@ -47,152 +26,163 @@ type Name = string
 
 // PointChange defines model for PointChange.
 type PointChange struct {
-	ChangeSource       string `json:"changeSource"`
-	DesiredChangeValue int    `json:"desiredChangeValue"`
-}
-
-// PointChangeHistoryRow defines model for PointChangeHistoryRow.
-type PointChangeHistoryRow struct {
-	ActualChangeValue  int    `json:"actualChangeValue"`
-	ChangeSource       string `json:"changeSource"`
-	DesiredChangeValue int    `json:"desiredChangeValue"`
-	FinalValue         Points `json:"finalValue"`
+	DesiredChangeValue int `json:"desiredChangeValue"`
 }
 
 // PointChangeResult defines model for PointChangeResult.
 type PointChangeResult struct {
-	ActualChangeValue int    `json:"actualChangeValue"`
-	FinalValue        Points `json:"finalValue"`
+	ActualChangeValue  int    `json:"actualChangeValue"`
+	DesiredChangeValue int    `json:"desiredChangeValue"`
+	FinalValue         Points `json:"finalValue"`
 }
 
-// PointChangeResultByTypes defines model for PointChangeResultByTypes.
-type PointChangeResultByTypes map[string]PointChangeResult
+// PointHistoryEntries defines model for PointHistoryEntries.
+type PointHistoryEntries = []PointHistoryEntry
 
-// PointInfo defines model for PointInfo.
-type PointInfo struct {
-	FreePoints      Points `json:"freePoints"`
-	TerritoryPoints Points `json:"territoryPoints"`
+// PointHistoryEntry defines model for PointHistoryEntry.
+type PointHistoryEntry struct {
+	ActualChangeValue  int       `json:"actualChangeValue"`
+	ChangedDate        time.Time `json:"changedDate"`
+	DesiredChangeValue int       `json:"desiredChangeValue"`
+	FinalValue         Points    `json:"finalValue"`
+	SourceLogin        *Login    `json:"sourceLogin,omitempty"`
 }
 
-// PointInfoByLogins defines model for PointInfoByLogins.
-type PointInfoByLogins = []struct {
-	Login     *Login     `json:"login,omitempty"`
-	PointInfo *PointInfo `json:"pointInfo,omitempty"`
+// PointType defines model for PointType.
+type PointType struct {
+	Description string `json:"description"`
+	IsPublic    bool   `json:"isPublic"`
+	IsShared    bool   `json:"isShared"`
+	Maximum     int    `json:"maximum"`
+	Minimum     int    `json:"minimum"`
+	Name        Name   `json:"name"`
+	StartValue  int    `json:"startValue"`
 }
+
+// PointTypeChange defines model for PointTypeChange.
+type PointTypeChange struct {
+	Description string `json:"description"`
+	IsPublic    bool   `json:"isPublic"`
+	IsShared    bool   `json:"isShared"`
+	Maximum     int    `json:"maximum"`
+	Minimum     int    `json:"minimum"`
+}
+
+// PointTypeCreate defines model for PointTypeCreate.
+type PointTypeCreate struct {
+	Description string `json:"description"`
+	IsPublic    bool   `json:"isPublic"`
+	IsShared    bool   `json:"isShared"`
+	Maximum     int    `json:"maximum"`
+	Minimum     int    `json:"minimum"`
+	Name        Name   `json:"name"`
+	StartValue  int    `json:"startValue"`
+}
+
+// PointTypes defines model for PointTypes.
+type PointTypes = []PointType
 
 // Points defines model for Points.
 type Points = int
 
-// TerritoryHourChange defines model for TerritoryHourChange.
-type TerritoryHourChange struct {
-	ChangeSource       string `json:"changeSource"`
-	DesiredChangeValue int    `json:"desiredChangeValue"`
-	IsSomeones         *bool  `json:"isSomeones,omitempty"`
-	Login              *Login `json:"login"`
+// UserPoint defines model for UserPoint.
+type UserPoint struct {
+	PointType PointType `json:"pointType"`
+	Value     Points    `json:"value"`
 }
 
-// TerritoryPointChangeHistories defines model for TerritoryPointChangeHistories.
-type TerritoryPointChangeHistories = []TerritoryPointChangeHistory
+// UserPoints defines model for UserPoints.
+type UserPoints = []UserPoint
 
-// TerritoryPointChangeHistory defines model for TerritoryPointChangeHistory.
-type TerritoryPointChangeHistory struct {
-	ActualChangeValue  int         `json:"actualChangeValue"`
-	ChangeDate         time.Time   `json:"changeDate"`
-	ChangeSource       interface{} `json:"changeSource"`
-	DesiredChangeValue int         `json:"desiredChangeValue"`
-	FinalValue         Points      `json:"finalValue"`
-	SourceLogin        *Login      `json:"sourceLogin"`
+// UserPointsByLogins defines model for UserPointsByLogins.
+type UserPointsByLogins = []struct {
+	Login  Login      `json:"login"`
+	Points UserPoints `json:"points"`
 }
 
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse = Error
 
-// FreePointChangeHistoriesResponse defines model for FreePointChangeHistoriesResponse.
-type FreePointChangeHistoriesResponse = FreePointChangeHistories
-
-// FreePointChangeResultResponse defines model for FreePointChangeResultResponse.
-type FreePointChangeResultResponse = PointChangeResult
-
-// PointChangeResultByTypesResponse defines model for PointChangeResultByTypesResponse.
-type PointChangeResultByTypesResponse = PointChangeResultByTypes
-
 // PointChangeResultResponse defines model for PointChangeResultResponse.
 type PointChangeResultResponse = PointChangeResult
 
-// PointInfoByLoginsResponse defines model for PointInfoByLoginsResponse.
-type PointInfoByLoginsResponse = PointInfoByLogins
+// PointHistoriesResponse defines model for PointHistoriesResponse.
+type PointHistoriesResponse = PointHistoryEntries
 
-// PointInfoResponse defines model for PointInfoResponse.
-type PointInfoResponse = PointInfo
+// PointTypeResponse defines model for PointTypeResponse.
+type PointTypeResponse = PointType
+
+// PointTypesResponse defines model for PointTypesResponse.
+type PointTypesResponse = PointTypes
 
 // PointsResponse defines model for PointsResponse.
 type PointsResponse = Points
 
-// TerritoryPointChangeHistoriesResponse defines model for TerritoryPointChangeHistoriesResponse.
-type TerritoryPointChangeHistoriesResponse = TerritoryPointChangeHistories
+// UserPointsByLoginsResponse defines model for UserPointsByLoginsResponse.
+type UserPointsByLoginsResponse = UserPointsByLogins
 
-// TerritoryPointChangeResultResponse defines model for TerritoryPointChangeResultResponse.
-type TerritoryPointChangeResultResponse = PointChangeResult
-
-// FreePointChangeRequest defines model for FreePointChangeRequest.
-type FreePointChangeRequest = FreePointChange
+// UserPointsResponse defines model for UserPointsResponse.
+type UserPointsResponse = UserPoints
 
 // PointChangeRequest defines model for PointChangeRequest.
 type PointChangeRequest = PointChange
 
-// TerritoryHourChangeRequest defines model for TerritoryHourChangeRequest.
-type TerritoryHourChangeRequest = TerritoryHourChange
+// PointTypeChangeRequest defines model for PointTypeChangeRequest.
+type PointTypeChangeRequest = PointTypeChange
 
-// ChangeExperiencePointsJSONRequestBody defines body for ChangeExperiencePoints for application/json ContentType.
-type ChangeExperiencePointsJSONRequestBody = PointChange
+// PointTypeCreateRequest defines model for PointTypeCreateRequest.
+type PointTypeCreateRequest = PointTypeCreate
 
-// ChangeTerritoryHoursJSONRequestBody defines body for ChangeTerritoryHours for application/json ContentType.
-type ChangeTerritoryHoursJSONRequestBody = TerritoryHourChange
+// ChangePartyPointValueJSONRequestBody defines body for ChangePartyPointValue for application/json ContentType.
+type ChangePartyPointValueJSONRequestBody = PointChange
 
-// ChangeFreePointsJSONRequestBody defines body for ChangeFreePoints for application/json ContentType.
-type ChangeFreePointsJSONRequestBody = FreePointChange
+// CreatePointTypeJSONRequestBody defines body for CreatePointType for application/json ContentType.
+type CreatePointTypeJSONRequestBody = PointTypeCreate
 
-// ChangeUserTerritoryPointsJSONRequestBody defines body for ChangeUserTerritoryPoints for application/json ContentType.
-type ChangeUserTerritoryPointsJSONRequestBody = PointChange
+// ChangePointTypeJSONRequestBody defines body for ChangePointType for application/json ContentType.
+type ChangePointTypeJSONRequestBody = PointTypeChange
+
+// ChangeUserPointValueJSONRequestBody defines body for ChangeUserPointValue for application/json ContentType.
+type ChangeUserPointValueJSONRequestBody = PointChange
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
-	// (GET /points/all/info)
-	GetAllPointInfo(ctx echo.Context) error
+	// (GET /points/all)
+	GetAllUserPoints(ctx echo.Context) error
 
-	// (GET /points/experience-points)
-	GetExperiencePoints(ctx echo.Context) error
+	// (GET /points/party/{name})
+	GetPartyPointValue(ctx echo.Context, name Name) error
 
-	// (POST /points/experience-points)
-	ChangeExperiencePoints(ctx echo.Context) error
+	// (POST /points/party/{name})
+	ChangePartyPointValue(ctx echo.Context, name Name) error
 
-	// (GET /points/territory-hours)
-	GetTerritoryHours(ctx echo.Context) error
+	// (GET /points/party/{name}/history)
+	GetPartyPointHistory(ctx echo.Context, name Name) error
 
-	// (POST /points/territory-hours)
-	ChangeTerritoryHours(ctx echo.Context) error
+	// (GET /points/types)
+	GetPointTypes(ctx echo.Context) error
 
-	// (GET /points/{login}/free-points)
-	GetFreePoints(ctx echo.Context, login Login) error
+	// (POST /points/types)
+	CreatePointType(ctx echo.Context) error
 
-	// (POST /points/{login}/free-points)
-	ChangeFreePoints(ctx echo.Context, login Login) error
+	// (DELETE /points/types/{name})
+	RemovePointType(ctx echo.Context, name Name) error
 
-	// (GET /points/{login}/free-points/history)
-	GetUserFreePointHistory(ctx echo.Context, login Login) error
+	// (PATCH /points/types/{name})
+	ChangePointType(ctx echo.Context, name Name) error
 
-	// (GET /points/{login}/info)
-	GetUserPointInfo(ctx echo.Context, login Login) error
+	// (GET /points/{login})
+	GetUserPoints(ctx echo.Context, login Login) error
 
-	// (GET /points/{login}/territory-points)
-	GetUserTerritoryPoints(ctx echo.Context, login Login) error
+	// (GET /points/{login}/{name})
+	GetUserPointValue(ctx echo.Context, login Login, name Name) error
 
-	// (POST /points/{login}/territory-points)
-	ChangeUserTerritoryPoints(ctx echo.Context, login Login) error
+	// (POST /points/{login}/{name})
+	ChangeUserPointValue(ctx echo.Context, login Login, name Name) error
 
-	// (GET /points/{login}/territory-points/history)
-	GetUserTerritoryPointHistory(ctx echo.Context, login Login) error
+	// (GET /points/{login}/{name}/history)
+	GetUserPointHistory(ctx echo.Context, login Login, name Name) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -200,53 +190,115 @@ type ServerInterfaceWrapper struct {
 	Handler ServerInterface
 }
 
-// GetAllPointInfo converts echo context to params.
-func (w *ServerInterfaceWrapper) GetAllPointInfo(ctx echo.Context) error {
+// GetAllUserPoints converts echo context to params.
+func (w *ServerInterfaceWrapper) GetAllUserPoints(ctx echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetAllPointInfo(ctx)
+	err = w.Handler.GetAllUserPoints(ctx)
 	return err
 }
 
-// GetExperiencePoints converts echo context to params.
-func (w *ServerInterfaceWrapper) GetExperiencePoints(ctx echo.Context) error {
+// GetPartyPointValue converts echo context to params.
+func (w *ServerInterfaceWrapper) GetPartyPointValue(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "name" -------------
+	var name Name
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", ctx.Param("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetPartyPointValue(ctx, name)
+	return err
+}
+
+// ChangePartyPointValue converts echo context to params.
+func (w *ServerInterfaceWrapper) ChangePartyPointValue(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "name" -------------
+	var name Name
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", ctx.Param("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.ChangePartyPointValue(ctx, name)
+	return err
+}
+
+// GetPartyPointHistory converts echo context to params.
+func (w *ServerInterfaceWrapper) GetPartyPointHistory(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "name" -------------
+	var name Name
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", ctx.Param("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetPartyPointHistory(ctx, name)
+	return err
+}
+
+// GetPointTypes converts echo context to params.
+func (w *ServerInterfaceWrapper) GetPointTypes(ctx echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetExperiencePoints(ctx)
+	err = w.Handler.GetPointTypes(ctx)
 	return err
 }
 
-// ChangeExperiencePoints converts echo context to params.
-func (w *ServerInterfaceWrapper) ChangeExperiencePoints(ctx echo.Context) error {
+// CreatePointType converts echo context to params.
+func (w *ServerInterfaceWrapper) CreatePointType(ctx echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ChangeExperiencePoints(ctx)
+	err = w.Handler.CreatePointType(ctx)
 	return err
 }
 
-// GetTerritoryHours converts echo context to params.
-func (w *ServerInterfaceWrapper) GetTerritoryHours(ctx echo.Context) error {
+// RemovePointType converts echo context to params.
+func (w *ServerInterfaceWrapper) RemovePointType(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "name" -------------
+	var name Name
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", ctx.Param("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetTerritoryHours(ctx)
+	err = w.Handler.RemovePointType(ctx, name)
 	return err
 }
 
-// ChangeTerritoryHours converts echo context to params.
-func (w *ServerInterfaceWrapper) ChangeTerritoryHours(ctx echo.Context) error {
+// ChangePointType converts echo context to params.
+func (w *ServerInterfaceWrapper) ChangePointType(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "name" -------------
+	var name Name
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", ctx.Param("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ChangeTerritoryHours(ctx)
+	err = w.Handler.ChangePointType(ctx, name)
 	return err
 }
 
-// GetFreePoints converts echo context to params.
-func (w *ServerInterfaceWrapper) GetFreePoints(ctx echo.Context) error {
+// GetUserPoints converts echo context to params.
+func (w *ServerInterfaceWrapper) GetUserPoints(ctx echo.Context) error {
 	var err error
 	// ------------- Path parameter "login" -------------
 	var login Login
@@ -257,12 +309,12 @@ func (w *ServerInterfaceWrapper) GetFreePoints(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetFreePoints(ctx, login)
+	err = w.Handler.GetUserPoints(ctx, login)
 	return err
 }
 
-// ChangeFreePoints converts echo context to params.
-func (w *ServerInterfaceWrapper) ChangeFreePoints(ctx echo.Context) error {
+// GetUserPointValue converts echo context to params.
+func (w *ServerInterfaceWrapper) GetUserPointValue(ctx echo.Context) error {
 	var err error
 	// ------------- Path parameter "login" -------------
 	var login Login
@@ -272,13 +324,21 @@ func (w *ServerInterfaceWrapper) ChangeFreePoints(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
 	}
 
+	// ------------- Path parameter "name" -------------
+	var name Name
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", ctx.Param("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
+	}
+
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ChangeFreePoints(ctx, login)
+	err = w.Handler.GetUserPointValue(ctx, login, name)
 	return err
 }
 
-// GetUserFreePointHistory converts echo context to params.
-func (w *ServerInterfaceWrapper) GetUserFreePointHistory(ctx echo.Context) error {
+// ChangeUserPointValue converts echo context to params.
+func (w *ServerInterfaceWrapper) ChangeUserPointValue(ctx echo.Context) error {
 	var err error
 	// ------------- Path parameter "login" -------------
 	var login Login
@@ -288,13 +348,21 @@ func (w *ServerInterfaceWrapper) GetUserFreePointHistory(ctx echo.Context) error
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
 	}
 
+	// ------------- Path parameter "name" -------------
+	var name Name
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", ctx.Param("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
+	}
+
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetUserFreePointHistory(ctx, login)
+	err = w.Handler.ChangeUserPointValue(ctx, login, name)
 	return err
 }
 
-// GetUserPointInfo converts echo context to params.
-func (w *ServerInterfaceWrapper) GetUserPointInfo(ctx echo.Context) error {
+// GetUserPointHistory converts echo context to params.
+func (w *ServerInterfaceWrapper) GetUserPointHistory(ctx echo.Context) error {
 	var err error
 	// ------------- Path parameter "login" -------------
 	var login Login
@@ -304,56 +372,16 @@ func (w *ServerInterfaceWrapper) GetUserPointInfo(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetUserPointInfo(ctx, login)
-	return err
-}
+	// ------------- Path parameter "name" -------------
+	var name Name
 
-// GetUserTerritoryPoints converts echo context to params.
-func (w *ServerInterfaceWrapper) GetUserTerritoryPoints(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "login" -------------
-	var login Login
-
-	err = runtime.BindStyledParameterWithOptions("simple", "login", ctx.Param("login"), &login, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "name", ctx.Param("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetUserTerritoryPoints(ctx, login)
-	return err
-}
-
-// ChangeUserTerritoryPoints converts echo context to params.
-func (w *ServerInterfaceWrapper) ChangeUserTerritoryPoints(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "login" -------------
-	var login Login
-
-	err = runtime.BindStyledParameterWithOptions("simple", "login", ctx.Param("login"), &login, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ChangeUserTerritoryPoints(ctx, login)
-	return err
-}
-
-// GetUserTerritoryPointHistory converts echo context to params.
-func (w *ServerInterfaceWrapper) GetUserTerritoryPointHistory(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "login" -------------
-	var login Login
-
-	err = runtime.BindStyledParameterWithOptions("simple", "login", ctx.Param("login"), &login, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetUserTerritoryPointHistory(ctx, login)
+	err = w.Handler.GetUserPointHistory(ctx, login, name)
 	return err
 }
 
@@ -385,17 +413,17 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/points/all/info", wrapper.GetAllPointInfo)
-	router.GET(baseURL+"/points/experience-points", wrapper.GetExperiencePoints)
-	router.POST(baseURL+"/points/experience-points", wrapper.ChangeExperiencePoints)
-	router.GET(baseURL+"/points/territory-hours", wrapper.GetTerritoryHours)
-	router.POST(baseURL+"/points/territory-hours", wrapper.ChangeTerritoryHours)
-	router.GET(baseURL+"/points/:login/free-points", wrapper.GetFreePoints)
-	router.POST(baseURL+"/points/:login/free-points", wrapper.ChangeFreePoints)
-	router.GET(baseURL+"/points/:login/free-points/history", wrapper.GetUserFreePointHistory)
-	router.GET(baseURL+"/points/:login/info", wrapper.GetUserPointInfo)
-	router.GET(baseURL+"/points/:login/territory-points", wrapper.GetUserTerritoryPoints)
-	router.POST(baseURL+"/points/:login/territory-points", wrapper.ChangeUserTerritoryPoints)
-	router.GET(baseURL+"/points/:login/territory-points/history", wrapper.GetUserTerritoryPointHistory)
+	router.GET(baseURL+"/points/all", wrapper.GetAllUserPoints)
+	router.GET(baseURL+"/points/party/:name", wrapper.GetPartyPointValue)
+	router.POST(baseURL+"/points/party/:name", wrapper.ChangePartyPointValue)
+	router.GET(baseURL+"/points/party/:name/history", wrapper.GetPartyPointHistory)
+	router.GET(baseURL+"/points/types", wrapper.GetPointTypes)
+	router.POST(baseURL+"/points/types", wrapper.CreatePointType)
+	router.DELETE(baseURL+"/points/types/:name", wrapper.RemovePointType)
+	router.PATCH(baseURL+"/points/types/:name", wrapper.ChangePointType)
+	router.GET(baseURL+"/points/:login", wrapper.GetUserPoints)
+	router.GET(baseURL+"/points/:login/:name", wrapper.GetUserPointValue)
+	router.POST(baseURL+"/points/:login/:name", wrapper.ChangeUserPointValue)
+	router.GET(baseURL+"/points/:login/:name/history", wrapper.GetUserPointHistory)
 
 }

@@ -1,7 +1,0 @@
-type: object
-properties:
-  territoryPoints:
-    $ref: "./Points.yaml"
-  freePoints:
-    $ref: "./Points.yaml"
-required: [ territoryPoints, freePoints ]

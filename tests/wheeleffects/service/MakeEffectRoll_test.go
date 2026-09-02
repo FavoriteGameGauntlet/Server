@@ -69,7 +69,6 @@ func matchRolledRows(expectedIds ...int) interface{} {
 // user's current value.
 func setupAvailableRollsPointType(pointsDb *dbpointsmock.DatabaseMock, currentValue int, changeValue int) {
 	pointsDb.On("GetPointTypesCommand", 1).Return([]typepoints.PointTypeInfo{availableRollsPointType}, nil)
-	pointsDb.On("GetPointTypeCommand", 1, availableRollsPointType.Id).Return(availableRollsPointType, nil)
 	pointsDb.On("GetUserPointCommand", 1, 1, availableRollsPointType.Id).
 		Return(typepoints.UserPoint{Id: 1, UserId: 1, PartyId: 1, PointTypeId: availableRollsPointType.Id, Value: currentValue}, nil)
 	pointsDb.On("ChangeUserPointValueCommand", 1, 1, availableRollsPointType.Id, changeValue).Return(nil)
@@ -224,7 +223,6 @@ var MakeEffectRollTestCases = []MakeEffectRollTestCase{
 		SetupPointsMock: func() *dbpointsmock.DatabaseMock {
 			databaseMock := new(dbpointsmock.DatabaseMock)
 			databaseMock.On("GetPointTypesCommand", 1).Return([]typepoints.PointTypeInfo{availableRollsPointType}, nil)
-			databaseMock.On("GetPointTypeCommand", 1, availableRollsPointType.Id).Return(availableRollsPointType, nil)
 			databaseMock.On("GetUserPointCommand", 1, 1, availableRollsPointType.Id).
 				Return(typepoints.UserPoint{Value: 5}, nil)
 			databaseMock.On("ChangeUserPointValueCommand", 1, 1, availableRollsPointType.Id, -1).Return(dbError)
