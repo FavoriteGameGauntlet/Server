@@ -71,8 +71,7 @@ func (s *Service) ApplyChangeEntries(partyId int, entries []typechanges.ChangeEn
 }
 
 // applyPerkEntry grants a perk by first granting its underlying Effect (party.Perks.EffectId is
-// mandatory), then granting the perk itself with the resulting EffectHistory row as its source —
-// the FK on users.Perks.UserEffectId requires this.
+// mandatory), then granting the perk itself. Both record the originating event as their source.
 func (s *Service) applyPerkEntry(userId int, partyId int, perkId int, sourceEventId int) error {
 	perk, err := s.PerksDatabase.GetPerkCommand(partyId, perkId)
 
@@ -80,13 +79,13 @@ func (s *Service) applyPerkEntry(userId int, partyId int, perkId int, sourceEven
 		return err
 	}
 
-	userEffect, err := s.EffectsDatabase.CreateUserEffectCommand(userId, partyId, perk.EffectId, sourceEventId)
+	_, err = s.EffectsDatabase.CreateUserEffectCommand(userId, partyId, perk.EffectId, sourceEventId)
 
 	if err != nil {
 		return err
 	}
 
-	_, err = s.PerksDatabase.CreateUserPerkCommand(userId, partyId, perkId, userEffect.EffectHistoryId)
+	_, err = s.PerksDatabase.CreateUserPerkCommand(userId, partyId, perkId, sourceEventId)
 
 	return err
 }

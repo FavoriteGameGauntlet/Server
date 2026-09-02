@@ -93,3 +93,31 @@ func ConvertIntSliceToString(intSlice []int) string {
 
 	return strings.Join(stringSlice, ", ")
 }
+
+// AdminChecker is the part of the auth service needed to authorize admin-only endpoints. It is
+// declared here instead of imported so that common keeps no dependency on the auth service.
+type AdminChecker interface {
+	GetUserId(ctx echo.Context) (userId int, err error)
+	IsAdmin(userId int) (isAdmin bool, err error)
+}
+
+// RequireAdmin returns an error unless the request comes from an admin of the party.
+func RequireAdmin(ctx echo.Context, authService AdminChecker) error {
+	userId, err := authService.GetUserId(ctx)
+
+	if err != nil {
+		return err
+	}
+
+	isAdmin, err := authService.IsAdmin(userId)
+
+	if err != nil {
+		return err
+	}
+
+	if !isAdmin {
+		return NewNotAdminUnauthorizedError()
+	}
+
+	return nil
+}

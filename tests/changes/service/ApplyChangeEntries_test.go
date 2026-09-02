@@ -133,7 +133,7 @@ var ApplyChangeEntriesTestCases = []ApplyChangeEntriesTestCase{
 	},
 	{
 		// A PerkId entry first grants the perk's underlying Effect, then grants the perk itself using
-		// the resulting EffectHistory row as its source.
+		// the same source event.
 		Name: "PerkEntry_Success_GrantsUnderlyingEffectFirst",
 		Entries: []typechanges.ChangeEntry{
 			{Amount: 1, PerkId: ptr(50), UserId: ptr(2)},
@@ -145,7 +145,7 @@ var ApplyChangeEntriesTestCases = []ApplyChangeEntriesTestCase{
 			perksDb.On("GetPerkCommand", 1, 50).Return(typeperks.Perk{Id: 50, PartyId: 1, EffectId: 40}, nil)
 			effectsDb.On("CreateUserEffectCommand", 2, 1, 40, 999).
 				Return(typeeffects.UserEffect{Id: 1, UserId: 2, PartyId: 1, EffectId: 40, EffectHistoryId: 777}, nil)
-			perksDb.On("CreateUserPerkCommand", 2, 1, 50, 777).Return(typeperks.UserPerk{Id: 1, UserId: 2, PartyId: 1, PerkId: 50, UserEffectId: 777}, nil)
+			perksDb.On("CreateUserPerkCommand", 2, 1, 50, 999).Return(typeperks.UserPerk{Id: 1, UserId: 2, PartyId: 1, PerkId: 50, UserEffectId: 777}, nil)
 
 			return new(dbitemsmock.DatabaseMock), perksDb, effectsDb, new(dbpointsmock.DatabaseMock)
 		},
@@ -194,7 +194,7 @@ var ApplyChangeEntriesTestCases = []ApplyChangeEntriesTestCase{
 			perksDb.On("GetPerkCommand", 1, 50).Return(typeperks.Perk{Id: 50, PartyId: 1, EffectId: 40}, nil)
 			effectsDb.On("CreateUserEffectCommand", 2, 1, 40, 999).
 				Return(typeeffects.UserEffect{EffectHistoryId: 777}, nil)
-			perksDb.On("CreateUserPerkCommand", 2, 1, 50, 777).Return(typeperks.UserPerk{}, dbError)
+			perksDb.On("CreateUserPerkCommand", 2, 1, 50, 999).Return(typeperks.UserPerk{}, dbError)
 
 			return new(dbitemsmock.DatabaseMock), perksDb, effectsDb, new(dbpointsmock.DatabaseMock)
 		},

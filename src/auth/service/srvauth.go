@@ -4,11 +4,10 @@ import (
 	"FGG-Service/src/auth/database"
 	"FGG-Service/src/auth/types"
 	"FGG-Service/src/common"
+	"FGG-Service/src/parties/database"
 	"database/sql"
 	"errors"
 	"net/http"
-	"os"
-	"strings"
 
 	"github.com/labstack/echo/v4"
 )
@@ -20,13 +19,19 @@ type IService interface {
 	IsAdmin(userId int) (bool, error)
 }
 
+// defaultPartyId is a stopgap until real party context exists (see project plan) — admin rights are
+// resolved against this one hardcoded party.
+const defaultPartyId = 1
+
 type Service struct {
-	Database dbauth.IDatabase
+	Database        dbauth.IDatabase
+	PartiesDatabase dbparties.IDatabase
 }
 
 func NewService() *Service {
 	return &Service{
-		Database: new(dbauth.Database),
+		Database:        new(dbauth.Database),
+		PartiesDatabase: new(dbparties.Database),
 	}
 }
 
@@ -146,19 +151,22 @@ func (s *Service) DeleteUserSession(userSessionId string) error {
 	return err
 }
 
+// IsAdmin reports whether the user is an admin of the party. Admin rights are party membership data
+// (parties.Members.IsAdmin) — a party creator becomes its first admin. A user who is not a member of
+// the party is simply not an admin.
 func (s *Service) IsAdmin(userId int) (isAdmin bool, err error) {
-	user, err := s.Database.GetUserByIdCommand(userId)
+	member, err := s.PartiesDatabase.GetMemberCommand(userId, defaultPartyId)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		err = nil
+		return
+	}
 
 	if err != nil {
 		return
 	}
 
-	for _, adminLogin := range strings.Split(os.Getenv(common.AdminLoginsEnvVar), common.AdminLoginsSeparator) {
-		if strings.TrimSpace(adminLogin) == user.Login {
-			isAdmin = true
-			return
-		}
-	}
+	isAdmin = member.IsAdmin
 
 	return
 }

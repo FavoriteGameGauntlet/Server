@@ -28,7 +28,7 @@ func NewController() *Controller {
 
 // GetAllAdminSystemParameters (GET /system-parameters/admin/all)
 func (c *Controller) GetAllAdminSystemParameters(ctx echo.Context) error {
-	err := c.requireAdmin(ctx)
+	err := common.RequireAdmin(ctx, &c.AuthService)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -47,7 +47,7 @@ func (c *Controller) GetAllAdminSystemParameters(ctx echo.Context) error {
 
 // GetAdminSystemParameter (GET /system-parameters/admin/{name})
 func (c *Controller) GetAdminSystemParameter(ctx echo.Context, name gensysparams.Name) error {
-	err := c.requireAdmin(ctx)
+	err := common.RequireAdmin(ctx, &c.AuthService)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -66,7 +66,7 @@ func (c *Controller) GetAdminSystemParameter(ctx echo.Context, name gensysparams
 
 // ChangeAdminSystemParameter (POST /system-parameters/admin/{name})
 func (c *Controller) ChangeAdminSystemParameter(ctx echo.Context, name gensysparams.Name) error {
-	err := c.requireAdmin(ctx)
+	err := common.RequireAdmin(ctx, &c.AuthService)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -109,26 +109,6 @@ func (c *Controller) GetAppSystemParameter(ctx echo.Context, name gensysparams.N
 	}
 
 	return ctx.JSON(http.StatusOK, convertParameterToDto(parameter))
-}
-
-func (c *Controller) requireAdmin(ctx echo.Context) error {
-	userId, err := c.AuthService.GetUserId(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	isAdmin, err := c.AuthService.IsAdmin(userId)
-
-	if err != nil {
-		return err
-	}
-
-	if !isAdmin {
-		return common.NewNotAdminUnauthorizedError()
-	}
-
-	return nil
 }
 
 func convertParameterToDto(parameter typesysparams.SystemParameter) gensysparams.SystemParameter {
