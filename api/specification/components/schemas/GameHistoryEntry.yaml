@@ -9,11 +9,6 @@ properties:
     enum: [ "started", "finished", "cancelled" ]
   timeSpent:
     $ref: "./Duration.yaml"
-  rating:
-    type: integer
-    format: int
-  reviewComment:
-    type: string
   createdDate:
     type: string
     format: date-time

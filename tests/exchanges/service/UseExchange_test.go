@@ -44,7 +44,7 @@ func TestSrvExchanges_UseExchange(test *testing.T) {
 			TargetChange: typechanges.Change{Entries: []typechanges.ChangeEntry{reward}},
 		}, nil)
 		pointsDb.On("GetPointTypeCommand", 1, territoryPoints.Id).Return(territoryPoints, nil)
-		pointsDb.On("GetPointTypesCommand", 1).Return([]typepoints.PointTypeInfo{territoryPoints}, nil)
+		pointsDb.On("GetPointTypeByNameCommand", 1, territoryPoints.Name).Return(territoryPoints, nil)
 		pointsDb.On("GetUserPointCommand", 5, 1, territoryPoints.Id).Return(typepoints.UserPoint{Value: 10}, nil)
 		exchangesDb.On("CreateExchangeHistoryCommand", 5, 1, seize.Id, (*int)(nil)).
 			Return(typeexchanges.ExchangeHistoryEntry{Id: 31}, nil)
@@ -86,7 +86,7 @@ func TestSrvExchanges_UseExchange(test *testing.T) {
 			SourceChange: typechanges.Change{Entries: []typechanges.ChangeEntry{cost}},
 		}, nil)
 		pointsDb.On("GetPointTypeCommand", 1, territoryPoints.Id).Return(territoryPoints, nil)
-		pointsDb.On("GetPointTypesCommand", 1).Return([]typepoints.PointTypeInfo{territoryPoints}, nil)
+		pointsDb.On("GetPointTypeByNameCommand", 1, territoryPoints.Name).Return(territoryPoints, nil)
 		pointsDb.On("GetUserPointCommand", 5, 1, territoryPoints.Id).Return(typepoints.UserPoint{Value: 10}, nil)
 
 		sut := srvexchanges.Service{Database: exchangesDb, PointsService: &srvpoints.Service{Database: pointsDb}}

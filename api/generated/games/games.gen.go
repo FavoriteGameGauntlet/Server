@@ -59,12 +59,10 @@ type GameHistoryEntries = []GameHistoryEntry
 
 // GameHistoryEntry defines model for GameHistoryEntry.
 type GameHistoryEntry struct {
-	Action        string                    `json:"action"`
-	CreatedDate   time.Time                 `json:"createdDate"`
-	EndState      *GameHistoryEntryEndState `json:"endState,omitempty"`
-	Name          Name                      `json:"name"`
-	Rating        *int                      `json:"rating,omitempty"`
-	ReviewComment *string                   `json:"reviewComment,omitempty"`
+	Action      string                    `json:"action"`
+	CreatedDate time.Time                 `json:"createdDate"`
+	EndState    *GameHistoryEntryEndState `json:"endState,omitempty"`
+	Name        Name                      `json:"name"`
 
 	// TimeSpent The duration notation as defined by ISO 8601
 	TimeSpent Duration `json:"timeSpent"`
@@ -75,6 +73,13 @@ type GameHistoryEntryEndState string
 
 // GameRate defines model for GameRate.
 type GameRate struct {
+	Name          Name    `json:"name"`
+	Rating        int     `json:"rating"`
+	ReviewComment *string `json:"reviewComment,omitempty"`
+}
+
+// GameReview defines model for GameReview.
+type GameReview struct {
 	Rating        int     `json:"rating"`
 	ReviewComment *string `json:"reviewComment,omitempty"`
 }
@@ -105,6 +110,9 @@ type ErrorResponse = Error
 // GameHistoriesResponse defines model for GameHistoriesResponse.
 type GameHistoriesResponse = GameHistoryEntries
 
+// GameReviewResponse defines model for GameReviewResponse.
+type GameReviewResponse = GameReview
+
 // WishlistGamesResponse defines model for WishlistGamesResponse.
 type WishlistGamesResponse = WishlistGames
 
@@ -114,8 +122,8 @@ type GameRateRequest = GameRate
 // WishlistGameRequest defines model for WishlistGameRequest.
 type WishlistGameRequest = WishlistGame
 
-// RateCurrentGameJSONRequestBody defines body for RateCurrentGame for application/json ContentType.
-type RateCurrentGameJSONRequestBody = GameRate
+// RateGameJSONRequestBody defines body for RateGame for application/json ContentType.
+type RateGameJSONRequestBody = GameRate
 
 // AddUserWishlistGameJSONRequestBody defines body for AddUserWishlistGame for application/json ContentType.
 type AddUserWishlistGameJSONRequestBody = WishlistGame
@@ -132,11 +140,14 @@ type ServerInterface interface {
 	// (POST /games/current/finish)
 	FinishCurrentGame(ctx echo.Context) error
 
-	// (POST /games/current/rate)
-	RateCurrentGame(ctx echo.Context) error
-
 	// (POST /games/current/roll)
 	RollNewCurrentGame(ctx echo.Context) error
+
+	// (POST /games/rate)
+	RateGame(ctx echo.Context) error
+
+	// (GET /games/rate/{name})
+	GetGameReview(ctx echo.Context, name Name) error
 
 	// (GET /games/{login}/current)
 	GetUserCurrentGame(ctx echo.Context, login Login) error
@@ -183,21 +194,37 @@ func (w *ServerInterfaceWrapper) FinishCurrentGame(ctx echo.Context) error {
 	return err
 }
 
-// RateCurrentGame converts echo context to params.
-func (w *ServerInterfaceWrapper) RateCurrentGame(ctx echo.Context) error {
-	var err error
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.RateCurrentGame(ctx)
-	return err
-}
-
 // RollNewCurrentGame converts echo context to params.
 func (w *ServerInterfaceWrapper) RollNewCurrentGame(ctx echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.RollNewCurrentGame(ctx)
+	return err
+}
+
+// RateGame converts echo context to params.
+func (w *ServerInterfaceWrapper) RateGame(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.RateGame(ctx)
+	return err
+}
+
+// GetGameReview converts echo context to params.
+func (w *ServerInterfaceWrapper) GetGameReview(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "name" -------------
+	var name Name
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", ctx.Param("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetGameReview(ctx, name)
 	return err
 }
 
@@ -296,8 +323,9 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/games/all/current", wrapper.GetAllCurrentGame)
 	router.POST(baseURL+"/games/current/cancel", wrapper.CancelCurrentGame)
 	router.POST(baseURL+"/games/current/finish", wrapper.FinishCurrentGame)
-	router.POST(baseURL+"/games/current/rate", wrapper.RateCurrentGame)
 	router.POST(baseURL+"/games/current/roll", wrapper.RollNewCurrentGame)
+	router.POST(baseURL+"/games/rate", wrapper.RateGame)
+	router.GET(baseURL+"/games/rate/:name", wrapper.GetGameReview)
 	router.GET(baseURL+"/games/:login/current", wrapper.GetUserCurrentGame)
 	router.GET(baseURL+"/games/:login/history", wrapper.GetUserGameHistory)
 	router.GET(baseURL+"/games/:login/wishlist", wrapper.GetUserWishlistGames)

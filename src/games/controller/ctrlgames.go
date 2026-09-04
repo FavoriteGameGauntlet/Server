@@ -153,12 +153,10 @@ func convertGameHistoryToDto(history []typegames.GameHistoryEntry) gengames.Game
 
 	for i, entry := range history {
 		historyDto[i] = gengames.GameHistoryEntry{
-			Name:          entry.Name,
-			Action:        entry.Action,
-			TimeSpent:     common.DurationToISO8601(entry.TimeSpent),
-			Rating:        entry.Rating,
-			ReviewComment: entry.ReviewComment,
-			CreatedDate:   entry.CreatedDate,
+			Name:        entry.Name,
+			Action:      entry.Action,
+			TimeSpent:   common.DurationToISO8601(entry.TimeSpent),
+			CreatedDate: entry.CreatedDate,
 		}
 
 		if entry.EndState != nil {
@@ -287,8 +285,8 @@ func convertAllCurrentGamesToDto(games []typegames.CurrentGameWithLogin) gengame
 	return dtos
 }
 
-// RateCurrentGame (POST /games/current/rate)
-func (c *Controller) RateCurrentGame(ctx echo.Context) error {
+// RateGame (POST /games/rate)
+func (c *Controller) RateGame(ctx echo.Context) error {
 	userId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
@@ -303,11 +301,47 @@ func (c *Controller) RateCurrentGame(ctx echo.Context) error {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.RateCurrentGame(userId, rateDto.Rating, rateDto.ReviewComment)
+	err = validator.ValidateName(rateDto.Name)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	err = c.Service.RateGame(userId, rateDto.Name, rateDto.Rating, rateDto.ReviewComment)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
 	return ctx.NoContent(http.StatusNoContent)
+}
+
+// GetGameReview (GET /games/rate/{name})
+func (c *Controller) GetGameReview(ctx echo.Context, name gengames.Name) error {
+	userId, err := c.AuthService.GetUserId(ctx)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	err = validator.ValidateName(name)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	review, err := c.Service.GetGameReview(userId, name)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	return ctx.JSON(http.StatusOK, convertGameReviewToDto(review))
+}
+
+func convertGameReviewToDto(review typegames.GameReview) gengames.GameReview {
+	return gengames.GameReview{
+		Rating:        review.Rating,
+		ReviewComment: review.ReviewComment,
+	}
 }

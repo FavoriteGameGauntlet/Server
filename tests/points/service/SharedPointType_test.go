@@ -22,7 +22,7 @@ var sharedPointType = typepoints.PointTypeInfo{
 func TestSrvPoints_SharedPointTypeUsesPartyPool(test *testing.T) {
 	test.Run("Read_ReadsPartyPoolNotUserValue", func(test *testing.T) {
 		databaseMock := new(dbpointsmock.DatabaseMock)
-		databaseMock.On("GetPointTypesCommand", 1).Return([]typepoints.PointTypeInfo{sharedPointType}, nil)
+		databaseMock.On("GetPointTypeByNameCommand", 1, sharedPointType.Name).Return(sharedPointType, nil)
 		databaseMock.On("GetPartyPointCommand", 1, sharedPointType.Id).
 			Return(typepoints.PartyPoint{PartyId: 1, PointTypeId: sharedPointType.Id, Value: 42}, nil)
 
@@ -57,7 +57,7 @@ func TestSrvPoints_SharedPointTypeUsesPartyPool(test *testing.T) {
 
 	test.Run("MissingPartyPoolRow_ReadsStartValue", func(test *testing.T) {
 		databaseMock := new(dbpointsmock.DatabaseMock)
-		databaseMock.On("GetPointTypesCommand", 1).Return([]typepoints.PointTypeInfo{sharedPointType}, nil)
+		databaseMock.On("GetPointTypeByNameCommand", 1, sharedPointType.Name).Return(sharedPointType, nil)
 		databaseMock.On("GetPartyPointCommand", 1, sharedPointType.Id).
 			Return(typepoints.PartyPoint{}, sql.ErrNoRows)
 
@@ -77,7 +77,7 @@ func TestSrvPoints_ChangeUserPointByTypeName(test *testing.T) {
 		databaseMock := new(dbpointsmock.DatabaseMock)
 		historyMock := new(dbhistorymock.DatabaseMock)
 
-		databaseMock.On("GetPointTypesCommand", 1).Return([]typepoints.PointTypeInfo{availableRollsType}, nil)
+		databaseMock.On("GetPointTypeByNameCommand", 1, availableRollsType.Name).Return(availableRollsType, nil)
 		historyMock.On("CreateManualHistoryCommand", 1, 9, mock.Anything, (*int)(nil)).
 			Return([]typehistory.ManualHistoryEntry{{Id: 77, UserId: 2, PartyId: 1}}, nil)
 		databaseMock.On("GetUserPointCommand", 2, 1, availableRollsType.Id).
@@ -99,7 +99,7 @@ func TestSrvPoints_ChangeUserPointByTypeName(test *testing.T) {
 
 	test.Run("SharedPointType_Rejected", func(test *testing.T) {
 		databaseMock := new(dbpointsmock.DatabaseMock)
-		databaseMock.On("GetPointTypesCommand", 1).Return([]typepoints.PointTypeInfo{sharedPointType}, nil)
+		databaseMock.On("GetPointTypeByNameCommand", 1, sharedPointType.Name).Return(sharedPointType, nil)
 
 		sut := srvpoints.Service{Database: databaseMock}
 

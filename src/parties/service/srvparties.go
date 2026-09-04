@@ -76,14 +76,14 @@ func (s *Service) GetMembers(partyId int) (members []typeparties.MemberWithLogin
 // AddMember joins a user to the party and gives them a starting value for each of its point types.
 // Nothing seeds a member's points otherwise, since the schema dropped create_user_stats.
 func (s *Service) AddMember(userId int, partyId int, displayName string, isAdmin bool) (member typeparties.Member, err error) {
-	doesExist, err := s.Database.DoesMemberExistCommand(userId, partyId)
+	_, err = s.Database.GetMemberCommand(userId, partyId)
 
-	if err != nil {
+	if err == nil {
+		err = common.NewMemberAlreadyExistsConflictError()
 		return
 	}
 
-	if doesExist {
-		err = common.NewMemberAlreadyExistsConflictError()
+	if !errors.Is(err, sql.ErrNoRows) {
 		return
 	}
 
@@ -132,13 +132,9 @@ func (s *Service) RemoveMember(userId int, partyId int) (err error) {
 }
 
 func (s *Service) requireMember(userId int, partyId int) (err error) {
-	doesExist, err := s.Database.DoesMemberExistCommand(userId, partyId)
+	_, err = s.Database.GetMemberCommand(userId, partyId)
 
-	if err != nil {
-		return
-	}
-
-	if !doesExist {
+	if errors.Is(err, sql.ErrNoRows) {
 		err = common.NewMemberNotFoundError()
 	}
 

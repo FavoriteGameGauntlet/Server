@@ -8,6 +8,7 @@ import (
 	typepoints "FGG-Service/src/points/type"
 	dbpartiesmock "FGG-Service/tests/parties/mock"
 	dbpointsmock "FGG-Service/tests/points/mock"
+	"database/sql"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -26,7 +27,7 @@ func TestSrvParties_CreateParty(test *testing.T) {
 		freePoints := typepoints.PointTypeInfo{Id: 2, PartyId: 8, Name: "freePoints", StartValue: 3}
 
 		partiesDb.On("CreatePartyCommand", "gauntlet").Return(typeparties.Party{Id: 8, Name: "gauntlet"}, nil)
-		partiesDb.On("DoesMemberExistCommand", 5, 8).Return(false, nil)
+		partiesDb.On("GetMemberCommand", 5, 8).Return(typeparties.MemberWithLogin{}, sql.ErrNoRows)
 		partiesDb.On("CreateMemberCommand", 5, 8, "Alice", true).
 			Return(typeparties.Member{Id: 1, UserId: 5, PartyId: 8, DisplayName: "Alice", IsAdmin: true}, nil)
 		pointsDb.On("GetPointTypesCommand", 8).Return([]typepoints.PointTypeInfo{freePoints}, nil)
@@ -46,7 +47,8 @@ func TestSrvParties_CreateParty(test *testing.T) {
 	test.Run("AlreadyMember_Rejected", func(test *testing.T) {
 		partiesDb := new(dbpartiesmock.DatabaseMock)
 
-		partiesDb.On("DoesMemberExistCommand", 5, 8).Return(true, nil)
+		partiesDb.On("GetMemberCommand", 5, 8).
+			Return(typeparties.MemberWithLogin{Id: 1, UserId: 5, PartyId: 8}, nil)
 
 		sut := srvparties.Service{Database: partiesDb}
 

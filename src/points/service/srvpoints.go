@@ -32,14 +32,14 @@ func (s *Service) GetPointTypes(partyId int) (pointTypes []typepoints.PointTypeI
 // CreatePointType adds a point type to the party. Names identify point types across the API, so a
 // duplicate is rejected rather than silently shadowing the existing one.
 func (s *Service) CreatePointType(partyId int, pointType typepoints.PointType) (created typepoints.PointType, err error) {
-	doesExist, err := s.Database.DoesPointTypeExistCommand(partyId, pointType.Name)
+	_, err = s.Database.GetPointTypeByNameCommand(partyId, pointType.Name)
 
-	if err != nil {
+	if err == nil {
+		err = common.NewPointTypeAlreadyExistsConflictError(pointType.Name)
 		return
 	}
 
-	if doesExist {
-		err = common.NewPointTypeAlreadyExistsConflictError(pointType.Name)
+	if !errors.Is(err, sql.ErrNoRows) {
 		return
 	}
 
@@ -86,19 +86,11 @@ func (s *Service) RemovePointType(partyId int, name string) (err error) {
 
 // GetPointTypeByName resolves a point type from the name the API addresses it by.
 func (s *Service) GetPointTypeByName(partyId int, name string) (pointType typepoints.PointTypeInfo, err error) {
-	pointTypes, err := s.Database.GetPointTypesCommand(partyId)
+	pointType, err = s.Database.GetPointTypeByNameCommand(partyId, name)
 
-	if err != nil {
-		return
+	if errors.Is(err, sql.ErrNoRows) {
+		err = common.NewPointTypeNotFoundError(name)
 	}
-
-	for _, candidate := range pointTypes {
-		if candidate.Name == name {
-			return candidate, nil
-		}
-	}
-
-	err = common.NewPointTypeNotFoundError(name)
 
 	return
 }

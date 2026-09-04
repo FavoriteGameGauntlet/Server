@@ -1,0 +1,16 @@
+post:
+  operationId: rateGame
+  tags: [ Games ]
+  requestBody:
+    $ref: "../../components/requests/GameRateRequest.yaml"
+  responses:
+    "204":
+      description: Success.
+    "400":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "401":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "404":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../components/responses/ErrorResponse.yaml"

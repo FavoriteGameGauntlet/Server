@@ -11,9 +11,9 @@ type DatabaseMock struct {
 	mock.Mock
 }
 
-func (m *DatabaseMock) DoesGameExistCommand(partyId int, name string) (doesExist bool, err error) {
+func (m *DatabaseMock) GetGameByNameCommand(partyId int, name string) (game typegames.Game, err error) {
 	args := m.Called(partyId, name)
-	doesExist = args.Get(0).(bool)
+	game = args.Get(0).(typegames.Game)
 	err = args.Error(1)
 	return
 }
@@ -32,16 +32,9 @@ func (m *DatabaseMock) GetGameCommand(partyId int, gameId int) (game typegames.G
 	return
 }
 
-func (m *DatabaseMock) GetWishlistGameCommand(name string) (game typegames.WishlistGame, err error) {
-	args := m.Called(name)
-	game = args.Get(0).(typegames.WishlistGame)
-	err = args.Error(1)
-	return
-}
-
-func (m *DatabaseMock) DoesWishlistGameExistCommand(userId int, partyId int, gameId int) (doesExist bool, err error) {
+func (m *DatabaseMock) GetWishlistGameCommand(userId int, partyId int, gameId int) (game typegames.WishlistGame, err error) {
 	args := m.Called(userId, partyId, gameId)
-	doesExist = args.Get(0).(bool)
+	game = args.Get(0).(typegames.WishlistGame)
 	err = args.Error(1)
 	return
 }
@@ -79,13 +72,6 @@ func (m *DatabaseMock) GetCurrentGameCommand(userId int, partyId int) (game type
 	return
 }
 
-func (m *DatabaseMock) DoesUserGameExistCommand(userId int, partyId int) (doesExist bool, err error) {
-	args := m.Called(userId, partyId)
-	doesExist = args.Get(0).(bool)
-	err = args.Error(1)
-	return
-}
-
 func (m *DatabaseMock) GetGameTimeSpentCommand(userId int, gameId int) (timeSpent time.Duration, err error) {
 	args := m.Called(userId, gameId)
 	timeSpent = args.Get(0).(time.Duration)
@@ -108,14 +94,16 @@ func (m *DatabaseMock) FinishCurrentGameCommand(userId int, partyId int, gameId 
 	return args.Error(0)
 }
 
-func (m *DatabaseMock) RateGameCommand(userId int, partyId int, gameId int, rating int, reviewComment *string, sourceEventId *int) error {
-	args := m.Called(userId, partyId, gameId, rating, reviewComment, sourceEventId)
-	return args.Error(0)
+func (m *DatabaseMock) RateGameCommand(userId int, partyId int, gameId int, rating int, reviewComment *string) (gameRating typegames.GameRating, err error) {
+	args := m.Called(userId, partyId, gameId, rating, reviewComment)
+	gameRating, _ = args.Get(0).(typegames.GameRating)
+	err = args.Error(1)
+	return
 }
 
-func (m *DatabaseMock) GetGameReviewCommand(userId int, partyId int, gameId int) (reviewComment *string, err error) {
+func (m *DatabaseMock) GetGameReviewCommand(userId int, partyId int, gameId int) (review typegames.GameReview, err error) {
 	args := m.Called(userId, partyId, gameId)
-	reviewComment, _ = args.Get(0).(*string)
+	review, _ = args.Get(0).(typegames.GameReview)
 	err = args.Error(1)
 	return
 }

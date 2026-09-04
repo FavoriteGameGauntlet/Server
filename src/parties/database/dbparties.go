@@ -14,7 +14,6 @@ type IDatabase interface {
 	CreateMemberCommand(userId int, partyId int, displayName string, isAdmin bool) (member typeparties.Member, err error)
 	GetMemberCommand(userId int, partyId int) (member typeparties.MemberWithLogin, err error)
 	GetMembersCommand(partyId int) (members []typeparties.MemberWithLogin, err error)
-	DoesMemberExistCommand(userId int, partyId int) (exists bool, err error)
 	ChangeMemberAdminStatusCommand(userId int, partyId int, isAdmin bool) error
 	ChangeMemberDisplayNameCommand(userId int, partyId int, displayName string) error
 	RemoveMemberCommand(userId int, partyId int) error
@@ -164,18 +163,6 @@ func (db *Database) GetMembersCommand(partyId int) (members []typeparties.Member
 	dbaccess.LogDbResult(getMembersQuery, members, err)
 
 	_ = rows.Close()
-	return
-}
-
-var doesMemberExistQuery = dbaccess.Query{Name: "DoesMemberExistQuery", SQL: `SELECT does_member_exist($1::integer, $2::integer)`}
-
-func (db *Database) DoesMemberExistCommand(userId int, partyId int) (exists bool, err error) {
-	row := dbaccess.QueryRow(doesMemberExistQuery, userId, partyId)
-
-	err = row.Scan(&exists)
-
-	dbaccess.LogDbResult(doesMemberExistQuery, exists, err)
-
 	return
 }
 

@@ -84,6 +84,32 @@ func NewCurrentGameNotFoundError() error {
 	}
 }
 
+func NewPlayedGameNotFoundError(name string) error {
+	message := fmt.Sprintf(
+		"The user hasn't played the game \"%s\". Only a finished or cancelled game can be rated.",
+		name)
+
+	return &NotFoundError{
+		&BaseError{
+			Code:    "PLAYED_GAME_NOT_FOUND",
+			Message: message,
+		},
+	}
+}
+
+func NewGameReviewNotFoundError(name string) error {
+	message := fmt.Sprintf(
+		"The user hasn't rated the game \"%s\".",
+		name)
+
+	return &NotFoundError{
+		&BaseError{
+			Code:    "GAME_REVIEW_NOT_FOUND",
+			Message: message,
+		},
+	}
+}
+
 func NewCompletedTimersNotFoundError() error {
 	return &NotFoundError{
 		&BaseError{

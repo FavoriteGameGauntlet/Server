@@ -26,11 +26,11 @@ type GetPointValueByTypeNameTestCase struct {
 
 var GetPointValueByTypeNameTestCases = []GetPointValueByTypeNameTestCase{
 	{
-		// GetPointTypesCommand fails. The error returns.
-		Name: "GetPointTypes_DatabaseError",
+		// GetPointTypeByNameCommand fails. The error returns.
+		Name: "GetPointTypeByName_DatabaseError",
 		SetupMock: func() *dbpointsmock.DatabaseMock {
 			databaseMock := new(dbpointsmock.DatabaseMock)
-			databaseMock.On("GetPointTypesCommand", 1).Return([]typepoints.PointTypeInfo{}, dbError)
+			databaseMock.On("GetPointTypeByNameCommand", 1, typepoints.PointTypeAvailableRolls).Return(typepoints.PointTypeInfo{}, dbError)
 			return databaseMock
 		},
 		ExpectedError: dbError,
@@ -40,7 +40,7 @@ var GetPointValueByTypeNameTestCases = []GetPointValueByTypeNameTestCase{
 		Name: "NameNotFound_Error",
 		SetupMock: func() *dbpointsmock.DatabaseMock {
 			databaseMock := new(dbpointsmock.DatabaseMock)
-			databaseMock.On("GetPointTypesCommand", 1).Return([]typepoints.PointTypeInfo{}, nil)
+			databaseMock.On("GetPointTypeByNameCommand", 1, typepoints.PointTypeAvailableRolls).Return(typepoints.PointTypeInfo{}, sql.ErrNoRows)
 			return databaseMock
 		},
 		ExpectAnyError: true,
@@ -50,7 +50,7 @@ var GetPointValueByTypeNameTestCases = []GetPointValueByTypeNameTestCase{
 		Name: "NoUserPointRow_ZeroValue",
 		SetupMock: func() *dbpointsmock.DatabaseMock {
 			databaseMock := new(dbpointsmock.DatabaseMock)
-			databaseMock.On("GetPointTypesCommand", 1).Return([]typepoints.PointTypeInfo{availableRollsType}, nil)
+			databaseMock.On("GetPointTypeByNameCommand", 1, typepoints.PointTypeAvailableRolls).Return(availableRollsType, nil)
 			databaseMock.On("GetUserPointCommand", 2, 1, availableRollsType.Id).Return(typepoints.UserPoint{}, sql.ErrNoRows)
 			return databaseMock
 		},
@@ -61,7 +61,7 @@ var GetPointValueByTypeNameTestCases = []GetPointValueByTypeNameTestCase{
 		Name: "GetUserPoint_DatabaseError",
 		SetupMock: func() *dbpointsmock.DatabaseMock {
 			databaseMock := new(dbpointsmock.DatabaseMock)
-			databaseMock.On("GetPointTypesCommand", 1).Return([]typepoints.PointTypeInfo{availableRollsType}, nil)
+			databaseMock.On("GetPointTypeByNameCommand", 1, typepoints.PointTypeAvailableRolls).Return(availableRollsType, nil)
 			databaseMock.On("GetUserPointCommand", 2, 1, availableRollsType.Id).Return(typepoints.UserPoint{}, dbError)
 			return databaseMock
 		},
@@ -72,7 +72,7 @@ var GetPointValueByTypeNameTestCases = []GetPointValueByTypeNameTestCase{
 		Name: "Success",
 		SetupMock: func() *dbpointsmock.DatabaseMock {
 			databaseMock := new(dbpointsmock.DatabaseMock)
-			databaseMock.On("GetPointTypesCommand", 1).Return([]typepoints.PointTypeInfo{availableRollsType}, nil)
+			databaseMock.On("GetPointTypeByNameCommand", 1, typepoints.PointTypeAvailableRolls).Return(availableRollsType, nil)
 			databaseMock.On("GetUserPointCommand", 2, 1, availableRollsType.Id).
 				Return(typepoints.UserPoint{Id: 1, UserId: 2, PartyId: 1, PointTypeId: availableRollsType.Id, Value: 7}, nil)
 			return databaseMock
@@ -260,7 +260,7 @@ func TestSrvPoints_ChangeUserPointValueClamped(test *testing.T) {
 func TestSrvPoints_ChangePointValueByTypeNameNoHistory(test *testing.T) {
 	test.Run("NameNotFound_Error", func(test *testing.T) {
 		databaseMock := new(dbpointsmock.DatabaseMock)
-		databaseMock.On("GetPointTypesCommand", 1).Return([]typepoints.PointTypeInfo{}, nil)
+		databaseMock.On("GetPointTypeByNameCommand", 1, typepoints.PointTypeAvailableRolls).Return(typepoints.PointTypeInfo{}, sql.ErrNoRows)
 
 		sut := srvpoints.Service{Database: databaseMock}
 
@@ -272,7 +272,7 @@ func TestSrvPoints_ChangePointValueByTypeNameNoHistory(test *testing.T) {
 
 	test.Run("Success_NoHistoryRecorded", func(test *testing.T) {
 		databaseMock := new(dbpointsmock.DatabaseMock)
-		databaseMock.On("GetPointTypesCommand", 1).Return([]typepoints.PointTypeInfo{availableRollsType}, nil)
+		databaseMock.On("GetPointTypeByNameCommand", 1, typepoints.PointTypeAvailableRolls).Return(availableRollsType, nil)
 		databaseMock.On("GetUserPointCommand", 2, 1, availableRollsType.Id).
 			Return(typepoints.UserPoint{Value: 5}, nil)
 		databaseMock.On("ChangeUserPointValueCommand", 2, 1, availableRollsType.Id, -1).Return(nil)

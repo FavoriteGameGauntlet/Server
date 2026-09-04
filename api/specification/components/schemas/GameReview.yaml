@@ -1,10 +1,8 @@
 type: object
 properties:
-  name:
-    $ref: "./Name.yaml"
   rating:
     type: integer
     format: int
   reviewComment:
     type: string
-required: [ name, rating ]
+required: [ rating ]

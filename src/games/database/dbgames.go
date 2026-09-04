@@ -9,23 +9,21 @@ import (
 )
 
 type IDatabase interface {
-	DoesGameExistCommand(partyId int, name string) (doesExist bool, err error)
+	GetGameByNameCommand(partyId int, name string) (game typegames.Game, err error)
 	CreateGameCommand(partyId int, name string) (game typegames.Game, err error)
 	GetGameCommand(partyId int, gameId int) (game typegames.Game, err error)
-	GetWishlistGameCommand(name string) (game typegames.WishlistGame, err error)
-	DoesWishlistGameExistCommand(userId int, partyId int, gameId int) (doesExist bool, err error)
+	GetWishlistGameCommand(userId int, partyId int, gameId int) (game typegames.WishlistGame, err error)
 	CreateWishlistGameCommand(userId int, partyId int, gameId int) (game typegames.CreatedWishlistGame, err error)
 	DeleteUnplayedGameCommand(userId int, partyId int, gameId int) error
 	GetWishlistGamesCommand(userId int, partyId int) (games typegames.WishlistGames, err error)
 	CreateCurrentGameCommand(userId int, partyId int, gameId int, sourceEventId *int) (game typegames.CreatedUserGame, err error)
 	GetCurrentGameCommand(userId int, partyId int) (game typegames.UserGame, err error)
-	DoesUserGameExistCommand(userId int, partyId int) (doesExist bool, err error)
 	GetGameTimeSpentCommand(userId int, gameId int) (timeSpent time.Duration, err error)
 	ChangeGameTimeSpentCommand(userId int, partyId int, gameId int, changeValue time.Duration, sourceEventId *int) error
 	CancelCurrentGameCommand(userId int, partyId int, gameId int, sourceEventId *int) error
 	FinishCurrentGameCommand(userId int, partyId int, gameId int, sourceEventId *int) error
-	RateGameCommand(userId int, partyId int, gameId int, rating int, reviewComment *string, sourceEventId *int) error
-	GetGameReviewCommand(userId int, partyId int, gameId int) (reviewComment *string, err error)
+	RateGameCommand(userId int, partyId int, gameId int, rating int, reviewComment *string) (gameRating typegames.GameRating, err error)
+	GetGameReviewCommand(userId int, partyId int, gameId int) (review typegames.GameReview, err error)
 	GetGameHistoryCommand(userId int, partyId int) (games []typegames.GameHistoryEntry, err error)
 	GetAllCurrentGamesCommand(partyId int) (games []typegames.UserGameWithLogin, err error)
 }
@@ -33,14 +31,14 @@ type IDatabase interface {
 type Database struct {
 }
 
-var doesGameExistQuery = dbaccess.Query{Name: "DoesGameExistQuery", SQL: `SELECT does_game_exist($1::integer, $2::text)`}
+var getGameByNameQuery = dbaccess.Query{Name: "GetGameByNameQuery", SQL: `SELECT * FROM get_game_by_name($1::integer, $2::text)`}
 
-func (db *Database) DoesGameExistCommand(partyId int, name string) (doesExist bool, err error) {
-	row := dbaccess.QueryRow(doesGameExistQuery, partyId, name)
+func (db *Database) GetGameByNameCommand(partyId int, name string) (game typegames.Game, err error) {
+	row := dbaccess.QueryRow(getGameByNameQuery, partyId, name)
 
-	err = row.Scan(&doesExist)
+	err = row.Scan(&game.Id, &game.PartyId, &game.Name)
 
-	dbaccess.LogDbResult(doesGameExistQuery, doesExist, err)
+	dbaccess.LogDbResult(getGameByNameQuery, game, err)
 
 	return
 }
@@ -69,26 +67,14 @@ func (db *Database) GetGameCommand(partyId int, gameId int) (game typegames.Game
 	return
 }
 
-var getWishlistGameQuery = dbaccess.Query{Name: "GetWishlistGameQuery", SQL: `SELECT * FROM get_wishlist_game($1::text)`}
+var getWishlistGameQuery = dbaccess.Query{Name: "GetWishlistGameQuery", SQL: `SELECT * FROM get_wishlist_game($1::integer, $2::integer, $3::integer)`}
 
-func (db *Database) GetWishlistGameCommand(name string) (game typegames.WishlistGame, err error) {
-	row := dbaccess.QueryRow(getWishlistGameQuery, name)
+func (db *Database) GetWishlistGameCommand(userId int, partyId int, gameId int) (game typegames.WishlistGame, err error) {
+	row := dbaccess.QueryRow(getWishlistGameQuery, userId, partyId, gameId)
 
-	err = row.Scan(&game.GameId, &game.Name)
+	err = row.Scan(&game.Id, &game.GameId, &game.Name)
 
 	dbaccess.LogDbResult(getWishlistGameQuery, game, err)
-
-	return
-}
-
-var doesUnplayedGameExistQuery = dbaccess.Query{Name: "DoesUnplayedGameExistQuery", SQL: `SELECT does_wishlist_game_exist($1::integer, $2::integer, $3::integer)`}
-
-func (db *Database) DoesWishlistGameExistCommand(userId int, partyId int, gameId int) (doesExist bool, err error) {
-	row := dbaccess.QueryRow(doesUnplayedGameExistQuery, userId, partyId, gameId)
-
-	err = row.Scan(&doesExist)
-
-	dbaccess.LogDbResult(doesUnplayedGameExistQuery, doesExist, err)
 
 	return
 }
@@ -176,18 +162,6 @@ func (db *Database) GetCurrentGameCommand(userId int, partyId int) (game typegam
 	return
 }
 
-var doesUserGameExistQuery = dbaccess.Query{Name: "DoesUserGameExistQuery", SQL: `SELECT does_user_game_exist($1::integer, $2::integer)`}
-
-func (db *Database) DoesUserGameExistCommand(userId int, partyId int) (doesExist bool, err error) {
-	row := dbaccess.QueryRow(doesUserGameExistQuery, userId, partyId)
-
-	err = row.Scan(&doesExist)
-
-	dbaccess.LogDbResult(doesUserGameExistQuery, doesExist, err)
-
-	return
-}
-
 var getGameSecondsSpentQuery = dbaccess.Query{Name: "GetGameSecondsSpentQuery", SQL: `SELECT get_game_seconds_spent($1::integer, $2::integer)`}
 
 func (db *Database) GetGameTimeSpentCommand(userId int, gameId int) (timeSpent time.Duration, err error) {
@@ -246,28 +220,36 @@ func (db *Database) FinishCurrentGameCommand(userId int, partyId int, gameId int
 	return err
 }
 
-var rateGameQuery = dbaccess.Query{Name: "RateGameQuery", SQL: `SELECT rate_game($1::integer, $2::integer, $3::integer, $4::integer, $5::text, $6::integer)`}
+var rateGameQuery = dbaccess.Query{Name: "RateGameQuery", SQL: `SELECT * FROM rate_game($1::integer, $2::integer, $3::integer, $4::integer, $5::text)`}
 
-func (db *Database) RateGameCommand(userId int, partyId int, gameId int, rating int, reviewComment *string, sourceEventId *int) error {
-	_, err := dbaccess.Exec(rateGameQuery, userId, partyId, gameId, rating, reviewComment, sourceEventId)
+// RateGameCommand upserts the rating a user left for a game. Only a game the user has already
+// finished or cancelled can be rated, and rating any other one writes nothing and returns no row.
+func (db *Database) RateGameCommand(userId int, partyId int, gameId int, rating int, reviewComment *string) (gameRating typegames.GameRating, err error) {
+	row := dbaccess.QueryRow(rateGameQuery, userId, partyId, gameId, rating, reviewComment)
 
-	dbaccess.LogDbResult(rateGameQuery, nil, err)
+	err = row.Scan(
+		&gameRating.Id,
+		&gameRating.UserId,
+		&gameRating.PartyId,
+		&gameRating.GameId,
+		&gameRating.Rating,
+		&gameRating.ReviewComment,
+		&gameRating.CreatedDate,
+		&gameRating.UpdatedDate)
 
-	return err
+	dbaccess.LogDbResult(rateGameQuery, gameRating, err)
+
+	return
 }
 
 var getGameReviewQuery = dbaccess.Query{Name: "GetGameReviewQuery", SQL: `SELECT * FROM get_game_review($1::integer, $2::integer, $3::integer)`}
 
-func (db *Database) GetGameReviewCommand(userId int, partyId int, gameId int) (reviewComment *string, err error) {
+func (db *Database) GetGameReviewCommand(userId int, partyId int, gameId int) (review typegames.GameReview, err error) {
 	row := dbaccess.QueryRow(getGameReviewQuery, userId, partyId, gameId)
 
-	err = row.Scan(&reviewComment)
+	err = row.Scan(&review.Rating, &review.ReviewComment)
 
-	if errors.Is(err, sql.ErrNoRows) {
-		err = nil
-	}
-
-	dbaccess.LogDbResult(getGameReviewQuery, reviewComment, err)
+	dbaccess.LogDbResult(getGameReviewQuery, review, err)
 
 	return
 }
@@ -290,8 +272,6 @@ func (db *Database) GetGameHistoryCommand(userId int, partyId int) (games []type
 			&entry.Name,
 			&entry.Action,
 			&timeSpentRaw,
-			&entry.Rating,
-			&entry.ReviewComment,
 			&entry.EndState,
 			&entry.SourceEventId,
 			&entry.CreatedDate)

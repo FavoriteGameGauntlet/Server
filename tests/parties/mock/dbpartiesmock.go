@@ -62,13 +62,6 @@ func (m *DatabaseMock) GetMembersCommand(partyId int) (members []typeparties.Mem
 	return
 }
 
-func (m *DatabaseMock) DoesMemberExistCommand(userId int, partyId int) (exists bool, err error) {
-	args := m.Called(userId, partyId)
-	exists = args.Bool(0)
-	err = args.Error(1)
-	return
-}
-
 func (m *DatabaseMock) ChangeMemberAdminStatusCommand(userId int, partyId int, isAdmin bool) error {
 	args := m.Called(userId, partyId, isAdmin)
 	return args.Error(0)

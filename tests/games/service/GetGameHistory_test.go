@@ -41,8 +41,8 @@ var GetGameHistoryTestCases = []GetGameHistoryTestCase{
 		ExpectedErrorIs: dbError,
 	},
 	{
-		// A history entry carries what happened to the game along with its rating and review, so the
-		// entries return as they are rather than being flattened into the current game shape.
+		// A history entry carries what happened to the game, so the entries return as they are
+		// rather than being flattened into the current game shape.
 		Name:   "SuccessReturn_KeepsWhatTheEntryCarries",
 		UserId: 1,
 		SetupMock: func() *dbgamesmock.DatabaseMock {
@@ -57,7 +57,6 @@ var GetGameHistoryTestCases = []GetGameHistoryTestCase{
 						Name:        "Half-Life 1",
 						Action:      "finished",
 						TimeSpent:   2 * time.Hour,
-						Rating:      ratingPtr(9),
 						EndState:    gameHistoryStatePtr("finished"),
 						CreatedDate: createdDate1,
 					},
@@ -79,7 +78,6 @@ var GetGameHistoryTestCases = []GetGameHistoryTestCase{
 				Name:        "Half-Life 1",
 				Action:      "finished",
 				TimeSpent:   2 * time.Hour,
-				Rating:      ratingPtr(9),
 				EndState:    gameHistoryStatePtr("finished"),
 				CreatedDate: createdDate1,
 			},
@@ -94,8 +92,6 @@ var GetGameHistoryTestCases = []GetGameHistoryTestCase{
 		},
 	},
 }
-
-func ratingPtr(rating int) *int { return &rating }
 
 func TestSrvGames_GetGameHistory(test *testing.T) {
 	for _, testCase := range GetGameHistoryTestCases {

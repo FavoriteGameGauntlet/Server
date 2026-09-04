@@ -1,7 +1,7 @@
 openapi: 3.0.4
 info:
   title: Favorite Game Gauntlet
-  version: 0.14.0
+  version: 0.15.0
 paths:
   /games/{login}/wishlist:
     post:
@@ -112,9 +112,9 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /games/current/rate:
+  /games/rate:
     post:
-      operationId: rateCurrentGame
+      operationId: rateGame
       tags:
         - Games
       requestBody:
@@ -124,6 +124,22 @@ paths:
           description: Success.
         '400':
           $ref: '#/components/responses/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /games/rate/{name}:
+    get:
+      operationId: getGameReview
+      tags:
+        - Games
+      parameters:
+        - $ref: '#/components/parameters/Name'
+      responses:
+        '200':
+          $ref: '#/components/responses/GameReviewResponse'
         '401':
           $ref: '#/components/responses/ErrorResponse'
         '404':
@@ -219,6 +235,19 @@ components:
     GameRate:
       type: object
       properties:
+        name:
+          $ref: '#/components/schemas/Name'
+        rating:
+          type: integer
+          format: int
+        reviewComment:
+          type: string
+      required:
+        - name
+        - rating
+    GameReview:
+      type: object
+      properties:
         rating:
           type: integer
           format: int
@@ -241,11 +270,6 @@ components:
             - cancelled
         timeSpent:
           $ref: '#/components/schemas/Duration'
-        rating:
-          type: integer
-          format: int
-        reviewComment:
-          type: string
         createdDate:
           type: string
           format: date-time
@@ -265,6 +289,12 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/Login'
+    Name:
+      name: name
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Name'
   responses:
     WishlistGamesResponse:
       description: Success.
@@ -290,6 +320,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CurrentGameByLogins'
+    GameReviewResponse:
+      description: Success.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GameReview'
     GameHistoriesResponse:
       description: Success.
       content:

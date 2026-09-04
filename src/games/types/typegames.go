@@ -76,9 +76,23 @@ type GameHistoryEntry struct {
 	Name          string
 	Action        string
 	TimeSpent     time.Duration
-	Rating        *int
-	ReviewComment *string
 	EndState      *string
 	SourceEventId *int
 	CreatedDate   time.Time
+}
+
+type GameRating struct {
+	Id            int
+	UserId        int
+	PartyId       int
+	GameId        int
+	Rating        int
+	ReviewComment *string
+	CreatedDate   time.Time
+	UpdatedDate   time.Time
+}
+
+type GameReview struct {
+	Rating        int
+	ReviewComment *string
 }

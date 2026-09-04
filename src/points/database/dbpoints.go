@@ -9,7 +9,7 @@ type IDatabase interface {
 	CreatePointTypeCommand(partyId int, name string, description string, startValue int, isPublic bool, isShared bool, minimum int, maximum int) (pointType typepoints.PointType, err error)
 	ChangePointTypeCommand(partyId int, pointTypeId int, name string, description string, isPublic bool, isShared bool, minimum int, maximum int) error
 	RemovePointTypeCommand(partyId int, pointTypeId int) error
-	DoesPointTypeExistCommand(partyId int, name string) (doesExist bool, err error)
+	GetPointTypeByNameCommand(partyId int, name string) (pointType typepoints.PointTypeInfo, err error)
 	GetPointTypeCommand(partyId int, pointTypeId int) (pointType typepoints.PointTypeInfo, err error)
 	GetPointTypesCommand(partyId int) (pointTypes []typepoints.PointTypeInfo, err error)
 	CreateUserPointCommand(userId int, partyId int, pointTypeId int, value int) (point typepoints.UserPoint, err error)
@@ -71,14 +71,23 @@ func (db *Database) RemovePointTypeCommand(partyId int, pointTypeId int) error {
 	return err
 }
 
-var doesPointTypeExistQuery = dbaccess.Query{Name: "DoesPointTypeExistQuery", SQL: `SELECT does_point_type_exist($1::integer, $2::text)`}
+var getPointTypeByNameQuery = dbaccess.Query{Name: "GetPointTypeByNameQuery", SQL: `SELECT * FROM get_point_type_by_name($1::integer, $2::text)`}
 
-func (db *Database) DoesPointTypeExistCommand(partyId int, name string) (doesExist bool, err error) {
-	row := dbaccess.QueryRow(doesPointTypeExistQuery, partyId, name)
+func (db *Database) GetPointTypeByNameCommand(partyId int, name string) (pointType typepoints.PointTypeInfo, err error) {
+	row := dbaccess.QueryRow(getPointTypeByNameQuery, partyId, name)
 
-	err = row.Scan(&doesExist)
+	err = row.Scan(
+		&pointType.Id,
+		&pointType.PartyId,
+		&pointType.Name,
+		&pointType.Description,
+		&pointType.StartValue,
+		&pointType.IsPublic,
+		&pointType.IsShared,
+		&pointType.Minimum,
+		&pointType.Maximum)
 
-	dbaccess.LogDbResult(doesPointTypeExistQuery, doesExist, err)
+	dbaccess.LogDbResult(getPointTypeByNameQuery, pointType, err)
 
 	return
 }

@@ -27,9 +27,9 @@ func (m *DatabaseMock) RemovePointTypeCommand(partyId int, pointTypeId int) erro
 	return args.Error(0)
 }
 
-func (m *DatabaseMock) DoesPointTypeExistCommand(partyId int, name string) (doesExist bool, err error) {
+func (m *DatabaseMock) GetPointTypeByNameCommand(partyId int, name string) (pointType typepoints.PointTypeInfo, err error) {
 	args := m.Called(partyId, name)
-	doesExist = args.Get(0).(bool)
+	pointType = args.Get(0).(typepoints.PointTypeInfo)
 	err = args.Error(1)
 	return
 }

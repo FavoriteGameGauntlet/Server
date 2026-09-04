@@ -22,7 +22,8 @@ type IService interface {
 	FinishCurrentGame(userId int) error
 	MakeGameRoll(userId int) (typegames.CurrentGame, error)
 	GetGameHistory(userId int) ([]typegames.GameHistoryEntry, error)
-	RateCurrentGame(userId int, rating int, reviewComment *string) error
+	RateGame(userId int, name string, rating int, reviewComment *string) error
+	GetGameReview(userId int, name string) (typegames.GameReview, error)
 	GetUnplayedGames(userId int) (typegames.WishlistGames, error)
 	AddWishlistGame(userId int, wishlistGame typegames.WishlistGame) error
 	GetAllCurrentGames() ([]typegames.CurrentGameWithLogin, error)
@@ -48,54 +49,37 @@ func NewService(ts srvtimers.IService) *Service {
 	}
 }
 
+// AddWishlistGame puts a game on the user's wishlist, registering the game in the party first if
+// nobody has named it before.
 func (s *Service) AddWishlistGame(userId int, wishlistGame typegames.WishlistGame) error {
-	doesGameExist, err := s.Database.DoesGameExistCommand(defaultPartyId, wishlistGame.Name)
+	game, err := s.Database.GetGameByNameCommand(defaultPartyId, wishlistGame.Name)
 
-	if err != nil {
-		return err
-	}
-
-	game := typegames.WishlistGame{}
-
-	if doesGameExist {
-		game, err = s.Database.GetWishlistGameCommand(wishlistGame.Name)
-	} else {
-		game, err = s.createAndGetGame(wishlistGame)
+	if errors.Is(err, sql.ErrNoRows) {
+		game, err = s.Database.CreateGameCommand(defaultPartyId, wishlistGame.Name)
 	}
 
 	if err != nil {
 		return err
 	}
 
-	doesWishlistGameExist, err := s.Database.DoesWishlistGameExistCommand(userId, defaultPartyId, game.GameId)
+	_, err = s.Database.GetWishlistGameCommand(userId, defaultPartyId, game.Id)
 
-	if err != nil {
-		return err
-	}
-
-	if doesWishlistGameExist {
+	// A row means the game is already on the wishlist; only its absence lets the insert through.
+	if err == nil {
 		return common.NewWishlistGameAlreadyExistsConflictError(wishlistGame.Name)
 	}
 
-	_, err = s.Database.CreateWishlistGameCommand(userId, defaultPartyId, game.GameId)
+	if !errors.Is(err, sql.ErrNoRows) {
+		return err
+	}
+
+	_, err = s.Database.CreateWishlistGameCommand(userId, defaultPartyId, game.Id)
 
 	return err
 }
 
 func (s *Service) GetUnplayedGames(userId int) (typegames.WishlistGames, error) {
 	return s.GettingService.GetWishlistGames(userId)
-}
-
-func (s *Service) createAndGetGame(wishlistGame typegames.WishlistGame) (game typegames.WishlistGame, err error) {
-	_, err = s.Database.CreateGameCommand(defaultPartyId, wishlistGame.Name)
-
-	if err != nil {
-		return
-	}
-
-	game, err = s.Database.GetWishlistGameCommand(wishlistGame.Name)
-
-	return
 }
 
 func (s *Service) GetCurrentGame(userId int) (typegames.CurrentGame, error) {
@@ -151,20 +135,64 @@ func (s *Service) FinishCurrentGame(userId int) error {
 }
 
 // GetGameHistory returns the recorded game events of a user. A history entry is not a current game:
-// it carries what happened to the game, and the rating and review left for it.
+// it carries what happened to the game rather than how it stands now.
 func (s *Service) GetGameHistory(userId int) (history []typegames.GameHistoryEntry, err error) {
 	return s.Database.GetGameHistoryCommand(userId, defaultPartyId)
 }
 
-// RateCurrentGame records a rating and an optional review for the game the user has going.
-func (s *Service) RateCurrentGame(userId int, rating int, reviewComment *string) (err error) {
-	game, err := s.GettingService.GetCurrentGame(userId)
+// RateGame records a rating and an optional review for a game the user has already played. Rating
+// the same game again overwrites the previous rating.
+func (s *Service) RateGame(userId int, name string, rating int, reviewComment *string) (err error) {
+	gameId, err := s.getPlayedGameId(userId, name)
 
 	if err != nil {
 		return
 	}
 
-	return s.Database.RateGameCommand(userId, defaultPartyId, game.Id, rating, reviewComment, nil)
+	_, err = s.Database.RateGameCommand(userId, defaultPartyId, gameId, rating, reviewComment)
+
+	// The game is in the history but hasn't ended yet, so there is nothing to rate and the
+	// database writes nothing.
+	if errors.Is(err, sql.ErrNoRows) {
+		err = common.NewPlayedGameNotFoundError(name)
+	}
+
+	return
+}
+
+// GetGameReview returns the rating and review the user left for a game they have played.
+func (s *Service) GetGameReview(userId int, name string) (review typegames.GameReview, err error) {
+	gameId, err := s.getPlayedGameId(userId, name)
+
+	if err != nil {
+		return
+	}
+
+	review, err = s.Database.GetGameReviewCommand(userId, defaultPartyId, gameId)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		err = common.NewGameReviewNotFoundError(name)
+	}
+
+	return
+}
+
+// getPlayedGameId resolves a game name to its id through the games the user has in their history,
+// which are the only ones a rating can be attached to.
+func (s *Service) getPlayedGameId(userId int, name string) (gameId int, err error) {
+	history, err := s.Database.GetGameHistoryCommand(userId, defaultPartyId)
+
+	if err != nil {
+		return
+	}
+
+	for _, entry := range history {
+		if entry.Name == name {
+			return entry.GameId, nil
+		}
+	}
+
+	return 0, common.NewPlayedGameNotFoundError(name)
 }
 
 func (s *Service) MakeGameRoll(userId int) (game typegames.CurrentGame, err error) {

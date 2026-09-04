@@ -1,13 +1,11 @@
-post:
-  operationId: rateCurrentGame
+get:
+  operationId: getGameReview
   tags: [ Games ]
-  requestBody:
-    $ref: "../../../components/requests/GameRateRequest.yaml"
+  parameters:
+    - $ref: "../../../components/parameters/Name.yaml"
   responses:
-    "204":
-      description: Success.
-    "400":
-      $ref: "../../../components/responses/ErrorResponse.yaml"
+    "200":
+      $ref: "../../../components/responses/GameReviewResponse.yaml"
     "401":
       $ref: "../../../components/responses/ErrorResponse.yaml"
     "404":

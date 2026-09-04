@@ -1,7 +1,7 @@
 openapi: 3.0.4
 info:
   title: Favorite Game Gauntlet
-  version: 0.14.0
+  version: 0.15.0
 paths:
   /games/{login}/wishlist:
     $ref: "../paths/games/login/wishlist.yaml"
@@ -21,8 +21,11 @@ paths:
   /games/current/cancel:
     $ref: "../paths/games/current/cancel.yaml"
 
-  /games/current/rate:
-    $ref: "../paths/games/current/rate.yaml"
+  /games/rate:
+    $ref: "../paths/games/rate.yaml"
+
+  /games/rate/{name}:
+    $ref: "../paths/games/rate/name.yaml"
 
   /games/{login}/history:
     $ref: "../paths/games/login/history.yaml"
