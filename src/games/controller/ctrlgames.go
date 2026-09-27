@@ -306,6 +306,12 @@ func (c *Controller) RateGame(ctx echo.Context) error {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
+	err = validator.ValidateRating(rateDto.Rating)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
 	err = c.Service.RateGame(userId, rateDto.Name, rateDto.Rating, rateDto.ReviewComment)
 
 	if err != nil {

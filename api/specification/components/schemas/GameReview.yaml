@@ -3,6 +3,8 @@ properties:
   rating:
     type: integer
     format: int
+    minimum: 1
+    maximum: 10
   reviewComment:
     type: string
 required: [ rating ]

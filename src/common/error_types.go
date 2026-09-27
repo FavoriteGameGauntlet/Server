@@ -554,6 +554,20 @@ func NewNameUnprocessableError(name string, messageDetails string) error {
 	}
 }
 
+func NewRatingUnprocessableError(rating int, messageDetails string) error {
+	message := fmt.Sprintf(
+		"'%d' does not match the format. %s",
+		rating,
+		messageDetails)
+
+	return &UnprocessableError{
+		&BaseError{
+			Code:    "INCORRECT_RATING_FORMAT",
+			Message: message,
+		},
+	}
+}
+
 func NewEmailUnprocessableError(email string, messageDetails string) error {
 	message := fmt.Sprintf(
 		"'%s' does not match the format. %s",

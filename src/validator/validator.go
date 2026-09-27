@@ -53,6 +53,16 @@ func ValidateName(name string) error {
 	return nil
 }
 
+func ValidateRating(rating int) error {
+	if rating < 1 || rating > 10 {
+		return common.NewRatingUnprocessableError(
+			rating,
+			"The rating should be between 1 and 10.")
+	}
+
+	return nil
+}
+
 var emailRegex = regexp.MustCompile(`^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$`)
 
 func ValidateEmail(email string) error {
