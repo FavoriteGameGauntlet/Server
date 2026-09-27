@@ -177,8 +177,9 @@ func (s *Service) GetGameReview(userId int, name string) (review typegames.GameR
 	return
 }
 
-// getPlayedGameId resolves a game name to its id through the games the user has in their history,
-// which are the only ones a rating can be attached to.
+// getPlayedGameId resolves a game name to its id through the games the user has finished, which are
+// the only ones a rating can be attached to. A history entry without an end state is a game still in
+// progress.
 func (s *Service) getPlayedGameId(userId int, name string) (gameId int, err error) {
 	history, err := s.Database.GetGameHistoryCommand(userId, defaultPartyId)
 
@@ -187,7 +188,7 @@ func (s *Service) getPlayedGameId(userId int, name string) (gameId int, err erro
 	}
 
 	for _, entry := range history {
-		if entry.Name == name {
+		if entry.Name == name && entry.EndState != nil {
 			return entry.GameId, nil
 		}
 	}
