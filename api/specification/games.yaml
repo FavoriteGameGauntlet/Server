@@ -205,12 +205,6 @@ components:
       properties:
         name:
           $ref: '#/components/schemas/Name'
-        state:
-          type: string
-          enum:
-            - started
-            - finished
-            - cancelled
         timeSpent:
           $ref: '#/components/schemas/Duration'
         startDate:
@@ -218,7 +212,6 @@ components:
           format: date-time
       required:
         - name
-        - state
         - timeSpent
         - startDate
     CurrentGameByLogins:

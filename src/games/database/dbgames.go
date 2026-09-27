@@ -148,7 +148,7 @@ func (db *Database) GetCurrentGameCommand(userId int, partyId int) (game typegam
 	row := dbaccess.QueryRow(getCurrentGameQuery, userId, partyId)
 
 	var timeSpentRaw string
-	err = row.Scan(&game.Id, &game.Name, &timeSpentRaw)
+	err = row.Scan(&game.Id, &game.Name, &timeSpentRaw, &game.StartDate)
 
 	if err == nil {
 		game.TimeSpent, err = dbaccess.ScanInterval(timeSpentRaw)
@@ -275,7 +275,7 @@ func (db *Database) GetAllCurrentGamesCommand(partyId int) (games []typegames.Us
 	for rows.Next() {
 		game := typegames.UserGameWithLogin{}
 		var timeSpentRaw string
-		err = rows.Scan(&game.Id, &game.Name, &timeSpentRaw, &game.Login)
+		err = rows.Scan(&game.Id, &game.Name, &timeSpentRaw, &game.Login, &game.StartDate)
 
 		if err == nil {
 			game.TimeSpent, err = dbaccess.ScanInterval(timeSpentRaw)

@@ -3,12 +3,10 @@ package typegames
 import "time"
 
 type CurrentGame struct {
-	Id         int
-	Name       string
-	State      CurrentGameState
-	TimeSpent  time.Duration
-	StartDate  time.Time
-	FinishDate *time.Time
+	Id        int
+	Name      string
+	TimeSpent time.Duration
+	StartDate time.Time
 }
 
 type CurrentGames = []CurrentGame
@@ -17,14 +15,6 @@ type CurrentGameWithLogin struct {
 	Login string
 	Game  CurrentGame
 }
-
-type CurrentGameState string
-
-const (
-	GameStateCancelled CurrentGameState = "cancelled"
-	GameStateFinished  CurrentGameState = "finished"
-	GameStateStarted   CurrentGameState = "started"
-)
 
 type WishlistGame struct {
 	Id     int
@@ -61,6 +51,7 @@ type UserGame struct {
 	Id        int
 	Name      string
 	TimeSpent time.Duration
+	StartDate time.Time
 }
 
 type UserGameWithLogin struct {
@@ -68,6 +59,7 @@ type UserGameWithLogin struct {
 	Name      string
 	TimeSpent time.Duration
 	Login     string
+	StartDate time.Time
 }
 
 type GameHistoryEntry struct {

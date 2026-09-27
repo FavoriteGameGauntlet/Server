@@ -12,32 +12,21 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
-// Defines values for CurrentGameState.
-const (
-	CurrentGameStateCancelled CurrentGameState = "cancelled"
-	CurrentGameStateFinished  CurrentGameState = "finished"
-	CurrentGameStateStarted   CurrentGameState = "started"
-)
-
 // Defines values for GameHistoryEntryEndState.
 const (
-	GameHistoryEntryEndStateCancelled GameHistoryEntryEndState = "cancelled"
-	GameHistoryEntryEndStateFinished  GameHistoryEntryEndState = "finished"
-	GameHistoryEntryEndStateStarted   GameHistoryEntryEndState = "started"
+	Cancelled GameHistoryEntryEndState = "cancelled"
+	Finished  GameHistoryEntryEndState = "finished"
+	Started   GameHistoryEntryEndState = "started"
 )
 
 // CurrentGame defines model for CurrentGame.
 type CurrentGame struct {
-	Name      Name             `json:"name"`
-	StartDate time.Time        `json:"startDate"`
-	State     CurrentGameState `json:"state"`
+	Name      Name      `json:"name"`
+	StartDate time.Time `json:"startDate"`
 
 	// TimeSpent The duration notation as defined by ISO 8601
 	TimeSpent Duration `json:"timeSpent"`
 }
-
-// CurrentGameState defines model for CurrentGame.State.
-type CurrentGameState string
 
 // CurrentGameByLogins defines model for CurrentGameByLogins.
 type CurrentGameByLogins = []struct {

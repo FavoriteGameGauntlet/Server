@@ -41,6 +41,7 @@ func (s *GettingService) GetCurrentGame(userId int) (game typegames.CurrentGame,
 		Id:        userGame.Id,
 		Name:      userGame.Name,
 		TimeSpent: userGame.TimeSpent,
+		StartDate: userGame.StartDate,
 	}
 
 	return

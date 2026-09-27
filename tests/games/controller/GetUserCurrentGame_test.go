@@ -21,7 +21,7 @@ type GetUserCurrentGameTestCase struct {
 	ExpectedStatus int
 }
 
-var currentGame = typegames.CurrentGame{Name: "Half-Life 1", State: typegames.GameStateStarted}
+var currentGame = typegames.CurrentGame{Name: "Half-Life 1"}
 
 var GetUserCurrentGameTestCases = []GetUserCurrentGameTestCase{
 	{

@@ -61,7 +61,6 @@ func (c *Controller) GetUserCurrentGame(ctx echo.Context, login gengames.Login) 
 func convertGameToDto(game typegames.CurrentGame) gengames.CurrentGame {
 	return gengames.CurrentGame{
 		Name:      game.Name,
-		State:     gengames.CurrentGameState(game.State),
 		TimeSpent: common.DurationToISO8601(game.TimeSpent),
 		StartDate: game.StartDate,
 	}

@@ -67,14 +67,16 @@ var GetCurrentGameTestCases = []GetCurrentGameTestCase{
 				Return(typegames.UserGame{
 					Id:        1,
 					Name:      "Half-Life 1",
-					TimeSpent: 2 * time.Hour}, nil)
+					TimeSpent: 2 * time.Hour,
+					StartDate: time.Date(2026, 9, 27, 12, 0, 0, 0, time.UTC)}, nil)
 
 			return databaseMock
 		},
 		ExpectedGame: &typegames.CurrentGame{
 			Id:        1,
 			Name:      "Half-Life 1",
-			TimeSpent: 2 * time.Hour},
+			TimeSpent: 2 * time.Hour,
+			StartDate: time.Date(2026, 9, 27, 12, 0, 0, 0, time.UTC)},
 	},
 }
 

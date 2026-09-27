@@ -228,7 +228,7 @@ func (s *Service) MakeGameRoll(userId int) (game typegames.CurrentGame, err erro
 	randomNumber := rand.Intn(len(unplayedGames))
 	randomUnplayedGame := unplayedGames[randomNumber]
 
-	_, err = s.Database.CreateCurrentGameCommand(userId, defaultPartyId, randomUnplayedGame.GameId, userId, nil)
+	createdGame, err := s.Database.CreateCurrentGameCommand(userId, defaultPartyId, randomUnplayedGame.GameId, userId, nil)
 
 	if err != nil {
 		return
@@ -242,7 +242,7 @@ func (s *Service) MakeGameRoll(userId int) (game typegames.CurrentGame, err erro
 
 	game.Id = randomUnplayedGame.GameId
 	game.Name = randomUnplayedGame.Name
-	game.State = typegames.GameStateStarted
+	game.StartDate = createdGame.StartedDate
 
 	return
 }
@@ -267,6 +267,7 @@ func (s *Service) GetAllCurrentGames() (games []typegames.CurrentGameWithLogin, 
 				Id:        userGame.Id,
 				Name:      userGame.Name,
 				TimeSpent: userGame.TimeSpent,
+				StartDate: userGame.StartDate,
 			},
 		}
 	}

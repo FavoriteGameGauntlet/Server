@@ -71,9 +71,8 @@ var CancelCurrentGameTestCases = []CancelCurrentGameTestCase{
 				On("GetCurrentGame",
 					1).
 				Return(typegames.CurrentGame{
-					Id:    1,
-					Name:  "Half-Life 1",
-					State: typegames.GameStateStarted},
+					Id:   1,
+					Name: "Half-Life 1"},
 					nil)
 			timerServiceMock.
 				On("ForceStopCurrentTimer",
@@ -96,7 +95,7 @@ var CancelCurrentGameTestCases = []CancelCurrentGameTestCase{
 			gettingServiceMock.
 				On("GetCurrentGame",
 					1).
-				Return(typegames.CurrentGame{Id: 1, Name: "Half-Life 1", State: typegames.GameStateStarted}, nil)
+				Return(typegames.CurrentGame{Id: 1, Name: "Half-Life 1"}, nil)
 			timerServiceMock.
 				On("ForceStopCurrentTimer",
 					1).
@@ -122,7 +121,7 @@ var CancelCurrentGameTestCases = []CancelCurrentGameTestCase{
 			gettingServiceMock.
 				On("GetCurrentGame",
 					1).
-				Return(typegames.CurrentGame{Id: 1, Name: "Half-Life 1", State: typegames.GameStateStarted}, nil)
+				Return(typegames.CurrentGame{Id: 1, Name: "Half-Life 1"}, nil)
 			timerServiceMock.
 				On("ForceStopCurrentTimer",
 					1).
