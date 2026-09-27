@@ -10,6 +10,8 @@ post:
       $ref: "../../components/responses/ErrorResponse.yaml"
     "409":
       $ref: "../../components/responses/ErrorResponse.yaml"
+    "422":
+      $ref: "../../components/responses/ErrorResponse.yaml"
     "500":
       $ref: "../../components/responses/ErrorResponse.yaml"
 get:
