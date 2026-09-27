@@ -72,13 +72,6 @@ func (m *DatabaseMock) GetCurrentGameCommand(userId int, partyId int) (game type
 	return
 }
 
-func (m *DatabaseMock) GetGameTimeSpentCommand(userId int, gameId int) (timeSpent time.Duration, err error) {
-	args := m.Called(userId, gameId)
-	timeSpent = args.Get(0).(time.Duration)
-	err = args.Error(1)
-	return
-}
-
 func (m *DatabaseMock) ChangeGameTimeSpentCommand(userId int, partyId int, gameId int, changeValue time.Duration, actorUserId int, sourceEventId *int) error {
 	args := m.Called(userId, partyId, gameId, changeValue, actorUserId, sourceEventId)
 	return args.Error(0)

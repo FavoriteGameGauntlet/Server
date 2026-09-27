@@ -3,8 +3,6 @@ package dbgames
 import (
 	"FGG-Service/src/dbaccess"
 	"FGG-Service/src/games/types"
-	"database/sql"
-	"errors"
 	"time"
 )
 
@@ -18,7 +16,6 @@ type IDatabase interface {
 	GetWishlistGamesCommand(userId int, partyId int) (games typegames.WishlistGames, err error)
 	CreateCurrentGameCommand(userId int, partyId int, gameId int, actorUserId int, sourceEventId *int) (game typegames.CreatedUserGame, err error)
 	GetCurrentGameCommand(userId int, partyId int) (game typegames.UserGame, err error)
-	GetGameTimeSpentCommand(userId int, gameId int) (timeSpent time.Duration, err error)
 	ChangeGameTimeSpentCommand(userId int, partyId int, gameId int, changeValue time.Duration, actorUserId int, sourceEventId *int) error
 	CancelCurrentGameCommand(userId int, partyId int, gameId int, actorUserId int, sourceEventId *int) error
 	FinishCurrentGameCommand(userId int, partyId int, gameId int, actorUserId int, sourceEventId *int) error
@@ -158,34 +155,6 @@ func (db *Database) GetCurrentGameCommand(userId int, partyId int) (game typegam
 	}
 
 	dbaccess.LogDbResult(getCurrentGameQuery, game, err)
-
-	return
-}
-
-var getGameSecondsSpentQuery = dbaccess.Query{Name: "GetGameSecondsSpentQuery", SQL: `SELECT get_game_seconds_spent($1::integer, $2::integer)`}
-
-func (db *Database) GetGameTimeSpentCommand(userId int, gameId int) (timeSpent time.Duration, err error) {
-	row := dbaccess.QueryRow(getGameSecondsSpentQuery, userId, gameId)
-
-	var secondsSpent int
-	err = row.Scan(&secondsSpent)
-
-	if errors.Is(err, sql.ErrNoRows) {
-		dbaccess.LogDbResult(getGameSecondsSpentQuery, timeSpent, err)
-
-		err = nil
-		return
-	}
-
-	if err != nil {
-		dbaccess.LogDbResult(getGameSecondsSpentQuery, timeSpent, err)
-
-		return
-	}
-
-	timeSpent = time.Duration(secondsSpent) * time.Second
-
-	dbaccess.LogDbResult(getGameSecondsSpentQuery, timeSpent, err)
 
 	return
 }
