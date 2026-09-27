@@ -12,7 +12,7 @@ type Member struct {
 	Id          int
 	UserId      int
 	PartyId     int
-	DisplayName string
+	DisplayName *string
 	IsAdmin     bool
 	JoinedDate  time.Time
 	LeftDate    *time.Time
@@ -23,7 +23,7 @@ type MemberWithLogin struct {
 	UserId      int
 	PartyId     int
 	Login       string
-	DisplayName string
+	DisplayName *string
 	IsAdmin     bool
 	JoinedDate  time.Time
 	LeftDate    *time.Time

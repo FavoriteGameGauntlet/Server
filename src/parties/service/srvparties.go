@@ -10,13 +10,13 @@ import (
 )
 
 type IService interface {
-	CreateParty(creatorUserId int, name string, displayName string) (typeparties.Party, error)
+	CreateParty(creatorUserId int, name string) (typeparties.Party, error)
 	GetParties() ([]typeparties.Party, error)
 	GetParty(partyId int) (typeparties.Party, error)
 	ChangePartyName(partyId int, name string) error
 	DeleteParty(partyId int) error
 	GetMembers(partyId int) ([]typeparties.MemberWithLogin, error)
-	AddMember(userId int, partyId int, displayName string, isAdmin bool) (typeparties.Member, error)
+	AddMember(userId int, partyId int, displayName *string, isAdmin bool) (typeparties.Member, error)
 	ChangeMember(userId int, partyId int, displayName *string, isAdmin *bool) error
 	RemoveMember(userId int, partyId int) error
 }
@@ -35,14 +35,14 @@ func NewService() *Service {
 
 // CreateParty makes a party and puts the user who asked for it in as its first admin. Admin rights
 // are membership data, so without this a new party would have nobody able to administer it.
-func (s *Service) CreateParty(creatorUserId int, name string, displayName string) (party typeparties.Party, err error) {
+func (s *Service) CreateParty(creatorUserId int, name string) (party typeparties.Party, err error) {
 	party, err = s.Database.CreatePartyCommand(name)
 
 	if err != nil {
 		return
 	}
 
-	_, err = s.AddMember(creatorUserId, party.Id, displayName, true)
+	_, err = s.AddMember(creatorUserId, party.Id, nil, true)
 
 	return
 }
@@ -75,7 +75,7 @@ func (s *Service) GetMembers(partyId int) (members []typeparties.MemberWithLogin
 
 // AddMember joins a user to the party and gives them a starting value for each of its point types.
 // Nothing seeds a member's points otherwise, since the schema dropped create_user_stats.
-func (s *Service) AddMember(userId int, partyId int, displayName string, isAdmin bool) (member typeparties.Member, err error) {
+func (s *Service) AddMember(userId int, partyId int, displayName *string, isAdmin bool) (member typeparties.Member, err error) {
 	_, err = s.Database.GetMemberCommand(userId, partyId)
 
 	if err == nil {

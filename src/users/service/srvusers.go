@@ -41,9 +41,7 @@ func (s *Service) GetAllUserNames() (users typeusers.Users, err error) {
 			continue
 		}
 
-		displayName := member.DisplayName
-
-		users = append(users, typeusers.User{Login: member.Login, DisplayName: &displayName})
+		users = append(users, typeusers.User{Login: member.Login, DisplayName: member.DisplayName})
 	}
 
 	return
@@ -56,7 +54,7 @@ func (s *Service) ChangeDisplayName(userId int, displayName string) error {
 func (s *Service) GetDisplayName(userId int) (displayName *string, err error) {
 	member, err := s.PartiesDatabase.GetMemberCommand(userId, defaultPartyId)
 
-	if errors.Is(err, sql.ErrNoRows) || err == nil && member.DisplayName == "" {
+	if errors.Is(err, sql.ErrNoRows) || err == nil && (member.DisplayName == nil || *member.DisplayName == "") {
 		return nil, common.NewDisplayNameNotFoundError()
 	}
 
@@ -64,7 +62,5 @@ func (s *Service) GetDisplayName(userId int) (displayName *string, err error) {
 		return
 	}
 
-	name := member.DisplayName
-
-	return &name, nil
+	return member.DisplayName, nil
 }

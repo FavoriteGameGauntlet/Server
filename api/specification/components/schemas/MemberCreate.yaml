@@ -6,4 +6,4 @@ properties:
     $ref: "./Name.yaml"
   isAdmin:
     type: boolean
-required: [ login, displayName, isAdmin ]
+required: [ login, isAdmin ]

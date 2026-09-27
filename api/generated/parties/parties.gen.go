@@ -23,7 +23,7 @@ type Login = string
 
 // Member defines model for Member.
 type Member struct {
-	DisplayName Name      `json:"displayName"`
+	DisplayName *Name     `json:"displayName,omitempty"`
 	IsAdmin     bool      `json:"isAdmin"`
 	JoinedDate  time.Time `json:"joinedDate"`
 	Login       Login     `json:"login"`
@@ -37,7 +37,7 @@ type MemberChange struct {
 
 // MemberCreate defines model for MemberCreate.
 type MemberCreate struct {
-	DisplayName Name  `json:"displayName"`
+	DisplayName *Name `json:"displayName,omitempty"`
 	IsAdmin     bool  `json:"isAdmin"`
 	Login       Login `json:"login"`
 }
@@ -63,10 +63,9 @@ type PartyChange struct {
 	Name Name `json:"name"`
 }
 
-// PartyCreate Creates a party. The user creating it joins as its first admin under the given display name.
+// PartyCreate Creates a party. The user creating it joins as its first admin.
 type PartyCreate struct {
-	DisplayName Name `json:"displayName"`
-	Name        Name `json:"name"`
+	Name Name `json:"name"`
 }
 
 // PartyId defines model for PartyId.
@@ -96,7 +95,7 @@ type MemberCreateRequest = MemberCreate
 // PartyChangeRequest defines model for PartyChangeRequest.
 type PartyChangeRequest = PartyChange
 
-// PartyCreateRequest Creates a party. The user creating it joins as its first admin under the given display name.
+// PartyCreateRequest Creates a party. The user creating it joins as its first admin.
 type PartyCreateRequest = PartyCreate
 
 // CreatePartyJSONRequestBody defines body for CreateParty for application/json ContentType.

@@ -45,7 +45,7 @@ func (c *Controller) CreateParty(ctx echo.Context) error {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	party, err := c.Service.CreateParty(userId, partyDto.Name, partyDto.DisplayName)
+	party, err := c.Service.CreateParty(userId, partyDto.Name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)

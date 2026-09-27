@@ -9,4 +9,4 @@ properties:
   joinedDate:
     type: string
     format: date-time
-required: [ login, displayName, isAdmin, joinedDate ]
+required: [ login, isAdmin, joinedDate ]

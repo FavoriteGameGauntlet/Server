@@ -41,7 +41,7 @@ func (m *DatabaseMock) DeletePartyCommand(partyId int) error {
 	return args.Error(0)
 }
 
-func (m *DatabaseMock) CreateMemberCommand(userId int, partyId int, displayName string, isAdmin bool) (member typeparties.Member, err error) {
+func (m *DatabaseMock) CreateMemberCommand(userId int, partyId int, displayName *string, isAdmin bool) (member typeparties.Member, err error) {
 	args := m.Called(userId, partyId, displayName, isAdmin)
 	member = args.Get(0).(typeparties.Member)
 	err = args.Error(1)

@@ -193,15 +193,12 @@ components:
     PartyCreate:
       type: object
       description: |
-        Creates a party. The user creating it joins as its first admin under the given display name.
+        Creates a party. The user creating it joins as its first admin.
       properties:
         name:
           $ref: '#/components/schemas/Name'
-        displayName:
-          $ref: '#/components/schemas/Name'
       required:
         - name
-        - displayName
     PartyChange:
       type: object
       properties:
@@ -228,7 +225,6 @@ components:
           format: date-time
       required:
         - login
-        - displayName
         - isAdmin
         - joinedDate
     Members:
@@ -246,7 +242,6 @@ components:
           type: boolean
       required:
         - login
-        - displayName
         - isAdmin
     MemberChange:
       type: object

@@ -59,8 +59,8 @@ var GetAllUserNamesTestCases = []GetAllUserNamesTestCase{
 			databaseMock.
 				On("GetMembersCommand", 1).
 				Return([]typeparties.MemberWithLogin{
-					{Login: "alice", DisplayName: "Alice"},
-					{Login: "bob", DisplayName: "Bob"},
+					{Login: "alice", DisplayName: ptr("Alice")},
+					{Login: "bob", DisplayName: ptr("Bob")},
 				}, nil)
 
 			return databaseMock
@@ -79,8 +79,8 @@ var GetAllUserNamesTestCases = []GetAllUserNamesTestCase{
 			databaseMock.
 				On("GetMembersCommand", 1).
 				Return([]typeparties.MemberWithLogin{
-					{Login: "alice", DisplayName: "Alice"},
-					{Login: "gone", DisplayName: "Gone", LeftDate: &leftDate},
+					{Login: "alice", DisplayName: ptr("Alice")},
+					{Login: "gone", DisplayName: ptr("Gone"), LeftDate: &leftDate},
 				}, nil)
 
 			return databaseMock

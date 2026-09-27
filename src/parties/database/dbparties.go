@@ -11,7 +11,7 @@ type IDatabase interface {
 	GetPartiesCommand() (parties []typeparties.Party, err error)
 	ChangePartyNameCommand(partyId int, name string) error
 	DeletePartyCommand(partyId int) error
-	CreateMemberCommand(userId int, partyId int, displayName string, isAdmin bool) (member typeparties.Member, err error)
+	CreateMemberCommand(userId int, partyId int, displayName *string, isAdmin bool) (member typeparties.Member, err error)
 	GetMemberCommand(userId int, partyId int) (member typeparties.MemberWithLogin, err error)
 	GetMembersCommand(partyId int) (members []typeparties.MemberWithLogin, err error)
 	ChangeMemberAdminStatusCommand(userId int, partyId int, isAdmin bool) error
@@ -94,7 +94,7 @@ func (db *Database) DeletePartyCommand(partyId int) error {
 
 var createMemberQuery = dbaccess.Query{Name: "CreateMemberQuery", SQL: `SELECT * FROM create_member($1::integer, $2::integer, $3::text, $4::boolean)`}
 
-func (db *Database) CreateMemberCommand(userId int, partyId int, displayName string, isAdmin bool) (member typeparties.Member, err error) {
+func (db *Database) CreateMemberCommand(userId int, partyId int, displayName *string, isAdmin bool) (member typeparties.Member, err error) {
 	row := dbaccess.QueryRow(createMemberQuery, userId, partyId, displayName, isAdmin)
 
 	err = row.Scan(

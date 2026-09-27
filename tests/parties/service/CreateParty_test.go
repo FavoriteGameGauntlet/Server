@@ -28,15 +28,15 @@ func TestSrvParties_CreateParty(test *testing.T) {
 
 		partiesDb.On("CreatePartyCommand", "gauntlet").Return(typeparties.Party{Id: 8, Name: "gauntlet"}, nil)
 		partiesDb.On("GetMemberCommand", 5, 8).Return(typeparties.MemberWithLogin{}, sql.ErrNoRows)
-		partiesDb.On("CreateMemberCommand", 5, 8, "Alice", true).
-			Return(typeparties.Member{Id: 1, UserId: 5, PartyId: 8, DisplayName: "Alice", IsAdmin: true}, nil)
+		partiesDb.On("CreateMemberCommand", 5, 8, (*string)(nil), true).
+			Return(typeparties.Member{Id: 1, UserId: 5, PartyId: 8, IsAdmin: true}, nil)
 		pointsDb.On("GetPointTypesCommand", 8).Return([]typepoints.PointTypeInfo{freePoints}, nil)
 		pointsDb.On("CreateUserPointCommand", 5, 8, freePoints.Id, freePoints.StartValue).
 			Return(typepoints.UserPoint{}, nil)
 
 		sut := srvparties.Service{Database: partiesDb, PointsService: &srvpoints.Service{Database: pointsDb}}
 
-		party, err := sut.CreateParty(5, "gauntlet", "Alice")
+		party, err := sut.CreateParty(5, "gauntlet")
 
 		require.NoError(test, err)
 		require.Equal(test, 8, party.Id)
@@ -52,7 +52,7 @@ func TestSrvParties_CreateParty(test *testing.T) {
 
 		sut := srvparties.Service{Database: partiesDb}
 
-		_, err := sut.AddMember(5, 8, "Alice", false)
+		_, err := sut.AddMember(5, 8, nil, false)
 
 		require.Error(test, err)
 		partiesDb.AssertNotCalled(test, "CreateMemberCommand")
