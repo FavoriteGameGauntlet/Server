@@ -132,8 +132,8 @@ func (s *Service) GetUserItems(userId int, partyId int) (details []typeitems.Use
 	return
 }
 
-// UseItem spends one use of an item the user holds and grants what it carries. The item history row
-// it records is the event the resulting grants are attributed to.
+// UseItem spends one use of an item the user holds and grants what it carries. The history event of
+// spending the use is the event the resulting grants are attributed to.
 func (s *Service) UseItem(userId int, partyId int, itemName string) (err error) {
 	item, err := s.itemByName(partyId, itemName)
 
@@ -163,19 +163,21 @@ func (s *Service) UseItem(userId int, partyId int, itemName string) (err error) 
 
 	usesLeft := userItem.UsesLeft - 1
 
-	history, err := s.Database.CreateItemHistoryCommand(userId, partyId, item.Id, usesLeft, nil)
+	historyEventId, err := s.Database.ChangeUserItemUsesLeftCommand(userId, partyId, item.Id, usesLeft, userId, nil)
 
 	if err != nil {
 		return
 	}
 
-	err = s.Database.ChangeUserItemUsesLeftCommand(userId, partyId, item.Id, usesLeft, userId, history.Id)
+	if usesLeft == 0 {
+		err = s.Database.DeleteUserItemCommand(userId, partyId, item.Id, userId, &historyEventId)
 
-	if err != nil {
-		return
+		if err != nil {
+			return
+		}
 	}
 
-	return s.applyItemChange(userId, partyId, withChange.Change.Entries, history.Id)
+	return s.applyItemChange(userId, partyId, withChange.Change.Entries, historyEventId)
 }
 
 // applyItemChange stamps the item's change template onto the user and applies it, the same way a

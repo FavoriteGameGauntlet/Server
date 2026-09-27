@@ -34,10 +34,10 @@ func TestSrvEffects_UseEffect(test *testing.T) {
 			Return(typeeffects.UserEffectDetail{Id: 21, UserId: 7, PartyId: 1, EffectId: haste.Id, UsesLeft: 2}, nil)
 		effectsDb.On("GetEffectCommand", 1, haste.Id).
 			Return(typeeffects.EffectWithChange{Id: haste.Id, Change: typechanges.Change{Entries: []typechanges.ChangeEntry{templateEntry}}}, nil)
-		effectsDb.On("ChangeUserEffectUsesLeftCommand", 7, 1, haste.Id, 1, 7, (*int)(nil)).Return(nil)
+		effectsDb.On("ChangeUserEffectUsesLeftCommand", 7, 1, haste.Id, 1, 7, (*int)(nil)).Return(60, nil)
 		changesDb.On("CreateUserChangeFromJsonbCommand", 1, []typechanges.ChangeEntry{targetedEntry}).
 			Return(typechanges.UserChange{Entries: []typechanges.ChangeEntry{targetedEntry}}, nil)
-		changesSvc.On("ApplyChangeEntries", 1, []typechanges.ChangeEntry{targetedEntry}, 7, 21).Return(nil)
+		changesSvc.On("ApplyChangeEntries", 1, []typechanges.ChangeEntry{targetedEntry}, 7, 60).Return(nil)
 
 		sut := srveffects.Service{Database: effectsDb, ChangesDatabase: changesDb, ChangesService: changesSvc}
 
@@ -45,8 +45,27 @@ func TestSrvEffects_UseEffect(test *testing.T) {
 
 		require.NoError(test, err)
 		effectsDb.AssertExpectations(test)
+		effectsDb.AssertNotCalled(test, "DeleteUserEffectCommand")
 		changesDb.AssertExpectations(test)
 		changesSvc.AssertExpectations(test)
+	})
+
+	test.Run("LastUse_RemovesEffectAttributedToUse", func(test *testing.T) {
+		effectsDb := new(dbeffectsmock.DatabaseMock)
+
+		effectsDb.On("GetActualEffectsCommand", 1).Return([]typeeffects.Effect{haste}, nil)
+		effectsDb.On("GetUserEffectCommand", 7, 1, haste.Id).
+			Return(typeeffects.UserEffectDetail{Id: 21, UserId: 7, PartyId: 1, EffectId: haste.Id, UsesLeft: 1}, nil)
+		effectsDb.On("GetEffectCommand", 1, haste.Id).Return(typeeffects.EffectWithChange{Id: haste.Id}, nil)
+		effectsDb.On("ChangeUserEffectUsesLeftCommand", 7, 1, haste.Id, 0, 7, (*int)(nil)).Return(60, nil)
+		effectsDb.On("DeleteUserEffectCommand", 7, 1, haste.Id, 7, ptr(60)).Return(nil)
+
+		sut := srveffects.Service{Database: effectsDb}
+
+		err := sut.UseEffect(7, 1, haste.Name)
+
+		require.NoError(test, err)
+		effectsDb.AssertExpectations(test)
 	})
 
 	test.Run("NoUsesLeft_Rejected", func(test *testing.T) {

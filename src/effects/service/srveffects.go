@@ -161,13 +161,21 @@ func (s *Service) UseEffect(userId int, partyId int, effectName string) (err err
 
 	usesLeft := userEffect.UsesLeft - 1
 
-	err = s.Database.ChangeUserEffectUsesLeftCommand(userId, partyId, effect.Id, usesLeft, userId, nil)
+	historyEventId, err := s.Database.ChangeUserEffectUsesLeftCommand(userId, partyId, effect.Id, usesLeft, userId, nil)
 
 	if err != nil {
 		return
 	}
 
-	return s.applyEffectChange(userId, partyId, withChange.Change.Entries, userEffect.Id)
+	if usesLeft == 0 {
+		err = s.Database.DeleteUserEffectCommand(userId, partyId, effect.Id, userId, &historyEventId)
+
+		if err != nil {
+			return
+		}
+	}
+
+	return s.applyEffectChange(userId, partyId, withChange.Change.Entries, historyEventId)
 }
 
 // applyEffectChange stamps the effect's change template onto the user and applies it.

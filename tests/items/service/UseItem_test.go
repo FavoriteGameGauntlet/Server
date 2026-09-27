@@ -22,10 +22,10 @@ func ptr[T any](value T) *T {
 	return &value
 }
 
-// Using an item spends one use and grants what the item carries. The item history row it records is
-// the source event of the grants, so they can be traced back to the use that caused them.
+// Using an item spends one use and grants what the item carries. The history event of spending the
+// use is the source event of the grants, so they can be traced back to the use that caused them.
 func TestSrvItems_UseItem(test *testing.T) {
-	test.Run("Success_RecordsHistoryThenSpendsUseThenGrants", func(test *testing.T) {
+	test.Run("Success_SpendsUseThenGrants", func(test *testing.T) {
 		itemsDb := new(dbitemsmock.DatabaseMock)
 		changesDb := new(dbchangesmock.DatabaseMock)
 		changesSvc := new(srvchangesmock.ServiceMock)
@@ -38,9 +38,7 @@ func TestSrvItems_UseItem(test *testing.T) {
 			Return(typeitems.UserItem{Id: 1, UserId: 7, PartyId: 1, ItemId: potion.Id, UsesLeft: 2}, nil)
 		itemsDb.On("GetItemCommand", 1, potion.Id).
 			Return(typeitems.ItemWithChange{Id: potion.Id, Change: typechanges.Change{Entries: []typechanges.ChangeEntry{templateEntry}}}, nil)
-		itemsDb.On("CreateItemHistoryCommand", 7, 1, potion.Id, 1, (*int)(nil)).
-			Return(typeitems.ItemHistoryEntry{Id: 55}, nil)
-		itemsDb.On("ChangeUserItemUsesLeftCommand", 7, 1, potion.Id, 1, 7, 55).Return(nil)
+		itemsDb.On("ChangeUserItemUsesLeftCommand", 7, 1, potion.Id, 1, 7, (*int)(nil)).Return(55, nil)
 		changesDb.On("CreateUserChangeFromJsonbCommand", 1, []typechanges.ChangeEntry{targetedEntry}).
 			Return(typechanges.UserChange{Entries: []typechanges.ChangeEntry{targetedEntry}}, nil)
 		changesSvc.On("ApplyChangeEntries", 1, []typechanges.ChangeEntry{targetedEntry}, 7, 55).Return(nil)
@@ -51,8 +49,27 @@ func TestSrvItems_UseItem(test *testing.T) {
 
 		require.NoError(test, err)
 		itemsDb.AssertExpectations(test)
+		itemsDb.AssertNotCalled(test, "DeleteUserItemCommand")
 		changesDb.AssertExpectations(test)
 		changesSvc.AssertExpectations(test)
+	})
+
+	test.Run("LastUse_RemovesItemAttributedToUse", func(test *testing.T) {
+		itemsDb := new(dbitemsmock.DatabaseMock)
+
+		itemsDb.On("GetActualItemsCommand", 1).Return([]typeitems.Item{potion}, nil)
+		itemsDb.On("GetUserItemCommand", 7, 1, potion.Id).
+			Return(typeitems.UserItem{Id: 1, UserId: 7, PartyId: 1, ItemId: potion.Id, UsesLeft: 1}, nil)
+		itemsDb.On("GetItemCommand", 1, potion.Id).Return(typeitems.ItemWithChange{Id: potion.Id}, nil)
+		itemsDb.On("ChangeUserItemUsesLeftCommand", 7, 1, potion.Id, 0, 7, (*int)(nil)).Return(55, nil)
+		itemsDb.On("DeleteUserItemCommand", 7, 1, potion.Id, 7, ptr(55)).Return(nil)
+
+		sut := srvitems.Service{Database: itemsDb}
+
+		err := sut.UseItem(7, 1, potion.Name)
+
+		require.NoError(test, err)
+		itemsDb.AssertExpectations(test)
 	})
 
 	test.Run("NoUsesLeft_Rejected", func(test *testing.T) {
@@ -65,7 +82,6 @@ func TestSrvItems_UseItem(test *testing.T) {
 		err := sut.UseItem(7, 1, potion.Name)
 
 		require.Error(test, err)
-		itemsDb.AssertNotCalled(test, "CreateItemHistoryCommand")
 		itemsDb.AssertNotCalled(test, "ChangeUserItemUsesLeftCommand")
 	})
 
@@ -79,7 +95,7 @@ func TestSrvItems_UseItem(test *testing.T) {
 		err := sut.UseItem(7, 1, potion.Name)
 
 		require.Error(test, err)
-		itemsDb.AssertNotCalled(test, "CreateItemHistoryCommand")
+		itemsDb.AssertNotCalled(test, "ChangeUserItemUsesLeftCommand")
 	})
 
 	test.Run("UnknownItem_Rejected", func(test *testing.T) {

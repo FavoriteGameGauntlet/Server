@@ -66,9 +66,11 @@ func (m *DatabaseMock) GetUserEffectsCommand(userId int, partyId int) (userEffec
 	return
 }
 
-func (m *DatabaseMock) ChangeUserEffectUsesLeftCommand(userId int, partyId int, effectId int, usesLeft int, actorUserId int, sourceEventId *int) error {
+func (m *DatabaseMock) ChangeUserEffectUsesLeftCommand(userId int, partyId int, effectId int, usesLeft int, actorUserId int, sourceEventId *int) (historyEventId int, err error) {
 	args := m.Called(userId, partyId, effectId, usesLeft, actorUserId, sourceEventId)
-	return args.Error(0)
+	historyEventId = args.Int(0)
+	err = args.Error(1)
+	return
 }
 
 func (m *DatabaseMock) DeleteUserEffectCommand(userId int, partyId int, effectId int, actorUserId int, sourceEventId *int) error {

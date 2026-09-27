@@ -65,14 +65,9 @@ func (m *DatabaseMock) GetUserItemsCommand(userId int, partyId int) (userItems [
 	return
 }
 
-func (m *DatabaseMock) ChangeUserItemUsesLeftCommand(userId int, partyId int, itemId int, usesLeft int, actorUserId int, sourceEventId int) error {
+func (m *DatabaseMock) ChangeUserItemUsesLeftCommand(userId int, partyId int, itemId int, usesLeft int, actorUserId int, sourceEventId *int) (historyEventId int, err error) {
 	args := m.Called(userId, partyId, itemId, usesLeft, actorUserId, sourceEventId)
-	return args.Error(0)
-}
-
-func (m *DatabaseMock) CreateItemHistoryCommand(userId int, partyId int, itemId int, usesLeft int, sourceEventId *int) (entry typeitems.ItemHistoryEntry, err error) {
-	args := m.Called(userId, partyId, itemId, usesLeft, sourceEventId)
-	entry = args.Get(0).(typeitems.ItemHistoryEntry)
+	historyEventId = args.Int(0)
 	err = args.Error(1)
 	return
 }

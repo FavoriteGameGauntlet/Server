@@ -32,15 +32,6 @@ type UserItem struct {
 	ReceivedDate time.Time
 }
 
-type ItemHistoryEntry struct {
-	Id       int
-	UserId   int
-	PartyId  int
-	ItemId   int
-	UsesLeft int
-	UsedDate time.Time
-}
-
 type ItemHistory struct {
 	Id            int
 	UserId        int

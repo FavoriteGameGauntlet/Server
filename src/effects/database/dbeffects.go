@@ -18,7 +18,7 @@ type IDatabase interface {
 	CreateUserEffectCommand(userId int, partyId int, effectId int, actorUserId int, sourceEventId int) (userEffect typeeffects.UserEffect, err error)
 	GetUserEffectCommand(userId int, partyId int, effectId int) (userEffect typeeffects.UserEffectDetail, err error)
 	GetUserEffectsCommand(userId int, partyId int) (userEffects []typeeffects.UserEffectDetail, err error)
-	ChangeUserEffectUsesLeftCommand(userId int, partyId int, effectId int, usesLeft int, actorUserId int, sourceEventId *int) error
+	ChangeUserEffectUsesLeftCommand(userId int, partyId int, effectId int, usesLeft int, actorUserId int, sourceEventId *int) (historyEventId int, err error)
 	DeleteUserEffectCommand(userId int, partyId int, effectId int, actorUserId int, sourceEventId *int) error
 	DeleteEndedUserEffectsCommand() (deleted []typeeffects.EndedUserEffect, err error)
 	GetEffectHistoryCommand(userId int, partyId int) (history []typeeffects.EffectHistory, err error)
@@ -246,12 +246,14 @@ func (db *Database) GetUserEffectsCommand(userId int, partyId int) (userEffects 
 
 var changeUserEffectUsesLeftQuery = dbaccess.Query{Name: "ChangeUserEffectUsesLeftQuery", SQL: `SELECT change_user_effect_uses_left($1::integer, $2::integer, $3::integer, $4::integer, $5::integer, $6::integer)`}
 
-func (db *Database) ChangeUserEffectUsesLeftCommand(userId int, partyId int, effectId int, usesLeft int, actorUserId int, sourceEventId *int) error {
-	_, err := dbaccess.Exec(changeUserEffectUsesLeftQuery, userId, partyId, effectId, usesLeft, actorUserId, sourceEventId)
+func (db *Database) ChangeUserEffectUsesLeftCommand(userId int, partyId int, effectId int, usesLeft int, actorUserId int, sourceEventId *int) (historyEventId int, err error) {
+	row := dbaccess.QueryRow(changeUserEffectUsesLeftQuery, userId, partyId, effectId, usesLeft, actorUserId, sourceEventId)
 
-	dbaccess.LogDbResult(changeUserEffectUsesLeftQuery, nil, err)
+	err = row.Scan(&historyEventId)
 
-	return err
+	dbaccess.LogDbResult(changeUserEffectUsesLeftQuery, historyEventId, err)
+
+	return
 }
 
 var deleteUserEffectQuery = dbaccess.Query{Name: "DeleteUserEffectQuery", SQL: `SELECT delete_user_effect($1::integer, $2::integer, $3::integer, $4::integer, $5::integer)`}
