@@ -34,10 +34,10 @@ func TestSrvEffects_UseEffect(test *testing.T) {
 			Return(typeeffects.UserEffectDetail{Id: 21, UserId: 7, PartyId: 1, EffectId: haste.Id, UsesLeft: 2}, nil)
 		effectsDb.On("GetEffectCommand", 1, haste.Id).
 			Return(typeeffects.EffectWithChange{Id: haste.Id, Change: typechanges.Change{Entries: []typechanges.ChangeEntry{templateEntry}}}, nil)
-		effectsDb.On("ChangeUserEffectUsesLeftCommand", 7, 1, haste.Id, 1, (*int)(nil)).Return(nil)
+		effectsDb.On("ChangeUserEffectUsesLeftCommand", 7, 1, haste.Id, 1, 7, (*int)(nil)).Return(nil)
 		changesDb.On("CreateUserChangeFromJsonbCommand", 1, []typechanges.ChangeEntry{targetedEntry}).
 			Return(typechanges.UserChange{Entries: []typechanges.ChangeEntry{targetedEntry}}, nil)
-		changesSvc.On("ApplyChangeEntries", 1, []typechanges.ChangeEntry{targetedEntry}, 21).Return(nil)
+		changesSvc.On("ApplyChangeEntries", 1, []typechanges.ChangeEntry{targetedEntry}, 7, 21).Return(nil)
 
 		sut := srveffects.Service{Database: effectsDb, ChangesDatabase: changesDb, ChangesService: changesSvc}
 

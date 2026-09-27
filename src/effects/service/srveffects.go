@@ -161,7 +161,7 @@ func (s *Service) UseEffect(userId int, partyId int, effectName string) (err err
 
 	usesLeft := userEffect.UsesLeft - 1
 
-	err = s.Database.ChangeUserEffectUsesLeftCommand(userId, partyId, effect.Id, usesLeft, nil)
+	err = s.Database.ChangeUserEffectUsesLeftCommand(userId, partyId, effect.Id, usesLeft, userId, nil)
 
 	if err != nil {
 		return
@@ -190,7 +190,7 @@ func (s *Service) applyEffectChange(userId int, partyId int, templateEntries []t
 		return
 	}
 
-	return s.ChangesService.ApplyChangeEntries(partyId, userChange.Entries, sourceEventId)
+	return s.ChangesService.ApplyChangeEntries(partyId, userChange.Entries, userId, sourceEventId)
 }
 
 // EndUserEffect ends an active effect before it runs out on its own.
@@ -211,7 +211,7 @@ func (s *Service) EndUserEffect(userId int, partyId int, effectName string) (err
 		return
 	}
 
-	return s.Database.DeleteUserEffectCommand(userId, partyId, effect.Id, nil)
+	return s.Database.DeleteUserEffectCommand(userId, partyId, effect.Id, userId, nil)
 }
 
 // StopEndedUserEffects clears the effects whose duration has run out. Nothing else calls the sweep,

@@ -15,11 +15,11 @@ type IDatabase interface {
 	GetActualEffectsCommand(partyId int) (effects []typeeffects.Effect, err error)
 	GetRemovedEffectsCommand(partyId int) (effects []typeeffects.Effect, err error)
 	RemoveEffectCommand(partyId int, effectId int) error
-	CreateUserEffectCommand(userId int, partyId int, effectId int, sourceEventId int) (userEffect typeeffects.UserEffect, err error)
+	CreateUserEffectCommand(userId int, partyId int, effectId int, actorUserId int, sourceEventId int) (userEffect typeeffects.UserEffect, err error)
 	GetUserEffectCommand(userId int, partyId int, effectId int) (userEffect typeeffects.UserEffectDetail, err error)
 	GetUserEffectsCommand(userId int, partyId int) (userEffects []typeeffects.UserEffectDetail, err error)
-	ChangeUserEffectUsesLeftCommand(userId int, partyId int, effectId int, usesLeft int, sourceEventId *int) error
-	DeleteUserEffectCommand(userId int, partyId int, effectId int, sourceEventId *int) error
+	ChangeUserEffectUsesLeftCommand(userId int, partyId int, effectId int, usesLeft int, actorUserId int, sourceEventId *int) error
+	DeleteUserEffectCommand(userId int, partyId int, effectId int, actorUserId int, sourceEventId *int) error
 	DeleteEndedUserEffectsCommand() (deleted []typeeffects.EndedUserEffect, err error)
 	GetEffectHistoryCommand(userId int, partyId int) (history []typeeffects.EffectHistory, err error)
 	GetUserEffectPointModifiersJsonbCommand(partyId int, userEffectId int) (modifiers []typeeffects.PointModifier, err error)
@@ -147,10 +147,10 @@ func (db *Database) RemoveEffectCommand(partyId int, effectId int) error {
 	return err
 }
 
-var createUserEffectQuery = dbaccess.Query{Name: "CreateUserEffectQuery", SQL: `SELECT * FROM create_user_effect($1::integer, $2::integer, $3::integer, $4::integer)`}
+var createUserEffectQuery = dbaccess.Query{Name: "CreateUserEffectQuery", SQL: `SELECT * FROM create_user_effect($1::integer, $2::integer, $3::integer, $4::integer, $5::integer)`}
 
-func (db *Database) CreateUserEffectCommand(userId int, partyId int, effectId int, sourceEventId int) (userEffect typeeffects.UserEffect, err error) {
-	row := dbaccess.QueryRow(createUserEffectQuery, userId, partyId, effectId, sourceEventId)
+func (db *Database) CreateUserEffectCommand(userId int, partyId int, effectId int, actorUserId int, sourceEventId int) (userEffect typeeffects.UserEffect, err error) {
+	row := dbaccess.QueryRow(createUserEffectQuery, userId, partyId, effectId, actorUserId, sourceEventId)
 
 	err = row.Scan(&userEffect.Id, &userEffect.UserId, &userEffect.PartyId, &userEffect.EffectId, &userEffect.UsesLeft, &userEffect.EffectHistoryId)
 
@@ -244,20 +244,20 @@ func (db *Database) GetUserEffectsCommand(userId int, partyId int) (userEffects 
 	return
 }
 
-var changeUserEffectUsesLeftQuery = dbaccess.Query{Name: "ChangeUserEffectUsesLeftQuery", SQL: `SELECT change_user_effect_uses_left($1::integer, $2::integer, $3::integer, $4::integer, $5::integer)`}
+var changeUserEffectUsesLeftQuery = dbaccess.Query{Name: "ChangeUserEffectUsesLeftQuery", SQL: `SELECT change_user_effect_uses_left($1::integer, $2::integer, $3::integer, $4::integer, $5::integer, $6::integer)`}
 
-func (db *Database) ChangeUserEffectUsesLeftCommand(userId int, partyId int, effectId int, usesLeft int, sourceEventId *int) error {
-	_, err := dbaccess.Exec(changeUserEffectUsesLeftQuery, userId, partyId, effectId, usesLeft, sourceEventId)
+func (db *Database) ChangeUserEffectUsesLeftCommand(userId int, partyId int, effectId int, usesLeft int, actorUserId int, sourceEventId *int) error {
+	_, err := dbaccess.Exec(changeUserEffectUsesLeftQuery, userId, partyId, effectId, usesLeft, actorUserId, sourceEventId)
 
 	dbaccess.LogDbResult(changeUserEffectUsesLeftQuery, nil, err)
 
 	return err
 }
 
-var deleteUserEffectQuery = dbaccess.Query{Name: "DeleteUserEffectQuery", SQL: `SELECT delete_user_effect($1::integer, $2::integer, $3::integer, $4::integer)`}
+var deleteUserEffectQuery = dbaccess.Query{Name: "DeleteUserEffectQuery", SQL: `SELECT delete_user_effect($1::integer, $2::integer, $3::integer, $4::integer, $5::integer)`}
 
-func (db *Database) DeleteUserEffectCommand(userId int, partyId int, effectId int, sourceEventId *int) error {
-	_, err := dbaccess.Exec(deleteUserEffectQuery, userId, partyId, effectId, sourceEventId)
+func (db *Database) DeleteUserEffectCommand(userId int, partyId int, effectId int, actorUserId int, sourceEventId *int) error {
+	_, err := dbaccess.Exec(deleteUserEffectQuery, userId, partyId, effectId, actorUserId, sourceEventId)
 
 	dbaccess.LogDbResult(deleteUserEffectQuery, nil, err)
 

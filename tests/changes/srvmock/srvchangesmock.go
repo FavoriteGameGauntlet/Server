@@ -10,8 +10,8 @@ type ServiceMock struct {
 	mock.Mock
 }
 
-func (m *ServiceMock) ApplyChangeEntries(partyId int, entries []typechanges.ChangeEntry, sourceEventId int) error {
-	args := m.Called(partyId, entries, sourceEventId)
+func (m *ServiceMock) ApplyChangeEntries(partyId int, entries []typechanges.ChangeEntry, actorUserId int, sourceEventId int) error {
+	args := m.Called(partyId, entries, actorUserId, sourceEventId)
 	return args.Error(0)
 }
 

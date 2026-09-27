@@ -40,10 +40,10 @@ func TestSrvItems_UseItem(test *testing.T) {
 			Return(typeitems.ItemWithChange{Id: potion.Id, Change: typechanges.Change{Entries: []typechanges.ChangeEntry{templateEntry}}}, nil)
 		itemsDb.On("CreateItemHistoryCommand", 7, 1, potion.Id, 1, (*int)(nil)).
 			Return(typeitems.ItemHistoryEntry{Id: 55}, nil)
-		itemsDb.On("ChangeUserItemUsesLeftCommand", 7, 1, potion.Id, 1, 55).Return(nil)
+		itemsDb.On("ChangeUserItemUsesLeftCommand", 7, 1, potion.Id, 1, 7, 55).Return(nil)
 		changesDb.On("CreateUserChangeFromJsonbCommand", 1, []typechanges.ChangeEntry{targetedEntry}).
 			Return(typechanges.UserChange{Entries: []typechanges.ChangeEntry{targetedEntry}}, nil)
-		changesSvc.On("ApplyChangeEntries", 1, []typechanges.ChangeEntry{targetedEntry}, 55).Return(nil)
+		changesSvc.On("ApplyChangeEntries", 1, []typechanges.ChangeEntry{targetedEntry}, 7, 55).Return(nil)
 
 		sut := srvitems.Service{Database: itemsDb, ChangesDatabase: changesDb, ChangesService: changesSvc}
 

@@ -15,7 +15,7 @@ import (
 // history-recording function (create_manual_history, create_wheel_row_history, create_exchange_history)
 // is record-only, so it happens here.
 type IService interface {
-	ApplyChangeEntries(partyId int, entries []typechanges.ChangeEntry, sourceEventId int) error
+	ApplyChangeEntries(partyId int, entries []typechanges.ChangeEntry, actorUserId int, sourceEventId int) error
 	ResolveChangeEntries(partyId int, inputs []typechanges.ChangeEntryInput) ([]typechanges.ChangeEntry, error)
 }
 
@@ -40,7 +40,7 @@ func NewService() *Service {
 // ApplyChangeEntries grants each entry to its UserId. sourceEventId is the HistoryEvents row that
 // caused this (e.g. a wheel roll's WheelRowHistory.Id or a manual grant's ManualHistory.Id) and is
 // recorded as the origin of every resulting point/item/perk/effect history row.
-func (s *Service) ApplyChangeEntries(partyId int, entries []typechanges.ChangeEntry, sourceEventId int) error {
+func (s *Service) ApplyChangeEntries(partyId int, entries []typechanges.ChangeEntry, actorUserId int, sourceEventId int) error {
 	for _, entry := range entries {
 		if entry.UserId == nil {
 			return fmt.Errorf("change entry has no target user id")
@@ -52,13 +52,13 @@ func (s *Service) ApplyChangeEntries(partyId int, entries []typechanges.ChangeEn
 
 		switch {
 		case entry.PointTypeId != nil:
-			err = s.PointsService.ChangeUserPointValueClamped(userId, partyId, *entry.PointTypeId, entry.Amount, sourceEventId)
+			err = s.PointsService.ChangeUserPointValueClamped(userId, partyId, *entry.PointTypeId, entry.Amount, actorUserId, sourceEventId)
 		case entry.ItemId != nil:
-			_, err = s.ItemsDatabase.CreateUserItemCommand(userId, partyId, *entry.ItemId, sourceEventId)
+			_, err = s.ItemsDatabase.CreateUserItemCommand(userId, partyId, *entry.ItemId, actorUserId, sourceEventId)
 		case entry.EffectId != nil:
-			_, err = s.EffectsDatabase.CreateUserEffectCommand(userId, partyId, *entry.EffectId, sourceEventId)
+			_, err = s.EffectsDatabase.CreateUserEffectCommand(userId, partyId, *entry.EffectId, actorUserId, sourceEventId)
 		case entry.PerkId != nil:
-			err = s.applyPerkEntry(userId, partyId, *entry.PerkId, sourceEventId)
+			err = s.applyPerkEntry(userId, partyId, *entry.PerkId, actorUserId, sourceEventId)
 		default:
 			err = fmt.Errorf("change entry has no point/item/perk/effect target")
 		}
@@ -73,20 +73,20 @@ func (s *Service) ApplyChangeEntries(partyId int, entries []typechanges.ChangeEn
 
 // applyPerkEntry grants a perk by first granting its underlying Effect (party.Perks.EffectId is
 // mandatory), then granting the perk itself. Both record the originating event as their source.
-func (s *Service) applyPerkEntry(userId int, partyId int, perkId int, sourceEventId int) error {
+func (s *Service) applyPerkEntry(userId int, partyId int, perkId int, actorUserId int, sourceEventId int) error {
 	perk, err := s.PerksDatabase.GetPerkCommand(partyId, perkId)
 
 	if err != nil {
 		return err
 	}
 
-	_, err = s.EffectsDatabase.CreateUserEffectCommand(userId, partyId, perk.EffectId, sourceEventId)
+	_, err = s.EffectsDatabase.CreateUserEffectCommand(userId, partyId, perk.EffectId, actorUserId, sourceEventId)
 
 	if err != nil {
 		return err
 	}
 
-	_, err = s.PerksDatabase.CreateUserPerkCommand(userId, partyId, perkId, sourceEventId)
+	_, err = s.PerksDatabase.CreateUserPerkCommand(userId, partyId, perkId, actorUserId, sourceEventId)
 
 	return err
 }

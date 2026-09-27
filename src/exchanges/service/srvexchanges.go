@@ -146,19 +146,19 @@ func (s *Service) UseExchange(userId int, partyId int, exchangeName string, targ
 		return
 	}
 
-	history, err := s.Database.CreateExchangeHistoryCommand(userId, partyId, exchange.Id, nil)
+	history, err := s.Database.CreateExchangeHistoryCommand(userId, partyId, exchange.Id, userId, nil)
 
 	if err != nil {
 		return
 	}
 
-	err = s.applyEntriesTo(partyId, payingUserIds, withChanges.SourceChange.Entries, history.Id)
+	err = s.applyEntriesTo(partyId, payingUserIds, withChanges.SourceChange.Entries, userId, history.Id)
 
 	if err != nil {
 		return
 	}
 
-	return s.applyEntriesTo(partyId, []int{userId}, withChanges.TargetChange.Entries, history.Id)
+	return s.applyEntriesTo(partyId, []int{userId}, withChanges.TargetChange.Entries, userId, history.Id)
 }
 
 // requireAffordable rejects an exchange whose cost the payer cannot cover. Point changes clamp to
@@ -195,7 +195,7 @@ func (s *Service) requireAffordable(partyId int, payingUserIds []int, sourceEntr
 }
 
 // applyEntriesTo stamps a change template onto each of the given users and applies it.
-func (s *Service) applyEntriesTo(partyId int, targetUserIds []int, templateEntries []typechanges.ChangeEntry, sourceEventId int) (err error) {
+func (s *Service) applyEntriesTo(partyId int, targetUserIds []int, templateEntries []typechanges.ChangeEntry, actorUserId int, sourceEventId int) (err error) {
 	if len(templateEntries) == 0 {
 		return
 	}
@@ -218,5 +218,5 @@ func (s *Service) applyEntriesTo(partyId int, targetUserIds []int, templateEntri
 		return
 	}
 
-	return s.ChangesService.ApplyChangeEntries(partyId, userChange.Entries, sourceEventId)
+	return s.ChangesService.ApplyChangeEntries(partyId, userChange.Entries, actorUserId, sourceEventId)
 }

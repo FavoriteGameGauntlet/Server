@@ -46,7 +46,7 @@ func TestSrvExchanges_UseExchange(test *testing.T) {
 		pointsDb.On("GetPointTypeCommand", 1, territoryPoints.Id).Return(territoryPoints, nil)
 		pointsDb.On("GetPointTypeByNameCommand", 1, territoryPoints.Name).Return(territoryPoints, nil)
 		pointsDb.On("GetUserPointCommand", 5, 1, territoryPoints.Id).Return(typepoints.UserPoint{Value: 10}, nil)
-		exchangesDb.On("CreateExchangeHistoryCommand", 5, 1, seize.Id, (*int)(nil)).
+		exchangesDb.On("CreateExchangeHistoryCommand", 5, 1, seize.Id, 5, (*int)(nil)).
 			Return(typeexchanges.ExchangeHistoryEntry{Id: 31}, nil)
 
 		chargedEntry := typechanges.ChangeEntry{Amount: -3, PointTypeId: ptr(territoryPoints.Id), UserId: ptr(5)}
@@ -56,8 +56,8 @@ func TestSrvExchanges_UseExchange(test *testing.T) {
 			Return(typechanges.UserChange{Entries: []typechanges.ChangeEntry{chargedEntry}}, nil)
 		changesDb.On("CreateUserChangeFromJsonbCommand", 1, []typechanges.ChangeEntry{rewardedEntry}).
 			Return(typechanges.UserChange{Entries: []typechanges.ChangeEntry{rewardedEntry}}, nil)
-		changesSvc.On("ApplyChangeEntries", 1, []typechanges.ChangeEntry{chargedEntry}, 31).Return(nil)
-		changesSvc.On("ApplyChangeEntries", 1, []typechanges.ChangeEntry{rewardedEntry}, 31).Return(nil)
+		changesSvc.On("ApplyChangeEntries", 1, []typechanges.ChangeEntry{chargedEntry}, 5, 31).Return(nil)
+		changesSvc.On("ApplyChangeEntries", 1, []typechanges.ChangeEntry{rewardedEntry}, 5, 31).Return(nil)
 
 		sut := srvexchanges.Service{
 			Database:        exchangesDb,

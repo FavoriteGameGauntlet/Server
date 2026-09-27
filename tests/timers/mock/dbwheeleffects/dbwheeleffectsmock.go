@@ -57,8 +57,8 @@ func (m *DatabaseMock) GetLastRolledWheelEffectsCommand(userId int, partyId int)
 	return
 }
 
-func (m *DatabaseMock) AddWheelEffectHistoryCommand(userId int, partyId int, wheelRowId int, sourceEventId *int) (created typewheeleffects.CreatedWheelRowHistory, err error) {
-	args := m.Called(userId, partyId, wheelRowId, sourceEventId)
+func (m *DatabaseMock) AddWheelEffectHistoryCommand(userId int, partyId int, wheelRowId int, actorUserId int, sourceEventId *int) (created typewheeleffects.CreatedWheelRowHistory, err error) {
+	args := m.Called(userId, partyId, wheelRowId, actorUserId, sourceEventId)
 	created = args.Get(0).(typewheeleffects.CreatedWheelRowHistory)
 	err = args.Error(1)
 	return

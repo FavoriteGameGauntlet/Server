@@ -13,7 +13,7 @@ type IDatabase interface {
 	GetActualExchangesCommand(partyId int) (exchanges []typeexchanges.Exchange, err error)
 	GetRemovedExchangesCommand(partyId int) (exchanges []typeexchanges.Exchange, err error)
 	RemoveExchangeCommand(partyId int, exchangeId int) error
-	CreateExchangeHistoryCommand(userId int, partyId int, exchangeId int, sourceEventId *int) (entry typeexchanges.ExchangeHistoryEntry, err error)
+	CreateExchangeHistoryCommand(userId int, partyId int, exchangeId int, actorUserId int, sourceEventId *int) (entry typeexchanges.ExchangeHistoryEntry, err error)
 	GetExchangeHistoryCommand(userId int, partyId int) (history []typeexchanges.ExchangeHistory, err error)
 }
 
@@ -116,10 +116,10 @@ func (db *Database) RemoveExchangeCommand(partyId int, exchangeId int) error {
 	return err
 }
 
-var createExchangeHistoryQuery = dbaccess.Query{Name: "CreateExchangeHistoryQuery", SQL: `SELECT * FROM create_exchange_history($1::integer, $2::integer, $3::integer, $4::integer)`}
+var createExchangeHistoryQuery = dbaccess.Query{Name: "CreateExchangeHistoryQuery", SQL: `SELECT * FROM create_exchange_history($1::integer, $2::integer, $3::integer, $4::integer, $5::integer)`}
 
-func (db *Database) CreateExchangeHistoryCommand(userId int, partyId int, exchangeId int, sourceEventId *int) (entry typeexchanges.ExchangeHistoryEntry, err error) {
-	row := dbaccess.QueryRow(createExchangeHistoryQuery, userId, partyId, exchangeId, sourceEventId)
+func (db *Database) CreateExchangeHistoryCommand(userId int, partyId int, exchangeId int, actorUserId int, sourceEventId *int) (entry typeexchanges.ExchangeHistoryEntry, err error) {
+	row := dbaccess.QueryRow(createExchangeHistoryQuery, userId, partyId, exchangeId, actorUserId, sourceEventId)
 
 	err = row.Scan(&entry.Id, &entry.UserId, &entry.PartyId, &entry.ExchangeId, &entry.UsedDate)
 

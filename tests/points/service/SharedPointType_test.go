@@ -42,12 +42,12 @@ func TestSrvPoints_SharedPointTypeUsesPartyPool(test *testing.T) {
 		databaseMock.On("GetPartyPointCommand", 1, sharedPointType.Id).
 			Return(typepoints.PartyPoint{Value: 10}, nil)
 		databaseMock.On("ChangePartyPointValueCommand", 1, sharedPointType.Id, 5).Return(nil)
-		databaseMock.On("CreatePartyPointHistoryCommand", 1, sharedPointType.Id, 2, 5, 5, 15, 99).
+		databaseMock.On("CreatePartyPointHistoryCommand", 1, sharedPointType.Id, 9, 5, 5, 15, 99).
 			Return(typepoints.PartyPointHistoryEntry{}, nil)
 
 		sut := srvpoints.Service{Database: databaseMock}
 
-		err := sut.ChangeUserPointValueClamped(2, 1, sharedPointType.Id, 5, 99)
+		err := sut.ChangeUserPointValueClamped(2, 1, sharedPointType.Id, 5, 9, 99)
 
 		require.NoError(test, err)
 		databaseMock.AssertExpectations(test)

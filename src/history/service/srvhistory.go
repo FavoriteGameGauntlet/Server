@@ -78,7 +78,7 @@ func (s *Service) grantToUser(actorUserId int, partyId int, targetedEntries []ty
 			return
 		}
 
-		err = s.ChangesService.ApplyChangeEntries(partyId, persistedEntries, entry.Id)
+		err = s.ChangesService.ApplyChangeEntries(partyId, persistedEntries, actorUserId, entry.Id)
 
 		if err != nil {
 			return

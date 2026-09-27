@@ -126,14 +126,14 @@ func (s *Service) ChangePointValueByTypeNameNoHistory(userId int, partyId int, p
 
 // ChangeUserPointValueClamped changes a value by point type id, clamped and recorded. Change entries
 // are applied through this (see srvchanges), which is why it takes an id rather than a name.
-func (s *Service) ChangeUserPointValueClamped(userId int, partyId int, pointTypeId int, changeValue int, sourceEventId int) (err error) {
+func (s *Service) ChangeUserPointValueClamped(userId int, partyId int, pointTypeId int, changeValue int, actorUserId int, sourceEventId int) (err error) {
 	pointType, err := s.Database.GetPointTypeCommand(partyId, pointTypeId)
 
 	if err != nil {
 		return
 	}
 
-	_, err = s.changePointValue(userId, partyId, pointType, userId, changeValue, &sourceEventId)
+	_, err = s.changePointValue(userId, partyId, pointType, actorUserId, changeValue, &sourceEventId)
 
 	return
 }

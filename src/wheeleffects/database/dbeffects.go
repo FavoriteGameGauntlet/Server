@@ -25,7 +25,7 @@ type IDatabase interface {
 	ClearLastWheelEffectsCommand(userId int, partyId int) error
 	AddLastRolledWheelEffectsCommand(userId int, partyId int, rows []typewheeleffects.RolledWheelRowInput) (created []typewheeleffects.CreatedLastWheelRow, err error)
 	GetLastRolledWheelEffectsCommand(userId int, partyId int) (rows []typewheeleffects.LastWheelRow, err error)
-	AddWheelEffectHistoryCommand(userId int, partyId int, wheelRowId int, sourceEventId *int) (created typewheeleffects.CreatedWheelRowHistory, err error)
+	AddWheelEffectHistoryCommand(userId int, partyId int, wheelRowId int, actorUserId int, sourceEventId *int) (created typewheeleffects.CreatedWheelRowHistory, err error)
 	CreateWheelCollectionCommand(partyId int, name string, shouldCheckHistory bool) (collection typewheeleffects.WheelCollection, err error)
 	GetWheelCollectionsCommand(partyId int) (collections []typewheeleffects.WheelCollection, err error)
 	CreateWheelRowCommand(partyId int, name string, description string, changeId int, collectionId int) (row typewheeleffects.CreatedWheelRow, err error)
@@ -220,10 +220,10 @@ func (db *Database) GetLastRolledWheelEffectsCommand(userId int, partyId int) (r
 	return
 }
 
-var addWheelEffectHistoryQuery = dbaccess.Query{Name: "AddWheelEffectHistoryQuery", SQL: `SELECT * FROM create_wheel_row_history($1::integer, $2::integer, $3::integer, $4::integer)`}
+var addWheelEffectHistoryQuery = dbaccess.Query{Name: "AddWheelEffectHistoryQuery", SQL: `SELECT * FROM create_wheel_row_history($1::integer, $2::integer, $3::integer, $4::integer, $5::integer)`}
 
-func (db *Database) AddWheelEffectHistoryCommand(userId int, partyId int, wheelRowId int, sourceEventId *int) (created typewheeleffects.CreatedWheelRowHistory, err error) {
-	row := dbaccess.QueryRow(addWheelEffectHistoryQuery, userId, partyId, wheelRowId, sourceEventId)
+func (db *Database) AddWheelEffectHistoryCommand(userId int, partyId int, wheelRowId int, actorUserId int, sourceEventId *int) (created typewheeleffects.CreatedWheelRowHistory, err error) {
+	row := dbaccess.QueryRow(addWheelEffectHistoryQuery, userId, partyId, wheelRowId, actorUserId, sourceEventId)
 
 	err = row.Scan(&created.Id, &created.UserId, &created.PartyId, &created.WheelRowId, &created.AppliedDate)
 

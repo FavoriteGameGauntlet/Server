@@ -13,13 +13,13 @@ type IDatabase interface {
 	GetActualItemsCommand(partyId int) (items []typeitems.Item, err error)
 	GetRemovedItemsCommand(partyId int) (items []typeitems.Item, err error)
 	RemoveItemCommand(partyId int, itemId int) error
-	CreateUserItemCommand(userId int, partyId int, itemId int, sourceEventId int) (userItem typeitems.UserItem, err error)
+	CreateUserItemCommand(userId int, partyId int, itemId int, actorUserId int, sourceEventId int) (userItem typeitems.UserItem, err error)
 	GetUserItemCommand(userId int, partyId int, itemId int) (userItem typeitems.UserItem, err error)
 	GetUserItemsCommand(userId int, partyId int) (userItems []typeitems.UserItem, err error)
-	ChangeUserItemUsesLeftCommand(userId int, partyId int, itemId int, usesLeft int, sourceEventId int) error
+	ChangeUserItemUsesLeftCommand(userId int, partyId int, itemId int, usesLeft int, actorUserId int, sourceEventId int) error
 	CreateItemHistoryCommand(userId int, partyId int, itemId int, usesLeft int, sourceEventId *int) (entry typeitems.ItemHistoryEntry, err error)
 	GetItemHistoryCommand(userId int, partyId int) (history []typeitems.ItemHistory, err error)
-	DeleteUserItemCommand(userId int, partyId int, itemId int, sourceEventId *int) error
+	DeleteUserItemCommand(userId int, partyId int, itemId int, actorUserId int, sourceEventId *int) error
 }
 
 type Database struct{}
@@ -108,10 +108,10 @@ func (db *Database) RemoveItemCommand(partyId int, itemId int) error {
 	return err
 }
 
-var createUserItemQuery = dbaccess.Query{Name: "CreateUserItemQuery", SQL: `SELECT * FROM create_user_item($1::integer, $2::integer, $3::integer, $4::integer)`}
+var createUserItemQuery = dbaccess.Query{Name: "CreateUserItemQuery", SQL: `SELECT * FROM create_user_item($1::integer, $2::integer, $3::integer, $4::integer, $5::integer)`}
 
-func (db *Database) CreateUserItemCommand(userId int, partyId int, itemId int, sourceEventId int) (userItem typeitems.UserItem, err error) {
-	row := dbaccess.QueryRow(createUserItemQuery, userId, partyId, itemId, sourceEventId)
+func (db *Database) CreateUserItemCommand(userId int, partyId int, itemId int, actorUserId int, sourceEventId int) (userItem typeitems.UserItem, err error) {
+	row := dbaccess.QueryRow(createUserItemQuery, userId, partyId, itemId, actorUserId, sourceEventId)
 
 	err = row.Scan(&userItem.Id, &userItem.UserId, &userItem.PartyId, &userItem.ItemId, &userItem.UsesLeft, &userItem.ReceivedDate)
 
@@ -159,10 +159,10 @@ func (db *Database) GetUserItemsCommand(userId int, partyId int) (userItems []ty
 	return
 }
 
-var changeUserItemUsesLeftQuery = dbaccess.Query{Name: "ChangeUserItemUsesLeftQuery", SQL: `SELECT change_user_item_uses_left($1::integer, $2::integer, $3::integer, $4::integer, $5::integer)`}
+var changeUserItemUsesLeftQuery = dbaccess.Query{Name: "ChangeUserItemUsesLeftQuery", SQL: `SELECT change_user_item_uses_left($1::integer, $2::integer, $3::integer, $4::integer, $5::integer, $6::integer)`}
 
-func (db *Database) ChangeUserItemUsesLeftCommand(userId int, partyId int, itemId int, usesLeft int, sourceEventId int) error {
-	_, err := dbaccess.Exec(changeUserItemUsesLeftQuery, userId, partyId, itemId, usesLeft, sourceEventId)
+func (db *Database) ChangeUserItemUsesLeftCommand(userId int, partyId int, itemId int, usesLeft int, actorUserId int, sourceEventId int) error {
+	_, err := dbaccess.Exec(changeUserItemUsesLeftQuery, userId, partyId, itemId, usesLeft, actorUserId, sourceEventId)
 
 	dbaccess.LogDbResult(changeUserItemUsesLeftQuery, nil, err)
 
@@ -208,10 +208,10 @@ func (db *Database) GetItemHistoryCommand(userId int, partyId int) (history []ty
 	return
 }
 
-var deleteUserItemQuery = dbaccess.Query{Name: "DeleteUserItemQuery", SQL: `SELECT delete_user_item($1::integer, $2::integer, $3::integer, $4::integer)`}
+var deleteUserItemQuery = dbaccess.Query{Name: "DeleteUserItemQuery", SQL: `SELECT delete_user_item($1::integer, $2::integer, $3::integer, $4::integer, $5::integer)`}
 
-func (db *Database) DeleteUserItemCommand(userId int, partyId int, itemId int, sourceEventId *int) error {
-	_, err := dbaccess.Exec(deleteUserItemQuery, userId, partyId, itemId, sourceEventId)
+func (db *Database) DeleteUserItemCommand(userId int, partyId int, itemId int, actorUserId int, sourceEventId *int) error {
+	_, err := dbaccess.Exec(deleteUserItemQuery, userId, partyId, itemId, actorUserId, sourceEventId)
 
 	dbaccess.LogDbResult(deleteUserItemQuery, nil, err)
 

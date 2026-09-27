@@ -58,8 +58,8 @@ func (m *DatabaseMock) GetWishlistGamesCommand(userId int, partyId int) (games t
 	return
 }
 
-func (m *DatabaseMock) CreateCurrentGameCommand(userId int, partyId int, gameId int, sourceEventId *int) (game typegames.CreatedUserGame, err error) {
-	args := m.Called(userId, partyId, gameId, sourceEventId)
+func (m *DatabaseMock) CreateCurrentGameCommand(userId int, partyId int, gameId int, actorUserId int, sourceEventId *int) (game typegames.CreatedUserGame, err error) {
+	args := m.Called(userId, partyId, gameId, actorUserId, sourceEventId)
 	game = args.Get(0).(typegames.CreatedUserGame)
 	err = args.Error(1)
 	return
@@ -79,18 +79,18 @@ func (m *DatabaseMock) GetGameTimeSpentCommand(userId int, gameId int) (timeSpen
 	return
 }
 
-func (m *DatabaseMock) ChangeGameTimeSpentCommand(userId int, partyId int, gameId int, changeValue time.Duration, sourceEventId *int) error {
-	args := m.Called(userId, partyId, gameId, changeValue, sourceEventId)
+func (m *DatabaseMock) ChangeGameTimeSpentCommand(userId int, partyId int, gameId int, changeValue time.Duration, actorUserId int, sourceEventId *int) error {
+	args := m.Called(userId, partyId, gameId, changeValue, actorUserId, sourceEventId)
 	return args.Error(0)
 }
 
-func (m *DatabaseMock) CancelCurrentGameCommand(userId int, partyId int, gameId int, sourceEventId *int) error {
-	args := m.Called(userId, partyId, gameId, sourceEventId)
+func (m *DatabaseMock) CancelCurrentGameCommand(userId int, partyId int, gameId int, actorUserId int, sourceEventId *int) error {
+	args := m.Called(userId, partyId, gameId, actorUserId, sourceEventId)
 	return args.Error(0)
 }
 
-func (m *DatabaseMock) FinishCurrentGameCommand(userId int, partyId int, gameId int, sourceEventId *int) error {
-	args := m.Called(userId, partyId, gameId, sourceEventId)
+func (m *DatabaseMock) FinishCurrentGameCommand(userId int, partyId int, gameId int, actorUserId int, sourceEventId *int) error {
+	args := m.Called(userId, partyId, gameId, actorUserId, sourceEventId)
 	return args.Error(0)
 }
 

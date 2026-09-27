@@ -154,7 +154,7 @@ func (s *Service) RevokeUserPerk(userId int, partyId int, perkName string) (err 
 		return
 	}
 
-	return s.Database.DeleteUserPerkCommand(userId, partyId, perk.Id, nil)
+	return s.Database.DeleteUserPerkCommand(userId, partyId, perk.Id, userId, nil)
 }
 
 // GetPerkHistory lists the recorded perk events of a user, named from the party catalogue.

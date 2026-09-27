@@ -177,7 +177,7 @@ func (s *Service) ApplyWheelEffectRoll(userId int, wheelRowName string, targetUs
 		return
 	}
 
-	history, err := s.Database.AddWheelEffectHistoryCommand(userId, defaultPartyId, wheelRow.Id, nil)
+	history, err := s.Database.AddWheelEffectHistoryCommand(userId, defaultPartyId, wheelRow.Id, userId, nil)
 
 	if err != nil {
 		return
@@ -205,7 +205,7 @@ func (s *Service) ApplyWheelEffectRoll(userId int, wheelRowName string, targetUs
 		return
 	}
 
-	return s.ChangesService.ApplyChangeEntries(defaultPartyId, userChange.Entries, history.Id)
+	return s.ChangesService.ApplyChangeEntries(defaultPartyId, userChange.Entries, userId, history.Id)
 }
 
 func (s *Service) GetEffectHistory(userId int) (history []typewheeleffects.WheelRowHistory, err error) {

@@ -99,7 +99,7 @@ func (s *Service) CancelCurrentGame(userId int) error {
 		return err
 	}
 
-	err = s.Database.CancelCurrentGameCommand(userId, defaultPartyId, game.Id, nil)
+	err = s.Database.CancelCurrentGameCommand(userId, defaultPartyId, game.Id, userId, nil)
 
 	if err != nil {
 		return err
@@ -125,7 +125,7 @@ func (s *Service) FinishCurrentGame(userId int) error {
 		return err
 	}
 
-	err = s.Database.FinishCurrentGameCommand(userId, defaultPartyId, game.Id, nil)
+	err = s.Database.FinishCurrentGameCommand(userId, defaultPartyId, game.Id, userId, nil)
 
 	if err != nil {
 		return err
@@ -228,7 +228,7 @@ func (s *Service) MakeGameRoll(userId int) (game typegames.CurrentGame, err erro
 	randomNumber := rand.Intn(len(unplayedGames))
 	randomUnplayedGame := unplayedGames[randomNumber]
 
-	_, err = s.Database.CreateCurrentGameCommand(userId, defaultPartyId, randomUnplayedGame.GameId, nil)
+	_, err = s.Database.CreateCurrentGameCommand(userId, defaultPartyId, randomUnplayedGame.GameId, userId, nil)
 
 	if err != nil {
 		return

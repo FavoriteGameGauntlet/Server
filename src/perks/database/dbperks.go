@@ -11,10 +11,10 @@ type IDatabase interface {
 	GetActualPerksCommand(partyId int) (perks []typeperks.Perk, err error)
 	GetRemovedPerksCommand(partyId int) (perks []typeperks.Perk, err error)
 	RemovePerkCommand(partyId int, perkId int) error
-	CreateUserPerkCommand(userId int, partyId int, perkId int, sourceEventId int) (userPerk typeperks.UserPerk, err error)
+	CreateUserPerkCommand(userId int, partyId int, perkId int, actorUserId int, sourceEventId int) (userPerk typeperks.UserPerk, err error)
 	GetUserPerkCommand(userId int, partyId int, perkId int) (userPerk typeperks.UserPerk, err error)
 	GetUserPerksCommand(userId int, partyId int) (userPerks []typeperks.UserPerk, err error)
-	DeleteUserPerkCommand(userId int, partyId int, perkId int, sourceEventId *int) error
+	DeleteUserPerkCommand(userId int, partyId int, perkId int, actorUserId int, sourceEventId *int) error
 	GetPerkHistoryCommand(userId int, partyId int) (history []typeperks.PerkHistory, err error)
 }
 
@@ -91,10 +91,10 @@ func (db *Database) RemovePerkCommand(partyId int, perkId int) error {
 	return err
 }
 
-var createUserPerkQuery = dbaccess.Query{Name: "CreateUserPerkQuery", SQL: `SELECT * FROM create_user_perk($1::integer, $2::integer, $3::integer, $4::integer)`}
+var createUserPerkQuery = dbaccess.Query{Name: "CreateUserPerkQuery", SQL: `SELECT * FROM create_user_perk($1::integer, $2::integer, $3::integer, $4::integer, $5::integer)`}
 
-func (db *Database) CreateUserPerkCommand(userId int, partyId int, perkId int, sourceEventId int) (userPerk typeperks.UserPerk, err error) {
-	row := dbaccess.QueryRow(createUserPerkQuery, userId, partyId, perkId, sourceEventId)
+func (db *Database) CreateUserPerkCommand(userId int, partyId int, perkId int, actorUserId int, sourceEventId int) (userPerk typeperks.UserPerk, err error) {
+	row := dbaccess.QueryRow(createUserPerkQuery, userId, partyId, perkId, actorUserId, sourceEventId)
 
 	err = row.Scan(&userPerk.Id, &userPerk.UserId, &userPerk.PartyId, &userPerk.PerkId, &userPerk.UserEffectId, &userPerk.ReceivedDate)
 
@@ -142,10 +142,10 @@ func (db *Database) GetUserPerksCommand(userId int, partyId int) (userPerks []ty
 	return
 }
 
-var deleteUserPerkQuery = dbaccess.Query{Name: "DeleteUserPerkQuery", SQL: `SELECT delete_user_perk($1::integer, $2::integer, $3::integer, $4::integer)`}
+var deleteUserPerkQuery = dbaccess.Query{Name: "DeleteUserPerkQuery", SQL: `SELECT delete_user_perk($1::integer, $2::integer, $3::integer, $4::integer, $5::integer)`}
 
-func (db *Database) DeleteUserPerkCommand(userId int, partyId int, perkId int, sourceEventId *int) error {
-	_, err := dbaccess.Exec(deleteUserPerkQuery, userId, partyId, perkId, sourceEventId)
+func (db *Database) DeleteUserPerkCommand(userId int, partyId int, perkId int, actorUserId int, sourceEventId *int) error {
+	_, err := dbaccess.Exec(deleteUserPerkQuery, userId, partyId, perkId, actorUserId, sourceEventId)
 
 	dbaccess.LogDbResult(deleteUserPerkQuery, nil, err)
 

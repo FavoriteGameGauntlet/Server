@@ -151,7 +151,7 @@ var ChangeUserPointValueClampedTestCases = []ChangeUserPointValueClampedTestCase
 				Return(typepoints.UserPoint{Value: 8}, nil)
 			// 8 + 5 = 13 > Maximum(10) -> clamp to 10, actual change = 2
 			databaseMock.On("ChangeUserPointValueCommand", 2, 1, availableRollsType.Id, 2).Return(nil)
-			databaseMock.On("CreateUserPointHistoryCommand", 2, 1, availableRollsType.Id, 2, 5, 2, 10, 999).
+			databaseMock.On("CreateUserPointHistoryCommand", 2, 1, availableRollsType.Id, 9, 5, 2, 10, 999).
 				Return(typepoints.UserPointHistoryEntry{}, nil)
 			return databaseMock
 		},
@@ -167,7 +167,7 @@ var ChangeUserPointValueClampedTestCases = []ChangeUserPointValueClampedTestCase
 				Return(typepoints.UserPoint{Value: 3}, nil)
 			// 3 - 5 = -2 < Minimum(0) -> clamp to 0, actual change = -3
 			databaseMock.On("ChangeUserPointValueCommand", 2, 1, availableRollsType.Id, -3).Return(nil)
-			databaseMock.On("CreateUserPointHistoryCommand", 2, 1, availableRollsType.Id, 2, -5, -3, 0, 999).
+			databaseMock.On("CreateUserPointHistoryCommand", 2, 1, availableRollsType.Id, 9, -5, -3, 0, 999).
 				Return(typepoints.UserPointHistoryEntry{}, nil)
 			return databaseMock
 		},
@@ -181,7 +181,7 @@ var ChangeUserPointValueClampedTestCases = []ChangeUserPointValueClampedTestCase
 			databaseMock.On("GetPointTypeCommand", 1, availableRollsType.Id).Return(availableRollsType, nil)
 			databaseMock.On("GetUserPointCommand", 2, 1, availableRollsType.Id).Return(typepoints.UserPoint{}, sql.ErrNoRows)
 			databaseMock.On("ChangeUserPointValueCommand", 2, 1, availableRollsType.Id, 1).Return(nil)
-			databaseMock.On("CreateUserPointHistoryCommand", 2, 1, availableRollsType.Id, 2, 1, 1, 1, 999).
+			databaseMock.On("CreateUserPointHistoryCommand", 2, 1, availableRollsType.Id, 9, 1, 1, 1, 999).
 				Return(typepoints.UserPointHistoryEntry{}, nil)
 			return databaseMock
 		},
@@ -196,7 +196,7 @@ var ChangeUserPointValueClampedTestCases = []ChangeUserPointValueClampedTestCase
 			databaseMock.On("GetUserPointCommand", 2, 1, availableRollsType.Id).
 				Return(typepoints.UserPoint{Value: 3}, nil)
 			databaseMock.On("ChangeUserPointValueCommand", 2, 1, availableRollsType.Id, 2).Return(nil)
-			databaseMock.On("CreateUserPointHistoryCommand", 2, 1, availableRollsType.Id, 2, 2, 2, 5, 999).
+			databaseMock.On("CreateUserPointHistoryCommand", 2, 1, availableRollsType.Id, 9, 2, 2, 5, 999).
 				Return(typepoints.UserPointHistoryEntry{}, nil)
 			return databaseMock
 		},
@@ -225,7 +225,7 @@ var ChangeUserPointValueClampedTestCases = []ChangeUserPointValueClampedTestCase
 			databaseMock.On("GetUserPointCommand", 2, 1, availableRollsType.Id).
 				Return(typepoints.UserPoint{Value: 3}, nil)
 			databaseMock.On("ChangeUserPointValueCommand", 2, 1, availableRollsType.Id, 2).Return(nil)
-			databaseMock.On("CreateUserPointHistoryCommand", 2, 1, availableRollsType.Id, 2, 2, 2, 5, 999).
+			databaseMock.On("CreateUserPointHistoryCommand", 2, 1, availableRollsType.Id, 9, 2, 2, 5, 999).
 				Return(typepoints.UserPointHistoryEntry{}, dbError)
 			return databaseMock
 		},
@@ -241,7 +241,7 @@ func TestSrvPoints_ChangeUserPointValueClamped(test *testing.T) {
 			sut := srvpoints.Service{Database: databaseMock}
 
 			// Act
-			err := sut.ChangeUserPointValueClamped(2, 1, availableRollsType.Id, testCase.ChangeValue, 999)
+			err := sut.ChangeUserPointValueClamped(2, 1, availableRollsType.Id, testCase.ChangeValue, 9, 999)
 
 			// Assert
 			if testCase.ExpectedError != nil {

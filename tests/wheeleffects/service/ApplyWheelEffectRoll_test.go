@@ -30,7 +30,7 @@ func setupApplyUpToChangeEntries(databaseMock *dbwheeleffectsmock.DatabaseMock, 
 	databaseMock.On("GetLastRolledWheelEffectsCommand", 1, 1).Return([]typewheeleffects.LastWheelRow{lastRolledRow}, nil)
 	databaseMock.On("GetEffectHistoryByEffectNameCommand", 1, 1, "test-effect").Return(typewheeleffects.WheelRowHistory{}, sql.ErrNoRows)
 	databaseMock.On("GetWheelRowCommand", 1, 42).Return(wheelRowDetail, nil)
-	databaseMock.On("AddWheelEffectHistoryCommand", 1, 1, 42, (*int)(nil)).Return(createdWheelRowHistory, nil)
+	databaseMock.On("AddWheelEffectHistoryCommand", 1, 1, 42, 1, (*int)(nil)).Return(createdWheelRowHistory, nil)
 	changesDbMock.On("GetChangeEntriesJsonbCommand", 1, 100).Return(applyTemplateEntries, nil)
 }
 
@@ -113,7 +113,7 @@ var ApplyWheelEffectRollTestCases = []ApplyWheelEffectRollTestCase{
 			databaseMock.On("GetLastRolledWheelEffectsCommand", 1, 1).Return([]typewheeleffects.LastWheelRow{lastRolledRow}, nil)
 			databaseMock.On("GetEffectHistoryByEffectNameCommand", 1, 1, "test-effect").Return(typewheeleffects.WheelRowHistory{}, sql.ErrNoRows)
 			databaseMock.On("GetWheelRowCommand", 1, 42).Return(wheelRowDetail, nil)
-			databaseMock.On("AddWheelEffectHistoryCommand", 1, 1, 42, (*int)(nil)).Return(typewheeleffects.CreatedWheelRowHistory{}, dbError)
+			databaseMock.On("AddWheelEffectHistoryCommand", 1, 1, 42, 1, (*int)(nil)).Return(typewheeleffects.CreatedWheelRowHistory{}, dbError)
 
 			return databaseMock, changesDbMock, changesSvcMock
 		},
@@ -133,7 +133,7 @@ var ApplyWheelEffectRollTestCases = []ApplyWheelEffectRollTestCase{
 			databaseMock.On("GetLastRolledWheelEffectsCommand", 1, 1).Return([]typewheeleffects.LastWheelRow{lastRolledRow}, nil)
 			databaseMock.On("GetEffectHistoryByEffectNameCommand", 1, 1, "test-effect").Return(typewheeleffects.WheelRowHistory{}, sql.ErrNoRows)
 			databaseMock.On("GetWheelRowCommand", 1, 42).Return(wheelRowDetail, nil)
-			databaseMock.On("AddWheelEffectHistoryCommand", 1, 1, 42, (*int)(nil)).Return(createdWheelRowHistory, nil)
+			databaseMock.On("AddWheelEffectHistoryCommand", 1, 1, 42, 1, (*int)(nil)).Return(createdWheelRowHistory, nil)
 			changesDbMock.On("GetChangeEntriesJsonbCommand", 1, 100).Return([]typechanges.ChangeEntry(nil), dbError)
 
 			return databaseMock, changesDbMock, changesSvcMock
@@ -176,7 +176,7 @@ var ApplyWheelEffectRollTestCases = []ApplyWheelEffectRollTestCase{
 			expectedEntries := []typechanges.ChangeEntry{{Amount: 5, PointTypeId: ptr(7), UserId: ptr(2)}}
 			createdUserChange := typechanges.UserChange{ChangeId: ptr(200), Entries: expectedEntries}
 			changesDbMock.On("CreateUserChangeFromJsonbCommand", 1, expectedEntries).Return(createdUserChange, nil)
-			changesSvcMock.On("ApplyChangeEntries", 1, expectedEntries, 999).Return(dbError)
+			changesSvcMock.On("ApplyChangeEntries", 1, expectedEntries, 1, 999).Return(dbError)
 
 			return databaseMock, changesDbMock, changesSvcMock
 		},
@@ -198,7 +198,7 @@ var ApplyWheelEffectRollTestCases = []ApplyWheelEffectRollTestCase{
 			expectedEntries := []typechanges.ChangeEntry{{Amount: 5, PointTypeId: ptr(7), UserId: ptr(2)}}
 			createdUserChange := typechanges.UserChange{ChangeId: ptr(200), Entries: expectedEntries}
 			changesDbMock.On("CreateUserChangeFromJsonbCommand", 1, expectedEntries).Return(createdUserChange, nil)
-			changesSvcMock.On("ApplyChangeEntries", 1, expectedEntries, 999).Return(nil)
+			changesSvcMock.On("ApplyChangeEntries", 1, expectedEntries, 1, 999).Return(nil)
 
 			return databaseMock, changesDbMock, changesSvcMock
 		},
@@ -223,7 +223,7 @@ var ApplyWheelEffectRollTestCases = []ApplyWheelEffectRollTestCase{
 			}
 			createdUserChange := typechanges.UserChange{ChangeId: ptr(200), Entries: expectedEntries}
 			changesDbMock.On("CreateUserChangeFromJsonbCommand", 1, expectedEntries).Return(createdUserChange, nil)
-			changesSvcMock.On("ApplyChangeEntries", 1, expectedEntries, 999).Return(nil)
+			changesSvcMock.On("ApplyChangeEntries", 1, expectedEntries, 1, 999).Return(nil)
 
 			return databaseMock, changesDbMock, changesSvcMock
 		},

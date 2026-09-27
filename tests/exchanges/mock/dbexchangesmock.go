@@ -44,8 +44,8 @@ func (m *DatabaseMock) RemoveExchangeCommand(partyId int, exchangeId int) error 
 	return args.Error(0)
 }
 
-func (m *DatabaseMock) CreateExchangeHistoryCommand(userId int, partyId int, exchangeId int, sourceEventId *int) (entry typeexchanges.ExchangeHistoryEntry, err error) {
-	args := m.Called(userId, partyId, exchangeId, sourceEventId)
+func (m *DatabaseMock) CreateExchangeHistoryCommand(userId int, partyId int, exchangeId int, actorUserId int, sourceEventId *int) (entry typeexchanges.ExchangeHistoryEntry, err error) {
+	args := m.Called(userId, partyId, exchangeId, actorUserId, sourceEventId)
 	entry = args.Get(0).(typeexchanges.ExchangeHistoryEntry)
 	err = args.Error(1)
 	return

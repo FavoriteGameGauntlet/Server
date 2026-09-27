@@ -169,7 +169,7 @@ func (s *Service) UseItem(userId int, partyId int, itemName string) (err error) 
 		return
 	}
 
-	err = s.Database.ChangeUserItemUsesLeftCommand(userId, partyId, item.Id, usesLeft, history.Id)
+	err = s.Database.ChangeUserItemUsesLeftCommand(userId, partyId, item.Id, usesLeft, userId, history.Id)
 
 	if err != nil {
 		return
@@ -199,7 +199,7 @@ func (s *Service) applyItemChange(userId int, partyId int, templateEntries []typ
 		return
 	}
 
-	return s.ChangesService.ApplyChangeEntries(partyId, userChange.Entries, sourceEventId)
+	return s.ChangesService.ApplyChangeEntries(partyId, userChange.Entries, userId, sourceEventId)
 }
 
 // DiscardUserItem drops an item the user holds without using it.
@@ -220,7 +220,7 @@ func (s *Service) DiscardUserItem(userId int, partyId int, itemName string) (err
 		return
 	}
 
-	return s.Database.DeleteUserItemCommand(userId, partyId, item.Id, nil)
+	return s.Database.DeleteUserItemCommand(userId, partyId, item.Id, userId, nil)
 }
 
 // GetItemHistory lists the recorded item events of a user, named from the party catalogue.

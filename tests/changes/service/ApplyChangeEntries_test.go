@@ -64,7 +64,7 @@ var ApplyChangeEntriesTestCases = []ApplyChangeEntriesTestCase{
 			pointsDb.On("GetPointTypeCommand", 1, 7).Return(typepoints.PointTypeInfo{Id: 7, PartyId: 1, Minimum: 0, Maximum: 100}, nil)
 			pointsDb.On("GetUserPointCommand", 2, 1, 7).Return(typepoints.UserPoint{Value: 10}, nil)
 			pointsDb.On("ChangeUserPointValueCommand", 2, 1, 7, 5).Return(nil)
-			pointsDb.On("CreateUserPointHistoryCommand", 2, 1, 7, 2, 5, 5, 15, 999).Return(typepoints.UserPointHistoryEntry{}, nil)
+			pointsDb.On("CreateUserPointHistoryCommand", 2, 1, 7, 9, 5, 5, 15, 999).Return(typepoints.UserPointHistoryEntry{}, nil)
 			return new(dbitemsmock.DatabaseMock), new(dbperksmock.DatabaseMock), new(dbeffectsmock.DatabaseMock), pointsDb
 		},
 	},
@@ -89,7 +89,7 @@ var ApplyChangeEntriesTestCases = []ApplyChangeEntriesTestCase{
 		},
 		SetupMocks: func() (*dbitemsmock.DatabaseMock, *dbperksmock.DatabaseMock, *dbeffectsmock.DatabaseMock, *dbpointsmock.DatabaseMock) {
 			itemsDb := new(dbitemsmock.DatabaseMock)
-			itemsDb.On("CreateUserItemCommand", 2, 1, 30, 999).Return(typeitems.UserItem{Id: 1, UserId: 2, PartyId: 1, ItemId: 30}, nil)
+			itemsDb.On("CreateUserItemCommand", 2, 1, 30, 9, 999).Return(typeitems.UserItem{Id: 1, UserId: 2, PartyId: 1, ItemId: 30}, nil)
 			return itemsDb, new(dbperksmock.DatabaseMock), new(dbeffectsmock.DatabaseMock), new(dbpointsmock.DatabaseMock)
 		},
 	},
@@ -101,7 +101,7 @@ var ApplyChangeEntriesTestCases = []ApplyChangeEntriesTestCase{
 		},
 		SetupMocks: func() (*dbitemsmock.DatabaseMock, *dbperksmock.DatabaseMock, *dbeffectsmock.DatabaseMock, *dbpointsmock.DatabaseMock) {
 			itemsDb := new(dbitemsmock.DatabaseMock)
-			itemsDb.On("CreateUserItemCommand", 2, 1, 30, 999).Return(typeitems.UserItem{}, dbError)
+			itemsDb.On("CreateUserItemCommand", 2, 1, 30, 9, 999).Return(typeitems.UserItem{}, dbError)
 			return itemsDb, new(dbperksmock.DatabaseMock), new(dbeffectsmock.DatabaseMock), new(dbpointsmock.DatabaseMock)
 		},
 		ExpectedError: dbError,
@@ -114,7 +114,7 @@ var ApplyChangeEntriesTestCases = []ApplyChangeEntriesTestCase{
 		},
 		SetupMocks: func() (*dbitemsmock.DatabaseMock, *dbperksmock.DatabaseMock, *dbeffectsmock.DatabaseMock, *dbpointsmock.DatabaseMock) {
 			effectsDb := new(dbeffectsmock.DatabaseMock)
-			effectsDb.On("CreateUserEffectCommand", 2, 1, 40, 999).Return(typeeffects.UserEffect{Id: 1, UserId: 2, PartyId: 1, EffectId: 40}, nil)
+			effectsDb.On("CreateUserEffectCommand", 2, 1, 40, 9, 999).Return(typeeffects.UserEffect{Id: 1, UserId: 2, PartyId: 1, EffectId: 40}, nil)
 			return new(dbitemsmock.DatabaseMock), new(dbperksmock.DatabaseMock), effectsDb, new(dbpointsmock.DatabaseMock)
 		},
 	},
@@ -126,7 +126,7 @@ var ApplyChangeEntriesTestCases = []ApplyChangeEntriesTestCase{
 		},
 		SetupMocks: func() (*dbitemsmock.DatabaseMock, *dbperksmock.DatabaseMock, *dbeffectsmock.DatabaseMock, *dbpointsmock.DatabaseMock) {
 			effectsDb := new(dbeffectsmock.DatabaseMock)
-			effectsDb.On("CreateUserEffectCommand", 2, 1, 40, 999).Return(typeeffects.UserEffect{}, dbError)
+			effectsDb.On("CreateUserEffectCommand", 2, 1, 40, 9, 999).Return(typeeffects.UserEffect{}, dbError)
 			return new(dbitemsmock.DatabaseMock), new(dbperksmock.DatabaseMock), effectsDb, new(dbpointsmock.DatabaseMock)
 		},
 		ExpectedError: dbError,
@@ -143,9 +143,9 @@ var ApplyChangeEntriesTestCases = []ApplyChangeEntriesTestCase{
 			effectsDb := new(dbeffectsmock.DatabaseMock)
 
 			perksDb.On("GetPerkCommand", 1, 50).Return(typeperks.Perk{Id: 50, PartyId: 1, EffectId: 40}, nil)
-			effectsDb.On("CreateUserEffectCommand", 2, 1, 40, 999).
+			effectsDb.On("CreateUserEffectCommand", 2, 1, 40, 9, 999).
 				Return(typeeffects.UserEffect{Id: 1, UserId: 2, PartyId: 1, EffectId: 40, EffectHistoryId: 777}, nil)
-			perksDb.On("CreateUserPerkCommand", 2, 1, 50, 999).Return(typeperks.UserPerk{Id: 1, UserId: 2, PartyId: 1, PerkId: 50, UserEffectId: 777}, nil)
+			perksDb.On("CreateUserPerkCommand", 2, 1, 50, 9, 999).Return(typeperks.UserPerk{Id: 1, UserId: 2, PartyId: 1, PerkId: 50, UserEffectId: 777}, nil)
 
 			return new(dbitemsmock.DatabaseMock), perksDb, effectsDb, new(dbpointsmock.DatabaseMock)
 		},
@@ -175,7 +175,7 @@ var ApplyChangeEntriesTestCases = []ApplyChangeEntriesTestCase{
 			effectsDb := new(dbeffectsmock.DatabaseMock)
 
 			perksDb.On("GetPerkCommand", 1, 50).Return(typeperks.Perk{Id: 50, PartyId: 1, EffectId: 40}, nil)
-			effectsDb.On("CreateUserEffectCommand", 2, 1, 40, 999).Return(typeeffects.UserEffect{}, dbError)
+			effectsDb.On("CreateUserEffectCommand", 2, 1, 40, 9, 999).Return(typeeffects.UserEffect{}, dbError)
 
 			return new(dbitemsmock.DatabaseMock), perksDb, effectsDb, new(dbpointsmock.DatabaseMock)
 		},
@@ -192,9 +192,9 @@ var ApplyChangeEntriesTestCases = []ApplyChangeEntriesTestCase{
 			effectsDb := new(dbeffectsmock.DatabaseMock)
 
 			perksDb.On("GetPerkCommand", 1, 50).Return(typeperks.Perk{Id: 50, PartyId: 1, EffectId: 40}, nil)
-			effectsDb.On("CreateUserEffectCommand", 2, 1, 40, 999).
+			effectsDb.On("CreateUserEffectCommand", 2, 1, 40, 9, 999).
 				Return(typeeffects.UserEffect{EffectHistoryId: 777}, nil)
-			perksDb.On("CreateUserPerkCommand", 2, 1, 50, 999).Return(typeperks.UserPerk{}, dbError)
+			perksDb.On("CreateUserPerkCommand", 2, 1, 50, 9, 999).Return(typeperks.UserPerk{}, dbError)
 
 			return new(dbitemsmock.DatabaseMock), perksDb, effectsDb, new(dbpointsmock.DatabaseMock)
 		},
@@ -212,7 +212,7 @@ var ApplyChangeEntriesTestCases = []ApplyChangeEntriesTestCase{
 			itemsDb := new(dbitemsmock.DatabaseMock)
 			effectsDb := new(dbeffectsmock.DatabaseMock)
 
-			itemsDb.On("CreateUserItemCommand", 2, 1, 30, 999).Return(typeitems.UserItem{}, dbError)
+			itemsDb.On("CreateUserItemCommand", 2, 1, 30, 9, 999).Return(typeitems.UserItem{}, dbError)
 			// EffectId entry is never reached - no mock expectation set for it, AssertExpectations
 			// only checks the effectsDb mock has no unfulfilled expectations, which holds trivially
 			// since none were set; the important assertion is effectsDb.AssertNotCalled below.
@@ -237,7 +237,7 @@ func TestSrvChanges_ApplyChangeEntries(test *testing.T) {
 			}
 
 			// Act
-			err := sut.ApplyChangeEntries(1, testCase.Entries, 999)
+			err := sut.ApplyChangeEntries(1, testCase.Entries, 9, 999)
 
 			// Assert
 			if testCase.ExpectedError != nil {

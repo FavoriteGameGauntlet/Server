@@ -41,8 +41,8 @@ func TestSrvHistory_GrantToUsers(test *testing.T) {
 		changesDb.On("GetChangeEntriesJsonbCommand", 1, 21).Return([]typechanges.ChangeEntry{forFirst}, nil)
 		changesDb.On("GetChangeEntriesJsonbCommand", 1, 22).Return([]typechanges.ChangeEntry{forSecond}, nil)
 
-		changesSvc.On("ApplyChangeEntries", 1, []typechanges.ChangeEntry{forFirst}, 11).Return(nil)
-		changesSvc.On("ApplyChangeEntries", 1, []typechanges.ChangeEntry{forSecond}, 12).Return(nil)
+		changesSvc.On("ApplyChangeEntries", 1, []typechanges.ChangeEntry{forFirst}, 9, 11).Return(nil)
+		changesSvc.On("ApplyChangeEntries", 1, []typechanges.ChangeEntry{forSecond}, 9, 12).Return(nil)
 
 		sut := srvhistory.Service{Database: historyDb, ChangesDatabase: changesDb, ChangesService: changesSvc}
 
