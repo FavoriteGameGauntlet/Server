@@ -17,6 +17,18 @@ const (
 	Running  TimerState = "running"
 )
 
+// ChangeEntryInput Names one thing a change grants. Exactly one of pointTypeName, itemName, perkName or effectName has to be set. The amount carries the sign it is applied with, so a cost is negative.
+type ChangeEntryInput struct {
+	Amount        int   `json:"amount"`
+	EffectName    *Name `json:"effectName,omitempty"`
+	ItemName      *Name `json:"itemName,omitempty"`
+	PerkName      *Name `json:"perkName,omitempty"`
+	PointTypeName *Name `json:"pointTypeName,omitempty"`
+}
+
+// ChangeEntryInputs defines model for ChangeEntryInputs.
+type ChangeEntryInputs = []ChangeEntryInput
+
 // Duration The duration notation as defined by ISO 8601
 type Duration = string
 
@@ -25,6 +37,9 @@ type Error struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
 }
+
+// Name defines model for Name.
+type Name = string
 
 // Timer defines model for Timer.
 type Timer struct {
@@ -40,11 +55,25 @@ type Timer struct {
 // TimerState defines model for Timer.State.
 type TimerState string
 
+// TimerReward What the party grants for every completed timer. Without a reward set, entries is empty.
+type TimerReward struct {
+	Entries ChangeEntryInputs `json:"entries"`
+}
+
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse = Error
 
 // TimerResponse defines model for TimerResponse.
 type TimerResponse = Timer
+
+// TimerRewardResponse What the party grants for every completed timer. Without a reward set, entries is empty.
+type TimerRewardResponse = TimerReward
+
+// TimerRewardRequest What the party grants for every completed timer. Without a reward set, entries is empty.
+type TimerRewardRequest = TimerReward
+
+// SetTimerRewardJSONRequestBody defines body for SetTimerReward for application/json ContentType.
+type SetTimerRewardJSONRequestBody = TimerReward
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -57,6 +86,15 @@ type ServerInterface interface {
 
 	// (POST /timers/current/start)
 	StartCurrentTimer(ctx echo.Context) error
+
+	// (DELETE /timers/reward)
+	RemoveTimerReward(ctx echo.Context) error
+
+	// (GET /timers/reward)
+	GetTimerReward(ctx echo.Context) error
+
+	// (PUT /timers/reward)
+	SetTimerReward(ctx echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -91,6 +129,33 @@ func (w *ServerInterfaceWrapper) StartCurrentTimer(ctx echo.Context) error {
 	return err
 }
 
+// RemoveTimerReward converts echo context to params.
+func (w *ServerInterfaceWrapper) RemoveTimerReward(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.RemoveTimerReward(ctx)
+	return err
+}
+
+// GetTimerReward converts echo context to params.
+func (w *ServerInterfaceWrapper) GetTimerReward(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetTimerReward(ctx)
+	return err
+}
+
+// SetTimerReward converts echo context to params.
+func (w *ServerInterfaceWrapper) SetTimerReward(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.SetTimerReward(ctx)
+	return err
+}
+
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -122,5 +187,8 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/timers/current", wrapper.GetCurrentTimer)
 	router.POST(baseURL+"/timers/current/pause", wrapper.PauseCurrentTimer)
 	router.POST(baseURL+"/timers/current/start", wrapper.StartCurrentTimer)
+	router.DELETE(baseURL+"/timers/reward", wrapper.RemoveTimerReward)
+	router.GET(baseURL+"/timers/reward", wrapper.GetTimerReward)
+	router.PUT(baseURL+"/timers/reward", wrapper.SetTimerReward)
 
 }

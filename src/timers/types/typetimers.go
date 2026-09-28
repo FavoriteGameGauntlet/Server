@@ -1,6 +1,7 @@
 package typetimers
 
 import (
+	"FGG-Service/src/changes/types"
 	"time"
 )
 
@@ -40,6 +41,20 @@ type EndedTimer struct {
 	Duration       time.Duration
 	TimeSpent      time.Duration
 	LastActionDate time.Time
+}
+
+// TimerReward is what the party grants for every completed timer.
+type TimerReward struct {
+	Id     int
+	Change typechanges.Change
+}
+
+type TimerHistoryEntry struct {
+	Id            int
+	UserId        int
+	PartyId       int
+	TimerRewardId *int
+	CompletedDate time.Time
 }
 
 type TimerStateType string

@@ -11,3 +11,6 @@ paths:
 
   /timers/current/pause:
     $ref: "../paths/timers/current/pause.yaml"
+
+  /timers/reward:
+    $ref: "../paths/timers/reward.yaml"

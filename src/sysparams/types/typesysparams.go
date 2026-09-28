@@ -24,11 +24,8 @@ const (
 	ParamEffectFinisherSchedulerIntervalInS = "EffectFinisherSchedulerIntervalInS"
 	ParamMaximumAvailableRollCountForTimer = "MaximumAvailableRollCountForTimer"
 
-	ParamAvailableRollChangeByTimer       = "AvailableRollChangeByTimer"
 	ParamAvailableRollChangeByRoll        = "AvailableRollChangeByRoll"
-	ParamTerritoryHourChangeByTimer       = "TerritoryHourChangeByTimer"
-	ParamExperiencePointChangeByTimer     = "ExperiencePointChangeByTimer"
-	ParamExperiencePointByLevelUp         = "ExperiencePointChangeByLevelUp"
+	ParamExperiencePointByLevelUp         ="ExperiencePointChangeByLevelUp"
 	ParamTerritoryHourChangeBySeizeSlice  = "TerritoryHourChangeBySeizeSlice"
 	ParamTerritoryPointChangeBySeizeSlice = "TerritoryPointChangeBySeizeSlice"
 	ParamFreePointChangeBySandstorm       = "FreePointChangeBySandstorm"

@@ -1,10 +1,10 @@
 package srvtimers
 
 import (
+	"FGG-Service/src/changes/service"
+	"FGG-Service/src/changes/types"
 	"FGG-Service/src/common"
 	"FGG-Service/src/games/database"
-	"FGG-Service/src/points/service"
-	"FGG-Service/src/points/type"
 	"FGG-Service/src/sysparams/service"
 	"FGG-Service/src/sysparams/types"
 	"FGG-Service/src/timers/database"
@@ -12,6 +12,7 @@ import (
 	"FGG-Service/src/wheeleffects/database"
 	"database/sql"
 	"errors"
+	"log/slog"
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
@@ -45,7 +46,7 @@ func toTimer(currentTimer typetimers.CurrentTimer) typetimers.Timer {
 type Service struct {
 	Database               dbtimers.IDatabase
 	GamesDatabase          dbgames.IDatabase
-	PointsService          *srvpoints.Service
+	ChangesService         srvchanges.IService
 	WheelEffectsDatabase   dbwheeleffects.IDatabase
 	SysParamsService       srvsysparams.IService
 	TimerFinisherScheduler gocron.Scheduler
@@ -54,14 +55,14 @@ type Service struct {
 func NewService() *Service {
 	db := new(dbtimers.Database)
 	gdb := new(dbgames.Database)
-	ps := srvpoints.NewService()
+	cs := srvchanges.NewService()
 	wedb := new(dbwheeleffects.Database)
 	sp := srvsysparams.NewService()
 
 	s := &Service{
 		Database:             db,
 		GamesDatabase:        gdb,
-		PointsService:        ps,
+		ChangesService:       cs,
 		WheelEffectsDatabase: wedb,
 		SysParamsService:     sp,
 	}
@@ -289,30 +290,74 @@ func (s *Service) StopAllCompletedTimers() error {
 		return err
 	}
 
-	availableRollChangeByTimer, err := s.SysParamsService.GetInt(typesysparams.ParamAvailableRollChangeByTimer)
-
-	if err != nil {
-		return err
-	}
-
-	territoryHourChangeByTimer, err := s.SysParamsService.GetInt(typesysparams.ParamTerritoryHourChangeByTimer)
-
-	if err != nil {
-		return err
-	}
-
-	experiencePointChangeByTimer, err := s.SysParamsService.GetInt(typesysparams.ParamExperiencePointChangeByTimer)
-
-	if err != nil {
-		return err
-	}
-
 	for _, endedTimer := range endedTimers {
-		_ = s.GamesDatabase.ChangeGameTimeSpentCommand(endedTimer.UserId, endedTimer.PartyId, endedTimer.GameId, endedTimer.TimeSpent, endedTimer.UserId, nil)
-		_ = s.PointsService.ChangePointValueByTypeNameNoHistory(endedTimer.UserId, defaultPartyId, typepoints.PointTypeAvailableRolls, availableRollChangeByTimer)
-		_ = s.PointsService.ChangePointValueByTypeNameNoHistory(endedTimer.UserId, defaultPartyId, typepoints.PointTypeTerritoryHours, territoryHourChangeByTimer)
-		_ = s.PointsService.ChangePointValueByTypeNameNoHistory(endedTimer.UserId, defaultPartyId, typepoints.PointTypeExperiencePoints, experiencePointChangeByTimer)
+		err = s.completeTimer(endedTimer)
+
+		if err != nil {
+			slog.Error("CompleteTimer", "timerId", endedTimer.Id, "userId", endedTimer.UserId, "error", err)
+		}
 	}
 
 	return nil
+}
+
+// completeTimer records a completed timer as a timer history event, which is then the source of the
+// time it adds to its game and of the party's timer reward. A party without a reward still gets the
+// event and the game time.
+func (s *Service) completeTimer(timer typetimers.EndedTimer) (err error) {
+	var rewardId *int
+	var rewardEntries []typechanges.ChangeEntry
+
+	reward, err := s.Database.GetTimerRewardCommand(timer.PartyId)
+
+	if err == nil {
+		rewardId = &reward.Id
+		rewardEntries = reward.Change.Entries
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		return
+	}
+
+	history, err := s.Database.CreateTimerHistoryCommand(timer.UserId, timer.PartyId, rewardId, timer.UserId)
+
+	if err != nil {
+		return
+	}
+
+	err = s.GamesDatabase.ChangeGameTimeSpentCommand(timer.UserId, timer.PartyId, timer.GameId, timer.TimeSpent, timer.UserId, &history.Id)
+
+	if err != nil {
+		return
+	}
+
+	for i := range rewardEntries {
+		rewardEntries[i].UserId = &timer.UserId
+	}
+
+	return s.ChangesService.ApplyChangeEntries(timer.PartyId, rewardEntries, timer.UserId, history.Id)
+}
+
+func (s *Service) GetTimerReward(partyId int) ([]typechanges.ChangeEntryInput, error) {
+	return s.Database.GetTimerRewardEntriesCommand(partyId)
+}
+
+// SetTimerReward replaces the party's timer reward. The previous one is kept as removed, so the
+// history of timers completed under it still points at what they granted.
+func (s *Service) SetTimerReward(partyId int, entries []typechanges.ChangeEntryInput) (reward []typechanges.ChangeEntryInput, err error) {
+	resolved, err := s.ChangesService.ResolveChangeEntries(partyId, entries)
+
+	if err != nil {
+		return
+	}
+
+	_, err = s.Database.SetTimerRewardCommand(partyId, typechanges.Change{Entries: resolved})
+
+	if err != nil {
+		return
+	}
+
+	return s.Database.GetTimerRewardEntriesCommand(partyId)
+}
+
+func (s *Service) RemoveTimerReward(partyId int) error {
+	return s.Database.RemoveTimerRewardCommand(partyId)
 }

@@ -1,0 +1,38 @@
+get:
+  operationId: getTimerReward
+  tags: [ Timers ]
+  responses:
+    "200":
+      $ref: "../../components/responses/TimerRewardResponse.yaml"
+    "401":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+put:
+  operationId: setTimerReward
+  tags: [ Timers ]
+  requestBody:
+    $ref: "../../components/requests/TimerRewardRequest.yaml"
+  responses:
+    "200":
+      $ref: "../../components/responses/TimerRewardResponse.yaml"
+    "400":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "401":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "404":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "422":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+delete:
+  operationId: removeTimerReward
+  tags: [ Timers ]
+  responses:
+    "204":
+      description: Success.
+    "401":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../components/responses/ErrorResponse.yaml"
