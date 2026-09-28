@@ -105,7 +105,9 @@ func (c *Controller) ChangePointType(ctx echo.Context, name genpoints.Name) erro
 	}
 
 	err = c.Service.ChangePointType(defaultPartyId, name, typepoints.PointType{
+		Name:        pointTypeDto.Name,
 		Description: pointTypeDto.Description,
+		StartValue:  pointTypeDto.StartValue,
 		IsPublic:    pointTypeDto.IsPublic,
 		IsShared:    pointTypeDto.IsShared,
 		Minimum:     pointTypeDto.Minimum,

@@ -17,8 +17,8 @@ func (m *DatabaseMock) CreatePointTypeCommand(partyId int, name string, descript
 	return
 }
 
-func (m *DatabaseMock) ChangePointTypeCommand(partyId int, pointTypeId int, name string, description string, isPublic bool, isShared bool, minimum *int, maximum *int) error {
-	args := m.Called(partyId, pointTypeId, name, description, isPublic, isShared, minimum, maximum)
+func (m *DatabaseMock) ChangePointTypeCommand(partyId int, pointTypeId int, name string, description string, startValue int, isPublic bool, isShared bool, minimum *int, maximum *int) error {
+	args := m.Called(partyId, pointTypeId, name, description, startValue, isPublic, isShared, minimum, maximum)
 	return args.Error(0)
 }
 

@@ -104,7 +104,7 @@ func TestSrvPoints_CreatePointType_ValidBounds_Created(test *testing.T) {
 
 // --- ChangePointType ---
 
-// New bounds have to keep the existing start value, which the change cannot touch.
+// New bounds have to contain the start value the change sets.
 func TestSrvPoints_ChangePointType_BoundsExcludeStartValue_Unprocessable(test *testing.T) {
 	// Arrange
 	databaseMock := new(dbpointsmock.DatabaseMock)
@@ -115,7 +115,7 @@ func TestSrvPoints_ChangePointType_BoundsExcludeStartValue_Unprocessable(test *t
 	sut := srvpoints.Service{Database: databaseMock}
 
 	// Act
-	err := sut.ChangePointType(1, "Rolls", typepoints.PointType{Minimum: ptrInt(1), Maximum: ptrInt(10)})
+	err := sut.ChangePointType(1, "Rolls", typepoints.PointType{Name: "Rolls", StartValue: 0, Minimum: ptrInt(1), Maximum: ptrInt(10)})
 
 	// Assert
 	var unprocessable *common.UnprocessableError
@@ -123,21 +123,82 @@ func TestSrvPoints_ChangePointType_BoundsExcludeStartValue_Unprocessable(test *t
 	databaseMock.AssertNotCalled(test, "ChangePointTypeCommand")
 }
 
-// Removing the maximum keeps the existing start value, so the change is saved.
+// Removing the maximum keeps the start value within bounds, so the change is saved.
 func TestSrvPoints_ChangePointType_RemoveMaximum_Changed(test *testing.T) {
 	// Arrange
 	databaseMock := new(dbpointsmock.DatabaseMock)
 	databaseMock.On("GetPointTypeByNameCommand", 1, "Rolls").Return(typepoints.PointTypeInfo{
 		Id: 5, PartyId: 1, Name: "Rolls", StartValue: 3, Minimum: ptrInt(0), Maximum: ptrInt(10),
 	}, nil)
-	databaseMock.On("ChangePointTypeCommand", 1, 5, "Rolls", "", false, false, ptrInt(3), (*int)(nil)).Return(nil)
+	databaseMock.On("ChangePointTypeCommand", 1, 5, "Rolls", "", 3, false, false, ptrInt(3), (*int)(nil)).Return(nil)
 
 	sut := srvpoints.Service{Database: databaseMock}
 
 	// Act
-	err := sut.ChangePointType(1, "Rolls", typepoints.PointType{Minimum: ptrInt(3)})
+	err := sut.ChangePointType(1, "Rolls", typepoints.PointType{Name: "Rolls", StartValue: 3, Minimum: ptrInt(3)})
 
 	// Assert
 	require.NoError(test, err)
 	databaseMock.AssertExpectations(test)
+}
+
+// A start value moved together with its bounds is saved.
+func TestSrvPoints_ChangePointType_NewStartValue_Changed(test *testing.T) {
+	// Arrange
+	databaseMock := new(dbpointsmock.DatabaseMock)
+	databaseMock.On("GetPointTypeByNameCommand", 1, "Rolls").Return(typepoints.PointTypeInfo{
+		Id: 5, PartyId: 1, Name: "Rolls", StartValue: 0, Minimum: ptrInt(0),
+	}, nil)
+	databaseMock.On("ChangePointTypeCommand", 1, 5, "Rolls", "", 1, false, false, ptrInt(1), (*int)(nil)).Return(nil)
+
+	sut := srvpoints.Service{Database: databaseMock}
+
+	// Act
+	err := sut.ChangePointType(1, "Rolls", typepoints.PointType{Name: "Rolls", StartValue: 1, Minimum: ptrInt(1)})
+
+	// Assert
+	require.NoError(test, err)
+	databaseMock.AssertExpectations(test)
+}
+
+// A point type can be renamed to a name no other point type has.
+func TestSrvPoints_ChangePointType_Rename_Changed(test *testing.T) {
+	// Arrange
+	databaseMock := new(dbpointsmock.DatabaseMock)
+	databaseMock.On("GetPointTypeByNameCommand", 1, "Rolls").Return(typepoints.PointTypeInfo{
+		Id: 5, PartyId: 1, Name: "Rolls", StartValue: 0,
+	}, nil)
+	databaseMock.On("GetPointTypeByNameCommand", 1, "Spins").Return(typepoints.PointTypeInfo{}, sql.ErrNoRows)
+	databaseMock.On("ChangePointTypeCommand", 1, 5, "Spins", "", 0, false, false, (*int)(nil), (*int)(nil)).Return(nil)
+
+	sut := srvpoints.Service{Database: databaseMock}
+
+	// Act
+	err := sut.ChangePointType(1, "Rolls", typepoints.PointType{Name: "Spins"})
+
+	// Assert
+	require.NoError(test, err)
+	databaseMock.AssertExpectations(test)
+}
+
+// Renaming to the name of another point type is a conflict.
+func TestSrvPoints_ChangePointType_RenameToTakenName_Conflict(test *testing.T) {
+	// Arrange
+	databaseMock := new(dbpointsmock.DatabaseMock)
+	databaseMock.On("GetPointTypeByNameCommand", 1, "Rolls").Return(typepoints.PointTypeInfo{
+		Id: 5, PartyId: 1, Name: "Rolls", StartValue: 0,
+	}, nil)
+	databaseMock.On("GetPointTypeByNameCommand", 1, "Spins").Return(typepoints.PointTypeInfo{
+		Id: 6, PartyId: 1, Name: "Spins", StartValue: 0,
+	}, nil)
+
+	sut := srvpoints.Service{Database: databaseMock}
+
+	// Act
+	err := sut.ChangePointType(1, "Rolls", typepoints.PointType{Name: "Spins"})
+
+	// Assert
+	var conflict *common.ConflictError
+	require.ErrorAs(test, err, &conflict)
+	databaseMock.AssertNotCalled(test, "ChangePointTypeCommand")
 }

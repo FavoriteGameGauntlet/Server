@@ -61,8 +61,9 @@ func (s *Service) CreatePointType(partyId int, pointType typepoints.PointType) (
 		pointType.Maximum)
 }
 
-// ChangePointType updates the named point type. The name itself is the API identity of the type and
-// is not editable, and neither is the start value, which the new bounds still have to contain.
+// ChangePointType updates the named point type, including its name and start value. A new name must
+// not be taken by another point type, since names identify point types across the API. A new start
+// value only affects values not held yet: a point already held keeps its value.
 func (s *Service) ChangePointType(partyId int, name string, pointType typepoints.PointType) (err error) {
 	current, err := s.GetPointTypeByName(partyId, name)
 
@@ -70,17 +71,31 @@ func (s *Service) ChangePointType(partyId int, name string, pointType typepoints
 		return
 	}
 
-	err = validator.ValidatePointTypeBounds(current.StartValue, pointType.Minimum, pointType.Maximum)
+	err = validator.ValidatePointTypeBounds(pointType.StartValue, pointType.Minimum, pointType.Maximum)
 
 	if err != nil {
 		return
 	}
 
+	if pointType.Name != current.Name {
+		_, err = s.Database.GetPointTypeByNameCommand(partyId, pointType.Name)
+
+		if err == nil {
+			err = common.NewPointTypeAlreadyExistsConflictError(pointType.Name)
+			return
+		}
+
+		if !errors.Is(err, sql.ErrNoRows) {
+			return
+		}
+	}
+
 	return s.Database.ChangePointTypeCommand(
 		partyId,
 		current.Id,
-		name,
+		pointType.Name,
 		pointType.Description,
+		pointType.StartValue,
 		pointType.IsPublic,
 		pointType.IsShared,
 		pointType.Minimum,

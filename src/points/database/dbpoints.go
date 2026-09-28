@@ -7,7 +7,7 @@ import (
 
 type IDatabase interface {
 	CreatePointTypeCommand(partyId int, name string, description string, startValue int, isPublic bool, isShared bool, minimum *int, maximum *int) (pointType typepoints.PointType, err error)
-	ChangePointTypeCommand(partyId int, pointTypeId int, name string, description string, isPublic bool, isShared bool, minimum *int, maximum *int) error
+	ChangePointTypeCommand(partyId int, pointTypeId int, name string, description string, startValue int, isPublic bool, isShared bool, minimum *int, maximum *int) error
 	RemovePointTypeCommand(partyId int, pointTypeId int) error
 	GetPointTypeByNameCommand(partyId int, name string) (pointType typepoints.PointTypeInfo, err error)
 	GetPointTypeCommand(partyId int, pointTypeId int) (pointType typepoints.PointTypeInfo, err error)
@@ -51,10 +51,10 @@ func (db *Database) CreatePointTypeCommand(partyId int, name string, description
 	return
 }
 
-var changePointTypeQuery = dbaccess.Query{Name: "ChangePointTypeQuery", SQL: `SELECT change_point_type($1::integer, $2::integer, $3::text, $4::text, $5::boolean, $6::boolean, $7::integer, $8::integer)`}
+var changePointTypeQuery = dbaccess.Query{Name: "ChangePointTypeQuery", SQL: `SELECT change_point_type($1::integer, $2::integer, $3::text, $4::text, $5::integer, $6::boolean, $7::boolean, $8::integer, $9::integer)`}
 
-func (db *Database) ChangePointTypeCommand(partyId int, pointTypeId int, name string, description string, isPublic bool, isShared bool, minimum *int, maximum *int) error {
-	_, err := dbaccess.Exec(changePointTypeQuery, partyId, pointTypeId, name, description, isPublic, isShared, minimum, maximum)
+func (db *Database) ChangePointTypeCommand(partyId int, pointTypeId int, name string, description string, startValue int, isPublic bool, isShared bool, minimum *int, maximum *int) error {
+	_, err := dbaccess.Exec(changePointTypeQuery, partyId, pointTypeId, name, description, startValue, isPublic, isShared, minimum, maximum)
 
 	dbaccess.LogDbResult(changePointTypeQuery, nil, err)
 

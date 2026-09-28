@@ -1,7 +1,13 @@
 type: object
 properties:
+  name:
+    $ref: "./Name.yaml"
   description:
     type: string
+  startValue:
+    type: integer
+    format: int
+    description: The value of a point not held yet. Points already held keep their value.
   isPublic:
     type: boolean
   isShared:
@@ -18,4 +24,4 @@ properties:
     nullable: true
     default: null
     description: The highest value a point can have, or null for no upper bound.
-required: [ description, isPublic, isShared, minimum, maximum ]
+required: [ name, description, startValue, isPublic, isShared, minimum, maximum ]

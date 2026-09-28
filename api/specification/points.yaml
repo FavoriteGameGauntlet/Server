@@ -52,6 +52,8 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '404':
           $ref: '#/components/responses/ErrorResponse'
+        '409':
+          $ref: '#/components/responses/ErrorResponse'
         '422':
           $ref: '#/components/responses/ErrorResponse'
         '500':
@@ -299,8 +301,14 @@ components:
     PointTypeChange:
       type: object
       properties:
+        name:
+          $ref: '#/components/schemas/Name'
         description:
           type: string
+        startValue:
+          type: integer
+          format: int
+          description: The value of a point not held yet. Points already held keep their value.
         isPublic:
           type: boolean
         isShared:
@@ -318,7 +326,9 @@ components:
           default: null
           description: The highest value a point can have, or null for no upper bound.
       required:
+        - name
         - description
+        - startValue
         - isPublic
         - isShared
         - minimum

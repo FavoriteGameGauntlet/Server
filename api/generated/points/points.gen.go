@@ -74,6 +74,10 @@ type PointTypeChange struct {
 
 	// Minimum The lowest value a point can have, or null for no lower bound.
 	Minimum *int `json:"minimum"`
+	Name    Name `json:"name"`
+
+	// StartValue The value of a point not held yet. Points already held keep their value.
+	StartValue int `json:"startValue"`
 }
 
 // PointTypeCreate defines model for PointTypeCreate.
