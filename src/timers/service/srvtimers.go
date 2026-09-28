@@ -286,6 +286,7 @@ func (s *Service) StopAllCompletedTimers() error {
 
 	for _, endedTimer := range endedTimers {
 		_, _ = s.StopCurrentTimer(endedTimer.UserId)
+		_ = s.GamesDatabase.ChangeGameTimeSpentCommand(endedTimer.UserId, endedTimer.PartyId, endedTimer.GameId, endedTimer.TimeSpent, endedTimer.UserId, nil)
 		_ = s.PointsService.ChangePointValueByTypeNameNoHistory(endedTimer.UserId, defaultPartyId, typepoints.PointTypeAvailableRolls, availableRollChangeByTimer)
 		_ = s.PointsService.ChangePointValueByTypeNameNoHistory(endedTimer.UserId, defaultPartyId, typepoints.PointTypeTerritoryHours, territoryHourChangeByTimer)
 		_ = s.PointsService.ChangePointValueByTypeNameNoHistory(endedTimer.UserId, defaultPartyId, typepoints.PointTypeExperiencePoints, experiencePointChangeByTimer)
