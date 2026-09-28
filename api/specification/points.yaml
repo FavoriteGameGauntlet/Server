@@ -313,6 +313,7 @@ components:
           type: boolean
         isShared:
           type: boolean
+          default: false
         minimum:
           type: integer
           format: int
