@@ -40,9 +40,9 @@ func (m *ServiceMock) GetIntSlice(name string) ([]int, error) {
 	return args.Get(0).([]int), args.Error(1)
 }
 
-func (m *ServiceMock) ChangeValue(name string, value string) error {
+func (m *ServiceMock) ChangeValue(name string, value string) (bool, error) {
 	args := m.Called(name, value)
-	return args.Error(0)
+	return args.Bool(0), args.Error(1)
 }
 
 func (m *ServiceMock) ResetParameter(name string) error {

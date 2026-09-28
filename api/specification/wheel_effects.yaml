@@ -39,7 +39,7 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/WheelEffectRollRequest'
       responses:
-        '200':
+        '201':
           $ref: '#/components/responses/RolledWheelRowsResponse'
         '401':
           $ref: '#/components/responses/ErrorResponse'

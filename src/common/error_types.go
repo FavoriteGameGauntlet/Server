@@ -486,6 +486,15 @@ func NewUserEmailAlreadyExistsConflictError() error {
 	}
 }
 
+func NewCurrentTimerAlreadyExistsConflictError() error {
+	return &ConflictError{
+		&BaseError{
+			Code:    "CURRENT_TIMER_ALREADY_EXISTS",
+			Message: "The user already has a current timer.",
+		},
+	}
+}
+
 func NewAvailableRollsExistConflictError() error {
 	return &ConflictError{
 		&BaseError{

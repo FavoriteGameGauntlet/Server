@@ -13,7 +13,7 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/WishlistGameRequest'
       responses:
-        '204':
+        '201':
           description: Success.
         '401':
           $ref: '#/components/responses/ErrorResponse'
@@ -74,7 +74,7 @@ paths:
       tags:
         - Games
       responses:
-        '200':
+        '201':
           $ref: '#/components/responses/CurrentGameResponse'
         '401':
           $ref: '#/components/responses/ErrorResponse'
@@ -122,8 +122,10 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/GameRateRequest'
       responses:
+        '201':
+          description: The game was rated for the first time.
         '204':
-          description: Success.
+          description: The existing rating was replaced.
         '400':
           $ref: '#/components/responses/ErrorResponse'
         '401':

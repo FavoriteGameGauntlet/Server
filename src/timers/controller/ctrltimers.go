@@ -38,7 +38,7 @@ func (c *Controller) GetCurrentTimer(ctx echo.Context) error {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	timer, err := c.Service.GetOrCreateCurrentTimer(userId)
+	timer, err := c.Service.GetCurrentTimer(userId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -47,6 +47,23 @@ func (c *Controller) GetCurrentTimer(ctx echo.Context) error {
 	timerDto := convertTimerToDto(timer)
 
 	return ctx.JSON(http.StatusOK, timerDto)
+}
+
+// CreateCurrentTimer (POST /timers/current)
+func (c *Controller) CreateCurrentTimer(ctx echo.Context) error {
+	userId, err := c.AuthService.GetUserId(ctx)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	timer, err := c.Service.CreateCurrentTimer(userId)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	return ctx.JSON(http.StatusCreated, convertTimerToDto(timer))
 }
 
 func convertTimerToDto(timer typetimers.Timer) gentimers.Timer {
@@ -135,7 +152,7 @@ func (c *Controller) SetTimerReward(ctx echo.Context) error {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	return ctx.JSON(http.StatusOK, convertTimerRewardToDto(reward))
+	return ctx.JSON(http.StatusCreated, convertTimerRewardToDto(reward))
 }
 
 // RemoveTimerReward (DELETE /timers/reward)

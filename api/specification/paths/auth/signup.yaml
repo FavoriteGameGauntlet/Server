@@ -4,7 +4,7 @@ post:
   requestBody:
     $ref: "../../components/requests/SignupUserRequest.yaml"
   responses:
-    "204":
+    "201":
       description: Success.
     "401":
       $ref: "../../components/responses/ErrorResponse.yaml"

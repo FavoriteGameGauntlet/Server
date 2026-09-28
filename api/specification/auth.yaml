@@ -11,7 +11,7 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/SignupUserRequest'
       responses:
-        '204':
+        '201':
           description: Success.
         '401':
           $ref: '#/components/responses/ErrorResponse'
@@ -32,7 +32,7 @@ paths:
             schema:
               $ref: '#/components/schemas/LoginUser'
       responses:
-        '204':
+        '201':
           description: Success.
           headers:
             Set-Cookie:

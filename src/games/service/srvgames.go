@@ -22,7 +22,7 @@ type IService interface {
 	FinishCurrentGame(userId int) error
 	MakeGameRoll(userId int) (typegames.CurrentGame, error)
 	GetGameHistory(userId int) ([]typegames.GameHistoryEntry, error)
-	RateGame(userId int, name string, rating int, reviewComment *string) error
+	RateGame(userId int, name string, rating int, reviewComment *string) (bool, error)
 	GetGameReview(userId int, name string) (typegames.GameReview, error)
 	GetUnplayedGames(userId int) (typegames.WishlistGames, error)
 	AddWishlistGame(userId int, wishlistGame typegames.WishlistGame) error
@@ -148,15 +148,15 @@ func (s *Service) GetGameHistory(userId int) (history []typegames.GameHistoryEnt
 }
 
 // RateGame records a rating and an optional review for a game the user has already played. Rating
-// the same game again overwrites the previous rating.
-func (s *Service) RateGame(userId int, name string, rating int, reviewComment *string) (err error) {
+// the same game again overwrites the previous rating; created tells whether this was the first.
+func (s *Service) RateGame(userId int, name string, rating int, reviewComment *string) (created bool, err error) {
 	gameId, err := s.getPlayedGameId(userId, name)
 
 	if err != nil {
 		return
 	}
 
-	_, err = s.Database.RateGameCommand(userId, defaultPartyId, gameId, rating, reviewComment)
+	gameRating, err := s.Database.RateGameCommand(userId, defaultPartyId, gameId, rating, reviewComment)
 
 	// The game is in the history but hasn't ended yet, so there is nothing to rate and the
 	// database writes nothing.
@@ -164,7 +164,12 @@ func (s *Service) RateGame(userId int, name string, rating int, reviewComment *s
 		err = common.NewPlayedGameNotFoundError(name)
 	}
 
-	return
+	if err != nil {
+		return
+	}
+
+	// Both dates are set to the same NOW() on insert, and only UpdatedDate moves on an update.
+	return gameRating.CreatedDate.Equal(gameRating.UpdatedDate), nil
 }
 
 // GetGameReview returns the rating and review the user left for a game they have played.

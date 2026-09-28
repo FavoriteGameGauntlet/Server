@@ -116,7 +116,7 @@ func (c *Controller) RollNewCurrentGame(ctx echo.Context) error {
 
 	gameDto := convertGameToDto(game)
 
-	return ctx.JSON(http.StatusOK, gameDto)
+	return ctx.JSON(http.StatusCreated, gameDto)
 }
 
 // GetUserGameHistory (GET /games/{login}/history)
@@ -250,7 +250,7 @@ func (c *Controller) AddUserWishlistGame(ctx echo.Context, login gengames.Login)
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	return ctx.NoContent(http.StatusNoContent)
+	return ctx.NoContent(http.StatusCreated)
 }
 
 func convertWishlistGameFromDto(gameDto gengames.WishlistGame) typegames.WishlistGame {
@@ -312,10 +312,14 @@ func (c *Controller) RateGame(ctx echo.Context) error {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.RateGame(userId, rateDto.Name, rateDto.Rating, rateDto.ReviewComment)
+	created, err := c.Service.RateGame(userId, rateDto.Name, rateDto.Rating, rateDto.ReviewComment)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	if created {
+		return ctx.NoContent(http.StatusCreated)
 	}
 
 	return ctx.NoContent(http.StatusNoContent)

@@ -49,9 +49,9 @@ func (m *ServiceMock) GetGameHistory(userId int) ([]typegames.GameHistoryEntry, 
 	return args.Get(0).([]typegames.GameHistoryEntry), args.Error(1)
 }
 
-func (m *ServiceMock) RateGame(userId int, name string, rating int, reviewComment *string) error {
+func (m *ServiceMock) RateGame(userId int, name string, rating int, reviewComment *string) (bool, error) {
 	args := m.Called(userId, name, rating, reviewComment)
-	return args.Error(0)
+	return args.Bool(0), args.Error(1)
 }
 
 func (m *ServiceMock) GetGameReview(userId int, name string) (typegames.GameReview, error) {

@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type GetOrCreateCurrentTimerTestCase struct {
+type CreateCurrentTimerTestCase struct {
 	Name            string
 	UserId          int
 	SetupMocks      func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock, *srvsysparamsmock.ServiceMock)
@@ -31,7 +31,7 @@ var timerLastActionDate = time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)
 var currentGame = typegames.UserGame{Id: 1, Name: "Half-Life 1"}
 
 // existingCurrentTimer is what the DB returns; existingTimer is the derived Timer (RemainingTime =
-// Duration - TimeSpent) that GetOrCreateCurrentTimer must return for it.
+// Duration - TimeSpent) that GetCurrentTimer must return for it.
 var existingCurrentTimer = typetimers.CurrentTimer{
 	Id:             1,
 	GameId:         1,
@@ -66,7 +66,7 @@ var newTimer = typetimers.Timer{
 	LastActionDate: timerLastActionDate,
 }
 
-var GetOrCreateCurrentTimerTestCases = []GetOrCreateCurrentTimerTestCase{
+var CreateCurrentTimerTestCases = []CreateCurrentTimerTestCase{
 	{
 		// GetCurrentGameCommand returns sql.ErrNoRows. The CurrentGameNotFoundError will return.
 		Name:   "NotFound_NoRows",
@@ -100,8 +100,9 @@ var GetOrCreateCurrentTimerTestCases = []GetOrCreateCurrentTimerTestCase{
 		ExpectedErrorIs: dbError,
 	},
 	{
-		// GetCurrentGameCommand succeeds. GetCurrentTimerCommand returns an existing timer. The existing timer will return.
-		Name:   "ExistingTimer",
+		// GetCurrentGameCommand succeeds. GetCurrentTimerCommand returns an existing timer. The
+		// CurrentTimerAlreadyExists conflict will return and nothing is created.
+		Name:   "ExistingTimer_Conflict",
 		UserId: 1,
 		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock, *srvsysparamsmock.ServiceMock) {
 			timerDb := new(dbtimermock.DatabaseMock)
@@ -114,7 +115,7 @@ var GetOrCreateCurrentTimerTestCases = []GetOrCreateCurrentTimerTestCase{
 
 			return timerDb, gamesDb, wheelDb, spSvc
 		},
-		ExpectedTimer: &existingTimer,
+		ExpectedErrorAs: new(common.ConflictError),
 	},
 	{
 		// GetCurrentGameCommand succeeds. GetCurrentTimerCommand returns a database error. The error will return.
@@ -262,8 +263,8 @@ var GetOrCreateCurrentTimerTestCases = []GetOrCreateCurrentTimerTestCase{
 	},
 }
 
-func TestSrvTimers_GetOrCreateCurrentTimer(test *testing.T) {
-	for _, testCase := range GetOrCreateCurrentTimerTestCases {
+func TestSrvTimers_CreateCurrentTimer(test *testing.T) {
+	for _, testCase := range CreateCurrentTimerTestCases {
 		test.Run(testCase.Name, func(test *testing.T) {
 			// Arrange
 			timerDb, gamesDb, wheelDb, spSvc := testCase.SetupMocks()
@@ -275,7 +276,7 @@ func TestSrvTimers_GetOrCreateCurrentTimer(test *testing.T) {
 			}
 
 			// Act
-			timer, err := sut.GetOrCreateCurrentTimer(testCase.UserId)
+			timer, err := sut.CreateCurrentTimer(testCase.UserId)
 
 			// Assert
 			if testCase.ExpectedErrorAs != nil {
@@ -298,4 +299,25 @@ func TestSrvTimers_GetOrCreateCurrentTimer(test *testing.T) {
 			spSvc.AssertExpectations(test)
 		})
 	}
+}
+
+// A user who already has a timer gets the CURRENT_TIMER_ALREADY_EXISTS conflict, not a second timer.
+func TestSrvTimers_CreateCurrentTimer_ExistingTimer_AlreadyExistsCode(test *testing.T) {
+	// Arrange
+	timerDb := new(dbtimermock.DatabaseMock)
+	gamesDb := new(dbgamesmock.DatabaseMock)
+
+	gamesDb.On("GetCurrentGameCommand", 1, 1).Return(currentGame, nil)
+	timerDb.On("GetCurrentTimerCommand", 1, 1).Return(existingCurrentTimer, nil)
+
+	sut := srvtimers.Service{Database: timerDb, GamesDatabase: gamesDb}
+
+	// Act
+	_, err := sut.CreateCurrentTimer(1)
+
+	// Assert
+	var conflict *common.ConflictError
+	require.ErrorAs(test, err, &conflict)
+	require.Equal(test, "CURRENT_TIMER_ALREADY_EXISTS", conflict.GetCode())
+	timerDb.AssertNotCalled(test, "CreateCurrentTimerCommand")
 }

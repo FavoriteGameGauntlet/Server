@@ -81,6 +81,9 @@ type ServerInterface interface {
 	// (GET /timers/current)
 	GetCurrentTimer(ctx echo.Context) error
 
+	// (POST /timers/current)
+	CreateCurrentTimer(ctx echo.Context) error
+
 	// (POST /timers/current/pause)
 	PauseCurrentTimer(ctx echo.Context) error
 
@@ -108,6 +111,15 @@ func (w *ServerInterfaceWrapper) GetCurrentTimer(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetCurrentTimer(ctx)
+	return err
+}
+
+// CreateCurrentTimer converts echo context to params.
+func (w *ServerInterfaceWrapper) CreateCurrentTimer(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.CreateCurrentTimer(ctx)
 	return err
 }
 
@@ -185,6 +197,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	}
 
 	router.GET(baseURL+"/timers/current", wrapper.GetCurrentTimer)
+	router.POST(baseURL+"/timers/current", wrapper.CreateCurrentTimer)
 	router.POST(baseURL+"/timers/current/pause", wrapper.PauseCurrentTimer)
 	router.POST(baseURL+"/timers/current/start", wrapper.StartCurrentTimer)
 	router.DELETE(baseURL+"/timers/reward", wrapper.RemoveTimerReward)

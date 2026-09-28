@@ -2,7 +2,7 @@ post:
   operationId: rollNewCurrentGame
   tags: [ Games ]
   responses:
-    "200":
+    "201":
       $ref: "../../../components/responses/CurrentGameResponse.yaml"
     "401":
       $ref: "../../../components/responses/ErrorResponse.yaml"

@@ -6,8 +6,10 @@ post:
   requestBody:
     $ref: "../../../components/requests/SystemParameterRequest.yaml"
   responses:
+    "201":
+      description: The party's override of the parameter was created.
     "204":
-      description: Success.
+      description: The party's existing override of the parameter was changed.
     "400":
       $ref: "../../../components/responses/ErrorResponse.yaml"
     "401":

@@ -7,7 +7,7 @@ post:
         schema:
           $ref: "../../components/schemas/LoginUser.yaml"
   responses:
-    "204":
+    "201":
       description: Success.
       headers:
         Set-Cookie:

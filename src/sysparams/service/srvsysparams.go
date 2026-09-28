@@ -18,7 +18,7 @@ type IService interface {
 	GetInt(name string) (int, error)
 	GetBool(name string) (bool, error)
 	GetIntSlice(name string) ([]int, error)
-	ChangeValue(name string, value string) error
+	ChangeValue(name string, value string) (bool, error)
 }
 
 // defaultPartyId is a stopgap until real party-context resolution exists (see project plan).
@@ -114,16 +114,15 @@ func (s *Service) GetIntSlice(name string) (values []int, err error) {
 	return
 }
 
-func (s *Service) ChangeValue(name string, value string) (err error) {
+// ChangeValue sets the party's override of a parameter; created tells whether the override is new.
+func (s *Service) ChangeValue(name string, value string) (created bool, err error) {
 	parameter, err := s.GetParameter(name)
 
 	if err != nil {
 		return
 	}
 
-	err = s.Database.ChangeSystemParameterValueCommand(defaultPartyId, parameter.Id, value)
-
-	return
+	return s.Database.ChangeSystemParameterValueCommand(defaultPartyId, parameter.Id, value)
 }
 
 // ResetParameter drops the party's override of a parameter so it falls back to its default value.

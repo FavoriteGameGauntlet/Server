@@ -100,7 +100,25 @@ func (s *Service) StartTimerFinisherScheduler() {
 	scheduler.Start()
 }
 
-func (s *Service) GetOrCreateCurrentTimer(userId int) (timer typetimers.Timer, err error) {
+// GetCurrentTimer returns the user's current timer.
+func (s *Service) GetCurrentTimer(userId int) (timer typetimers.Timer, err error) {
+	currentTimer, err := s.Database.GetCurrentTimerCommand(userId, defaultPartyId)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		err = common.NewCurrentTimerNotFoundError()
+		return
+	}
+
+	if err != nil {
+		return
+	}
+
+	return toTimer(currentTimer), nil
+}
+
+// CreateCurrentTimer creates a timer for the user's current game. A user has at most one timer, so
+// creating another while one exists is a conflict.
+func (s *Service) CreateCurrentTimer(userId int) (timer typetimers.Timer, err error) {
 	game, err := s.GamesDatabase.GetCurrentGameCommand(userId, defaultPartyId)
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -114,12 +132,12 @@ func (s *Service) GetOrCreateCurrentTimer(userId int) (timer typetimers.Timer, e
 
 	currentTimer, err := s.Database.GetCurrentTimerCommand(userId, defaultPartyId)
 
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+	if err == nil {
+		err = common.NewCurrentTimerAlreadyExistsConflictError()
 		return
 	}
 
 	if !errors.Is(err, sql.ErrNoRows) {
-		timer = toTimer(currentTimer)
 		return
 	}
 

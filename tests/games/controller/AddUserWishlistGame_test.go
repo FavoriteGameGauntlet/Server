@@ -182,7 +182,7 @@ var AddUserWishlistGameTestCases = []AddUserWishlistGameTestCase{
 		ExpectedStatus: http.StatusInternalServerError,
 	},
 	{
-		// Everything succeeds. 204 will return.
+		// Everything succeeds. 201 will return.
 		Name: "SuccessReturn",
 		Body: `{"name":"Half-Life 1"}`,
 		SetupMock: func() (*srvgamesmock.ServiceMock, *srvauthmock.ServiceMock) {
@@ -201,7 +201,7 @@ var AddUserWishlistGameTestCases = []AddUserWishlistGameTestCase{
 
 			return gameServiceMock, authServiceMock
 		},
-		ExpectedStatus: http.StatusNoContent,
+		ExpectedStatus: http.StatusCreated,
 	},
 }
 

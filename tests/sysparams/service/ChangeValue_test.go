@@ -18,6 +18,7 @@ type ChangeValueTestCase struct {
 	SetupMock         func() *dbsysparamsmock.DatabaseMock
 	ExpectedError     error
 	ExpectedErrorCode string
+	ExpectedCreated   bool
 }
 
 var ChangeValueTestCases = []ChangeValueTestCase{
@@ -67,15 +68,15 @@ var ChangeValueTestCases = []ChangeValueTestCase{
 
 			databaseMock.
 				On("ChangeSystemParameterValueCommand", 1, 1, "60").
-				Return(dbError)
+				Return(false, dbError)
 
 			return databaseMock
 		},
 		ExpectedError: dbError,
 	},
 	{
-		// The parameter exists and ChangeSystemParameterValueCommand succeeds. No error returns.
-		Name:          "Success",
+		// The party has no override yet, so one is created. created is true.
+		Name:          "OverrideCreated",
 		ParameterName: "DefaultTimerDurationInS",
 		Value:         "60",
 		SetupMock: func() *dbsysparamsmock.DatabaseMock {
@@ -87,7 +88,27 @@ var ChangeValueTestCases = []ChangeValueTestCase{
 
 			databaseMock.
 				On("ChangeSystemParameterValueCommand", 1, 1, "60").
-				Return(nil)
+				Return(true, nil)
+
+			return databaseMock
+		},
+		ExpectedCreated: true,
+	},
+	{
+		// The party already overrides the parameter, so the override changes. created is false.
+		Name:          "OverrideChanged",
+		ParameterName: "DefaultTimerDurationInS",
+		Value:         "60",
+		SetupMock: func() *dbsysparamsmock.DatabaseMock {
+			databaseMock := new(dbsysparamsmock.DatabaseMock)
+
+			databaseMock.
+				On("GetSystemParameterCommand", 1, "DefaultTimerDurationInS").
+				Return(typesysparams.SystemParameter{Id: 1, Name: "DefaultTimerDurationInS", Value: "30"}, nil)
+
+			databaseMock.
+				On("ChangeSystemParameterValueCommand", 1, 1, "60").
+				Return(false, nil)
 
 			return databaseMock
 		},
@@ -102,7 +123,7 @@ func TestSrvSysParams_ChangeValue(test *testing.T) {
 			sut := srvsysparams.Service{Database: databaseMock}
 
 			// Act
-			err := sut.ChangeValue(testCase.ParameterName, testCase.Value)
+			created, err := sut.ChangeValue(testCase.ParameterName, testCase.Value)
 
 			// Assert
 			if testCase.ExpectedErrorCode != "" {
@@ -114,6 +135,7 @@ func TestSrvSysParams_ChangeValue(test *testing.T) {
 				require.ErrorIs(test, err, testCase.ExpectedError)
 			} else {
 				require.NoError(test, err)
+				require.Equal(test, testCase.ExpectedCreated, created)
 			}
 
 			databaseMock.AssertExpectations(test)

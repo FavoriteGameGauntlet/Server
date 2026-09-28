@@ -52,7 +52,7 @@ func (c *Controller) Login(ctx echo.Context) error {
 	cookie := createSessionCookie(userSession.Id)
 	ctx.SetCookie(cookie)
 
-	return ctx.NoContent(http.StatusNoContent)
+	return ctx.NoContent(http.StatusCreated)
 }
 
 func convertDtoToLoginUser(userDto genauth.LoginUser) typeauth.LoginUser {
@@ -131,7 +131,7 @@ func (c *Controller) SignUp(ctx echo.Context) error {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	return ctx.NoContent(http.StatusNoContent)
+	return ctx.NoContent(http.StatusCreated)
 }
 
 func convertDtoToSignupUser(userDto genauth.SignupUser) typeauth.SignupUser {

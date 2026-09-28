@@ -51,7 +51,7 @@ func (c *Controller) RollAvailableWheelEffects(ctx echo.Context) error {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	return ctx.JSON(http.StatusOK, convertLastWheelRowsToDto(rolled))
+	return ctx.JSON(http.StatusCreated, convertLastWheelRowsToDto(rolled))
 }
 
 func convertWheelRowsToDto(rows []typewheeleffects.WheelRow) genwheeleffects.WheelRows {

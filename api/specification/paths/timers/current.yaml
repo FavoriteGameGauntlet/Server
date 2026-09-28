@@ -10,3 +10,17 @@ get:
       $ref: "../../components/responses/ErrorResponse.yaml"
     "500":
       $ref: "../../components/responses/ErrorResponse.yaml"
+post:
+  operationId: createCurrentTimer
+  tags: [ Timers ]
+  responses:
+    "201":
+      $ref: "../../components/responses/TimerResponse.yaml"
+    "401":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "404":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "409":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../components/responses/ErrorResponse.yaml"

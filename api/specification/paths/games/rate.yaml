@@ -4,8 +4,10 @@ post:
   requestBody:
     $ref: "../../components/requests/GameRateRequest.yaml"
   responses:
+    "201":
+      description: The game was rated for the first time.
     "204":
-      description: Success.
+      description: The existing rating was replaced.
     "400":
       $ref: "../../components/responses/ErrorResponse.yaml"
     "401":

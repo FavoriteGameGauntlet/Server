@@ -8,7 +8,7 @@ import (
 type IDatabase interface {
 	GetAllSystemParametersCommand(partyId int) (parameters []typesysparams.SystemParameter, err error)
 	GetSystemParameterCommand(partyId int, code string) (parameter typesysparams.SystemParameter, err error)
-	ChangeSystemParameterValueCommand(partyId int, systemParameterId int, value string) error
+	ChangeSystemParameterValueCommand(partyId int, systemParameterId int, value string) (created bool, err error)
 	GetDefaultSystemParametersCommand() (parameters []typesysparams.DefaultSystemParameter, err error)
 	DeleteSystemParameterOverrideCommand(partyId int, systemParameterId int) error
 }
@@ -57,12 +57,16 @@ func (db *Database) GetSystemParameterCommand(partyId int, code string) (paramet
 
 var changeSystemParameterValueQuery = dbaccess.Query{Name: "ChangeSystemParameterValueQuery", SQL: `SELECT change_system_parameter_value($1::integer, $2::integer, $3::text)`}
 
-func (db *Database) ChangeSystemParameterValueCommand(partyId int, systemParameterId int, value string) error {
-	_, err := dbaccess.Exec(changeSystemParameterValueQuery, partyId, systemParameterId, value)
+// ChangeSystemParameterValueCommand upserts the party's override of a parameter and reports whether
+// the override was created rather than changed.
+func (db *Database) ChangeSystemParameterValueCommand(partyId int, systemParameterId int, value string) (created bool, err error) {
+	row := dbaccess.QueryRow(changeSystemParameterValueQuery, partyId, systemParameterId, value)
 
-	dbaccess.LogDbResult(changeSystemParameterValueQuery, nil, err)
+	err = row.Scan(&created)
 
-	return err
+	dbaccess.LogDbResult(changeSystemParameterValueQuery, created, err)
+
+	return
 }
 
 var getDefaultSystemParametersQuery = dbaccess.Query{Name: "GetDefaultSystemParametersQuery", SQL: `SELECT * FROM get_default_system_parameters()`}

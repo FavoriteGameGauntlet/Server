@@ -24,9 +24,9 @@ func (m *DatabaseMock) GetSystemParameterCommand(partyId int, code string) (para
 	return
 }
 
-func (m *DatabaseMock) ChangeSystemParameterValueCommand(partyId int, systemParameterId int, value string) error {
+func (m *DatabaseMock) ChangeSystemParameterValueCommand(partyId int, systemParameterId int, value string) (bool, error) {
 	args := m.Called(partyId, systemParameterId, value)
-	return args.Error(0)
+	return args.Bool(0), args.Error(1)
 }
 
 func (m *DatabaseMock) GetDefaultSystemParametersCommand() (parameters []typesysparams.DefaultSystemParameter, err error) {

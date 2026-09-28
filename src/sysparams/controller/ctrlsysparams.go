@@ -80,10 +80,14 @@ func (c *Controller) ChangeAdminSystemParameter(ctx echo.Context, name gensyspar
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.ChangeValue(name, parameterDto.Value)
+	created, err := c.Service.ChangeValue(name, parameterDto.Value)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	if created {
+		return ctx.NoContent(http.StatusCreated)
 	}
 
 	return ctx.NoContent(http.StatusNoContent)
