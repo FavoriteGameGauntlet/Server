@@ -116,7 +116,7 @@ func (s *Service) FinishCurrentGame(userId int) error {
 	}
 
 	if game.TimeSpent == 0 {
-		return common.NewCompletedTimersNotFoundError()
+		return common.NewGameTimeSpentIsZeroError()
 	}
 
 	_, err = s.TimerService.ForceStopCurrentTimer(userId)

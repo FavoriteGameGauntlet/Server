@@ -110,11 +110,11 @@ func NewGameReviewNotFoundError(name string) error {
 	}
 }
 
-func NewCompletedTimersNotFoundError() error {
+func NewGameTimeSpentIsZeroError() error {
 	return &NotFoundError{
 		&BaseError{
-			Code:    "COMPLETED_TIMERS_NOT_FOUND",
-			Message: "The user doesn't have completed timers. Complete at least one timer to finish the game.",
+			Code:    "GAME_TIME_SPENT_IS_ZERO",
+			Message: "The time spent in the game is zero. Complete at least one timer to finish the game.",
 		},
 	}
 }
