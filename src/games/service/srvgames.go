@@ -115,7 +115,14 @@ func (s *Service) FinishCurrentGame(userId int) error {
 		return err
 	}
 
-	if game.TimeSpent == 0 {
+	// The current timer's time is added to the game when it is stopped below, so it counts too.
+	timerTimeSpent, err := s.TimerService.GetCurrentTimerTimeSpent(userId)
+
+	if err != nil {
+		return err
+	}
+
+	if game.TimeSpent+timerTimeSpent == 0 {
 		return common.NewGameTimeSpentIsZeroError()
 	}
 

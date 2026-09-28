@@ -30,6 +30,13 @@ func (m *DatabaseMock) ActTimerCommand(timerId int, timerState typetimers.TimerS
 	return args.Error(0)
 }
 
+func (m *DatabaseMock) DeleteCurrentTimerCommand(userId int, partyId int) (timer typetimers.EndedTimer, err error) {
+	args := m.Called(userId, partyId)
+	timer = args.Get(0).(typetimers.EndedTimer)
+	err = args.Error(1)
+	return
+}
+
 func (m *DatabaseMock) GetCompletedTimerUsersCommand() (timers []typetimers.EndedTimer, err error) {
 	args := m.Called()
 	timers = args.Get(0).([]typetimers.EndedTimer)

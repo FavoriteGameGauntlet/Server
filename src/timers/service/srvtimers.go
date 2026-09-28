@@ -21,6 +21,7 @@ import (
 const defaultPartyId = 1
 
 type IService interface {
+	GetCurrentTimerTimeSpent(userId int) (time.Duration, error)
 	ForceStopCurrentTimer(userId int) (typetimers.Timer, error)
 }
 
@@ -182,30 +183,52 @@ func (s *Service) PauseCurrentTimer(userId int) (typetimers.Timer, error) {
 		})
 }
 
-func (s *Service) StopCurrentTimer(userId int) (typetimers.Timer, error) {
-	return s.actCurrentTimer(
-		userId,
-		typetimers.TimerStateFinished,
-		[]typetimers.TimerStateType{
-			typetimers.TimerStateCreated,
-			typetimers.TimerStateFinished,
-		})
+// GetCurrentTimerTimeSpent returns how much of the current timer has passed, or zero without a timer.
+func (s *Service) GetCurrentTimerTimeSpent(userId int) (time.Duration, error) {
+	currentTimer, err := s.Database.GetCurrentTimerCommand(userId, defaultPartyId)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, nil
+	}
+
+	if err != nil {
+		return 0, err
+	}
+
+	return min(currentTimer.TimeSpent, currentTimer.Duration), nil
 }
 
+// ForceStopCurrentTimer deletes the current timer, if any, and adds the time already spent on it to
+// its game. It grants none of the rewards of a completed timer.
 func (s *Service) ForceStopCurrentTimer(userId int) (timer typetimers.Timer, err error) {
-	timer, err = s.actCurrentTimer(
-		userId,
-		typetimers.TimerStateFinished,
-		[]typetimers.TimerStateType{
-			typetimers.TimerStateFinished,
-		})
+	deletedTimer, err := s.Database.DeleteCurrentTimerCommand(userId, defaultPartyId)
 
-	var notFoundError *common.NotFoundError
-	if err != nil && !errors.As(err, &notFoundError) {
+	if errors.Is(err, sql.ErrNoRows) {
+		err = nil
 		return
 	}
 
-	err = nil
+	if err != nil {
+		return
+	}
+
+	if deletedTimer.TimeSpent > 0 {
+		err = s.GamesDatabase.ChangeGameTimeSpentCommand(userId, deletedTimer.PartyId, deletedTimer.GameId, deletedTimer.TimeSpent, userId, nil)
+
+		if err != nil {
+			return
+		}
+	}
+
+	timer = toTimer(typetimers.CurrentTimer{
+		Id:             deletedTimer.Id,
+		GameId:         deletedTimer.GameId,
+		State:          deletedTimer.State,
+		Duration:       deletedTimer.Duration,
+		LastActionDate: deletedTimer.LastActionDate,
+		TimeSpent:      deletedTimer.TimeSpent,
+	})
+
 	return
 }
 
@@ -285,7 +308,6 @@ func (s *Service) StopAllCompletedTimers() error {
 	}
 
 	for _, endedTimer := range endedTimers {
-		_, _ = s.StopCurrentTimer(endedTimer.UserId)
 		_ = s.GamesDatabase.ChangeGameTimeSpentCommand(endedTimer.UserId, endedTimer.PartyId, endedTimer.GameId, endedTimer.TimeSpent, endedTimer.UserId, nil)
 		_ = s.PointsService.ChangePointValueByTypeNameNoHistory(endedTimer.UserId, defaultPartyId, typepoints.PointTypeAvailableRolls, availableRollChangeByTimer)
 		_ = s.PointsService.ChangePointValueByTypeNameNoHistory(endedTimer.UserId, defaultPartyId, typepoints.PointTypeTerritoryHours, territoryHourChangeByTimer)

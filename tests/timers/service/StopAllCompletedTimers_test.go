@@ -10,7 +10,6 @@ import (
 	dbpointsmock "FGG-Service/tests/points/mock"
 	srvsysparamsmock "FGG-Service/tests/sysparams/srvmock"
 	"FGG-Service/tests/timers/mock/dbtimers"
-	"database/sql"
 	"testing"
 	"time"
 
@@ -38,7 +37,6 @@ func TestSrvTimers_StopAllCompletedTimers_AddsTimeToGame(test *testing.T) {
 	}
 
 	timerDb.On("GetCompletedTimerUsersCommand").Return([]typetimers.EndedTimer{endedTimer}, nil)
-	timerDb.On("GetCurrentTimerCommand", 2, 1).Return(typetimers.CurrentTimer{}, sql.ErrNoRows)
 	sysParams.On("GetInt", typesysparams.ParamAvailableRollChangeByTimer).Return(1, nil)
 	sysParams.On("GetInt", typesysparams.ParamTerritoryHourChangeByTimer).Return(1, nil)
 	sysParams.On("GetInt", typesysparams.ParamExperiencePointChangeByTimer).Return(1, nil)

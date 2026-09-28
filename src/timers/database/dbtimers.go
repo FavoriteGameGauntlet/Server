@@ -11,6 +11,7 @@ type IDatabase interface {
 	CreateCurrentTimerCommand(userId int, partyId int, gameId int, duration time.Duration) (timer typetimers.CreatedTimer, err error)
 	ActTimerCommand(timerId int, timerState typetimers.TimerStateType, timeSpent time.Duration) error
 	GetCompletedTimerUsersCommand() (timers []typetimers.EndedTimer, err error)
+	DeleteCurrentTimerCommand(userId int, partyId int) (timer typetimers.EndedTimer, err error)
 }
 
 type Database struct {
@@ -111,5 +112,33 @@ func (db *Database) GetCompletedTimerUsersCommand() (timers []typetimers.EndedTi
 	dbaccess.LogDbResult(getCompletedTimerUsersQuery, timers, err)
 
 	_ = rows.Close()
+	return
+}
+
+var deleteCurrentTimerQuery = dbaccess.Query{Name: "DeleteCurrentTimerQuery", SQL: `SELECT * FROM delete_timer($1::integer, $2::integer)`}
+
+func (db *Database) DeleteCurrentTimerCommand(userId int, partyId int) (timer typetimers.EndedTimer, err error) {
+	row := dbaccess.QueryRow(deleteCurrentTimerQuery, userId, partyId)
+
+	var durationRaw, timeSpentRaw string
+	err = row.Scan(
+		&timer.Id,
+		&timer.UserId,
+		&timer.PartyId,
+		&timer.GameId,
+		&timer.State,
+		&durationRaw,
+		&timeSpentRaw,
+		&timer.LastActionDate)
+
+	if err == nil {
+		timer.Duration, err = dbaccess.ScanInterval(durationRaw)
+	}
+	if err == nil {
+		timer.TimeSpent, err = dbaccess.ScanInterval(timeSpentRaw)
+	}
+
+	dbaccess.LogDbResult(deleteCurrentTimerQuery, timer, err)
+
 	return
 }

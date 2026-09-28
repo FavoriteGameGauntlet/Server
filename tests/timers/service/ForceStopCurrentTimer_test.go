@@ -1,7 +1,6 @@
 package srvtimers_test
 
 import (
-	"FGG-Service/src/common"
 	"FGG-Service/src/timers/service"
 	"FGG-Service/src/timers/types"
 	"FGG-Service/tests/games/mock"
@@ -9,8 +8,8 @@ import (
 	"FGG-Service/tests/timers/mock/dbwheeleffects"
 	"database/sql"
 	"testing"
+	"time"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,20 +18,23 @@ type ForceStopCurrentTimerTestCase struct {
 	UserId          int
 	SetupMocks      func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock)
 	ExpectNoError   bool
-	ExpectedErrorAs interface{}
 	ExpectedErrorIs error
 }
 
-var finishedCurrentTimer = typetimers.CurrentTimer{
+// deletedTimer is what delete_timer returns for a timer stopped 30 minutes in.
+var deletedTimer = typetimers.EndedTimer{
 	Id:        1,
-	Duration:  runningCurrentTimer.Duration,
-	TimeSpent: runningCurrentTimer.TimeSpent,
-	State:     typetimers.TimerStateFinished,
+	UserId:    1,
+	PartyId:   1,
+	GameId:    7,
+	State:     typetimers.TimerStateRunning,
+	Duration:  2 * time.Hour,
+	TimeSpent: 30 * time.Minute,
 }
 
 var ForceStopCurrentTimerTestCases = []ForceStopCurrentTimerTestCase{
 	{
-		// GetCurrentTimerCommand returns sql.ErrNoRows. CurrentTimerNotFoundError is swallowed.
+		// The user has no timer. Nothing is deleted or added and no error returns.
 		Name:   "NotFound",
 		UserId: 1,
 		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock) {
@@ -40,92 +42,72 @@ var ForceStopCurrentTimerTestCases = []ForceStopCurrentTimerTestCase{
 			gamesDb := new(dbgamesmock.DatabaseMock)
 			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
 
-			timerDb.On("GetCurrentTimerCommand", 1, 1).Return(typetimers.CurrentTimer{}, sql.ErrNoRows)
+			timerDb.On("DeleteCurrentTimerCommand", 1, 1).Return(typetimers.EndedTimer{}, sql.ErrNoRows)
 
 			return timerDb, gamesDb, wheelDb
 		},
 		ExpectNoError: true,
 	},
 	{
-		// GetCurrentTimerCommand returns a database error. The error will return.
-		Name:   "DatabaseError",
+		// DeleteCurrentTimerCommand returns a database error. The error will return.
+		Name:   "DeleteDatabaseError",
 		UserId: 1,
 		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock) {
 			timerDb := new(dbtimermock.DatabaseMock)
 			gamesDb := new(dbgamesmock.DatabaseMock)
 			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
 
-			timerDb.On("GetCurrentTimerCommand", 1, 1).Return(typetimers.CurrentTimer{}, dbError)
+			timerDb.On("DeleteCurrentTimerCommand", 1, 1).Return(typetimers.EndedTimer{}, dbError)
 
 			return timerDb, gamesDb, wheelDb
 		},
 		ExpectedErrorIs: dbError,
 	},
 	{
-		// Timer is already Finished. The IncorrectStateConflictError will return.
-		Name:   "IncorrectState_Finished",
+		// The timer never ran. It is deleted and the game time is left alone.
+		Name:   "Success_NoTimeSpent",
 		UserId: 1,
 		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock) {
 			timerDb := new(dbtimermock.DatabaseMock)
 			gamesDb := new(dbgamesmock.DatabaseMock)
 			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
 
-			timerDb.On("GetCurrentTimerCommand", 1, 1).Return(finishedCurrentTimer, nil)
-
-			return timerDb, gamesDb, wheelDb
-		},
-		ExpectedErrorAs: new(common.ConflictError),
-	},
-	{
-		// ActTimerCommand returns a database error. The error will return.
-		Name:   "ActTimerDatabaseError",
-		UserId: 1,
-		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock) {
-			timerDb := new(dbtimermock.DatabaseMock)
-			gamesDb := new(dbgamesmock.DatabaseMock)
-			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
-
-			timerDb.On("GetCurrentTimerCommand", 1, 1).Return(runningCurrentTimer, nil)
-			timerDb.On("ActTimerCommand", 1, typetimers.TimerStateFinished, mock.AnythingOfType("time.Duration")).
-				Return(dbError)
-
-			return timerDb, gamesDb, wheelDb
-		},
-		ExpectedErrorIs: dbError,
-	},
-	{
-		// Regression test: after ActTimerCommand successfully transitions the timer to Finished,
-		// the re-fetch of the timer finds no rows (e.g. get_current_timer excludes finished timers).
-		// This must not leak a raw sql.ErrNoRows - it should be swallowed just like the initial fetch.
-		Name:   "Success_ReFetchNotFound",
-		UserId: 1,
-		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock) {
-			timerDb := new(dbtimermock.DatabaseMock)
-			gamesDb := new(dbgamesmock.DatabaseMock)
-			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
-
-			timerDb.On("GetCurrentTimerCommand", 1, 1).Once().Return(runningCurrentTimer, nil)
-			timerDb.On("ActTimerCommand", 1, typetimers.TimerStateFinished, mock.AnythingOfType("time.Duration")).
-				Return(nil)
-			timerDb.On("GetCurrentTimerCommand", 1, 1).Once().Return(typetimers.CurrentTimer{}, sql.ErrNoRows)
+			unstartedTimer := deletedTimer
+			unstartedTimer.State = typetimers.TimerStateCreated
+			unstartedTimer.TimeSpent = 0
+			timerDb.On("DeleteCurrentTimerCommand", 1, 1).Return(unstartedTimer, nil)
 
 			return timerDb, gamesDb, wheelDb
 		},
 		ExpectNoError: true,
 	},
 	{
-		// Timer is Running. ActTimerCommand transitions it to Finished and the re-fetch finds it.
-		Name:   "Success_ReFetchFound",
+		// ChangeGameTimeSpentCommand returns a database error. The error will return.
+		Name:   "ChangeGameTimeDatabaseError",
 		UserId: 1,
 		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock) {
 			timerDb := new(dbtimermock.DatabaseMock)
 			gamesDb := new(dbgamesmock.DatabaseMock)
 			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
 
-			timerDb.On("GetCurrentTimerCommand", 1, 1).Once().Return(runningCurrentTimer, nil)
-			timerDb.On("ActTimerCommand", 1, typetimers.TimerStateFinished, mock.AnythingOfType("time.Duration")).
-				Return(nil)
-			timerDb.On("GetCurrentTimerCommand", 1, 1).Once().Return(finishedCurrentTimer, nil)
+			timerDb.On("DeleteCurrentTimerCommand", 1, 1).Return(deletedTimer, nil)
+			gamesDb.On("ChangeGameTimeSpentCommand", 1, 1, 7, 30*time.Minute, 1, (*int)(nil)).Return(dbError)
+
+			return timerDb, gamesDb, wheelDb
+		},
+		ExpectedErrorIs: dbError,
+	},
+	{
+		// The timer ran for 30 minutes. It is deleted and those 30 minutes are added to its game.
+		Name:   "Success_TimeSpentAddedToGame",
+		UserId: 1,
+		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock) {
+			timerDb := new(dbtimermock.DatabaseMock)
+			gamesDb := new(dbgamesmock.DatabaseMock)
+			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
+
+			timerDb.On("DeleteCurrentTimerCommand", 1, 1).Return(deletedTimer, nil)
+			gamesDb.On("ChangeGameTimeSpentCommand", 1, 1, 7, 30*time.Minute, 1, (*int)(nil)).Return(nil)
 
 			return timerDb, gamesDb, wheelDb
 		},
@@ -148,11 +130,6 @@ func TestSrvTimers_ForceStopCurrentTimer(test *testing.T) {
 			_, err := sut.ForceStopCurrentTimer(testCase.UserId)
 
 			// Assert
-			if testCase.ExpectedErrorAs != nil {
-				require.Error(test, err)
-				require.ErrorAs(test, err, &testCase.ExpectedErrorAs)
-			}
-
 			if testCase.ExpectedErrorIs != nil {
 				require.ErrorIs(test, err, testCase.ExpectedErrorIs)
 			}
