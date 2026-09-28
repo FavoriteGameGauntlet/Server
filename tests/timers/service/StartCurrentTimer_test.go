@@ -130,7 +130,7 @@ var StartCurrentTimerTestCases = []StartCurrentTimerTestCase{
 			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
 
 			timerDb.On("GetCurrentTimerCommand", 1, 1).Return(createdCurrentTimer, nil)
-			timerDb.On("ActTimerCommand", 1, typetimers.TimerStateRunning, createdTimer.RemainingTime).
+			timerDb.On("ActTimerCommand", 1, typetimers.TimerStateRunning, createdCurrentTimer.TimeSpent).
 				Return(dbError)
 
 			return timerDb, gamesDb, wheelDb
@@ -138,7 +138,7 @@ var StartCurrentTimerTestCases = []StartCurrentTimerTestCase{
 		ExpectedErrorIs: dbError,
 	},
 	{
-		// Timer is Created. RemainingTime is not adjusted (timer was not running).
+		// Timer is Created. ActTimerCommand is called with zero time spent (not the full duration).
 		// The updated running timer will return.
 		Name:   "Success_Created",
 		UserId: 1,
@@ -148,7 +148,7 @@ var StartCurrentTimerTestCases = []StartCurrentTimerTestCase{
 			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
 
 			timerDb.On("GetCurrentTimerCommand", 1, 1).Once().Return(createdCurrentTimer, nil)
-			timerDb.On("ActTimerCommand", 1, typetimers.TimerStateRunning, createdTimer.RemainingTime).
+			timerDb.On("ActTimerCommand", 1, typetimers.TimerStateRunning, time.Duration(0)).
 				Return(nil)
 			timerDb.On("GetCurrentTimerCommand", 1, 1).Once().Return(runningCurrentTimerResult, nil)
 
@@ -157,7 +157,7 @@ var StartCurrentTimerTestCases = []StartCurrentTimerTestCase{
 		ExpectedTimer: &runningTimerResult,
 	},
 	{
-		// Timer is Paused. RemainingTime is not adjusted (timer was not running).
+		// Timer is Paused. ActTimerCommand is called with the time already spent.
 		// The updated running timer will return.
 		Name:   "Success_Paused",
 		UserId: 1,
@@ -173,7 +173,7 @@ var StartCurrentTimerTestCases = []StartCurrentTimerTestCase{
 				State:     typetimers.TimerStatePaused,
 			}
 			timerDb.On("GetCurrentTimerCommand", 1, 1).Once().Return(pausedCurrentTimerLocal, nil)
-			timerDb.On("ActTimerCommand", 1, typetimers.TimerStateRunning, 45*time.Minute).
+			timerDb.On("ActTimerCommand", 1, typetimers.TimerStateRunning, 75*time.Minute).
 				Return(nil)
 			timerDb.On("GetCurrentTimerCommand", 1, 1).Once().Return(runningCurrentTimerResult, nil)
 

@@ -158,8 +158,8 @@ var PauseCurrentTimerTestCases = []PauseCurrentTimerTestCase{
 		ExpectedErrorIs: dbError,
 	},
 	{
-		// Timer is Running. ActTimerCommand is called with elapsed time subtracted from RemainingTime.
-		// The updated timer will return.
+		// Timer is Running. ActTimerCommand is called with the time spent reported by the DB
+		// (which already includes the elapsed running time). The updated timer will return.
 		Name:   "Success_Running",
 		UserId: 1,
 		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock) {
@@ -168,10 +168,8 @@ var PauseCurrentTimerTestCases = []PauseCurrentTimerTestCase{
 			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
 
 			timerDb.On("GetCurrentTimerCommand", 1, 1).Once().Return(runningCurrentTimer, nil)
-			timerDb.On("ActTimerCommand", 1, typetimers.TimerStatePaused,
-				mock.MatchedBy(func(d time.Duration) bool {
-					return d >= runningTimer.RemainingTime-time.Second && d <= runningTimer.RemainingTime
-				})).Return(nil)
+			timerDb.On("ActTimerCommand", 1, typetimers.TimerStatePaused, runningCurrentTimer.TimeSpent).
+				Return(nil)
 			timerDb.On("GetCurrentTimerCommand", 1, 1).Once().Return(pausedCurrentTimer, nil)
 
 			return timerDb, gamesDb, wheelDb

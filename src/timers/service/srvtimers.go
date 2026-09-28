@@ -234,15 +234,10 @@ func (s *Service) actCurrentTimer(
 		}
 	}
 
-	remainingTime := timer.RemainingTime
-	if timer.State == typetimers.TimerStateRunning {
-		remainingTime -= time.Since(timer.LastActionDate)
-	}
-	if remainingTime < 0 {
-		remainingTime = 0
-	}
+	// get_timer already includes the elapsed running time in TimeSpent.
+	timeSpent := min(currentTimer.TimeSpent, currentTimer.Duration)
 
-	err = s.Database.ActTimerCommand(timer.Id, timerState, remainingTime)
+	err = s.Database.ActTimerCommand(timer.Id, timerState, timeSpent)
 
 	if err != nil {
 		return
