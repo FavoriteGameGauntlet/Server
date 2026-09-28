@@ -1,0 +1,10 @@
+get:
+  operationId: getAllUserPoints
+  tags: [ Points ]
+  responses:
+    "200":
+      $ref: "../../components/responses/UserPointsByLoginsResponse.yaml"
+    "401":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../components/responses/ErrorResponse.yaml"

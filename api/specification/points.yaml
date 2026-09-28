@@ -73,7 +73,7 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /points/users/all:
+  /points/users:
     get:
       operationId: getAllUserPoints
       tags:
@@ -85,78 +85,7 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /points/party/all:
-    get:
-      operationId: getAllPartyPoints
-      tags:
-        - Points
-      responses:
-        '200':
-          $ref: '#/components/responses/PartyPointsResponse'
-        '401':
-          $ref: '#/components/responses/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/ErrorResponse'
-  /points/party/{name}:
-    get:
-      operationId: getPartyPointValue
-      tags:
-        - Points
-      parameters:
-        - $ref: '#/components/parameters/Name'
-      responses:
-        '200':
-          $ref: '#/components/responses/PointsResponse'
-        '401':
-          $ref: '#/components/responses/ErrorResponse'
-        '404':
-          $ref: '#/components/responses/ErrorResponse'
-        '409':
-          $ref: '#/components/responses/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/ErrorResponse'
-    post:
-      operationId: changePartyPointValue
-      tags:
-        - Points
-      parameters:
-        - $ref: '#/components/parameters/Name'
-      requestBody:
-        $ref: '#/components/requestBodies/PointChangeRequest'
-      responses:
-        '200':
-          $ref: '#/components/responses/PointChangeResultResponse'
-        '400':
-          $ref: '#/components/responses/ErrorResponse'
-        '401':
-          $ref: '#/components/responses/ErrorResponse'
-        '404':
-          $ref: '#/components/responses/ErrorResponse'
-        '409':
-          $ref: '#/components/responses/ErrorResponse'
-        '422':
-          $ref: '#/components/responses/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/ErrorResponse'
-  /points/party/{name}/history:
-    get:
-      operationId: getPartyPointHistory
-      tags:
-        - Points
-      parameters:
-        - $ref: '#/components/parameters/Name'
-      responses:
-        '200':
-          $ref: '#/components/responses/PointHistoriesResponse'
-        '401':
-          $ref: '#/components/responses/ErrorResponse'
-        '404':
-          $ref: '#/components/responses/ErrorResponse'
-        '409':
-          $ref: '#/components/responses/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/ErrorResponse'
-  /points/{login}:
+  /points/users/{login}:
     get:
       operationId: getUserPoints
       tags:
@@ -172,7 +101,7 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /points/{login}/{name}:
+  /points/users/{login}/types/{name}:
     get:
       operationId: getUserPointValue
       tags:
@@ -191,7 +120,7 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-    post:
+    patch:
       operationId: changeUserPointValue
       tags:
         - Points
@@ -215,13 +144,84 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /points/{login}/{name}/history:
+  /points/users/{login}/types/{name}/history:
     get:
       operationId: getUserPointHistory
       tags:
         - Points
       parameters:
         - $ref: '#/components/parameters/Login'
+        - $ref: '#/components/parameters/Name'
+      responses:
+        '200':
+          $ref: '#/components/responses/PointHistoriesResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '409':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /points/party:
+    get:
+      operationId: getAllPartyPoints
+      tags:
+        - Points
+      responses:
+        '200':
+          $ref: '#/components/responses/PartyPointsResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /points/party/types/{name}:
+    get:
+      operationId: getPartyPointValue
+      tags:
+        - Points
+      parameters:
+        - $ref: '#/components/parameters/Name'
+      responses:
+        '200':
+          $ref: '#/components/responses/PointsResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '409':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    patch:
+      operationId: changePartyPointValue
+      tags:
+        - Points
+      parameters:
+        - $ref: '#/components/parameters/Name'
+      requestBody:
+        $ref: '#/components/requestBodies/PointChangeRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/PointChangeResultResponse'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '409':
+          $ref: '#/components/responses/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /points/party/types/{name}/history:
+    get:
+      operationId: getPartyPointHistory
+      tags:
+        - Points
+      parameters:
         - $ref: '#/components/parameters/Name'
       responses:
         '200':
@@ -392,20 +392,6 @@ components:
         required:
           - login
           - points
-    PartyPoint:
-      type: object
-      properties:
-        pointType:
-          $ref: '#/components/schemas/PointType'
-        value:
-          $ref: '#/components/schemas/Points'
-      required:
-        - pointType
-        - value
-    PartyPoints:
-      type: array
-      items:
-        $ref: '#/components/schemas/PartyPoint'
     PointChange:
       type: object
       properties:
@@ -454,6 +440,20 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/PointHistoryEntry'
+    PartyPoint:
+      type: object
+      properties:
+        pointType:
+          $ref: '#/components/schemas/PointType'
+        value:
+          $ref: '#/components/schemas/Points'
+      required:
+        - pointType
+        - value
+    PartyPoints:
+      type: array
+      items:
+        $ref: '#/components/schemas/PartyPoint'
   responses:
     PointTypesResponse:
       description: Success.
@@ -479,12 +479,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/UserPointsByLogins'
-    PartyPointsResponse:
+    UserPointsResponse:
       description: Success.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/PartyPoints'
+            $ref: '#/components/schemas/UserPoints'
     PointsResponse:
       description: Success.
       content:
@@ -503,12 +503,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/PointHistoryEntries'
-    UserPointsResponse:
+    PartyPointsResponse:
       description: Success.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/UserPoints'
+            $ref: '#/components/schemas/PartyPoints'
   requestBodies:
     PointTypeCreateRequest:
       required: true

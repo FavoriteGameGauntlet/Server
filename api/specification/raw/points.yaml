@@ -9,23 +9,23 @@ paths:
   /points/types/{name}:
     $ref: "../paths/points/types/name.yaml"
 
-  /points/users/all:
-    $ref: "../paths/points/users/all.yaml"
+  /points/users:
+    $ref: "../paths/points/users.yaml"
 
-  /points/party/all:
-    $ref: "../paths/points/party/all.yaml"
+  /points/users/{login}:
+    $ref: "../paths/points/users/login.yaml"
 
-  /points/party/{name}:
-    $ref: "../paths/points/party/name.yaml"
+  /points/users/{login}/types/{name}:
+    $ref: "../paths/points/users/login/types/name.yaml"
 
-  /points/party/{name}/history:
-    $ref: "../paths/points/party/name/history.yaml"
+  /points/users/{login}/types/{name}/history:
+    $ref: "../paths/points/users/login/types/name/history.yaml"
 
-  /points/{login}:
-    $ref: "../paths/points/login.yaml"
+  /points/party:
+    $ref: "../paths/points/party.yaml"
 
-  /points/{login}/{name}:
-    $ref: "../paths/points/login/name.yaml"
+  /points/party/types/{name}:
+    $ref: "../paths/points/party/types/name.yaml"
 
-  /points/{login}/{name}/history:
-    $ref: "../paths/points/login/name/history.yaml"
+  /points/party/types/{name}/history:
+    $ref: "../paths/points/party/types/name/history.yaml"

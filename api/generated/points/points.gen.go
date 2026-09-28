@@ -176,16 +176,16 @@ type ChangeUserPointValueJSONRequestBody = PointChange
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
-	// (GET /points/party/all)
+	// (GET /points/party)
 	GetAllPartyPoints(ctx echo.Context) error
 
-	// (GET /points/party/{name})
+	// (GET /points/party/types/{name})
 	GetPartyPointValue(ctx echo.Context, name Name) error
 
-	// (POST /points/party/{name})
+	// (PATCH /points/party/types/{name})
 	ChangePartyPointValue(ctx echo.Context, name Name) error
 
-	// (GET /points/party/{name}/history)
+	// (GET /points/party/types/{name}/history)
 	GetPartyPointHistory(ctx echo.Context, name Name) error
 
 	// (GET /points/types)
@@ -200,19 +200,19 @@ type ServerInterface interface {
 	// (PATCH /points/types/{name})
 	ChangePointType(ctx echo.Context, name Name) error
 
-	// (GET /points/users/all)
+	// (GET /points/users)
 	GetAllUserPoints(ctx echo.Context) error
 
-	// (GET /points/{login})
+	// (GET /points/users/{login})
 	GetUserPoints(ctx echo.Context, login Login) error
 
-	// (GET /points/{login}/{name})
+	// (GET /points/users/{login}/types/{name})
 	GetUserPointValue(ctx echo.Context, login Login, name Name) error
 
-	// (POST /points/{login}/{name})
+	// (PATCH /points/users/{login}/types/{name})
 	ChangeUserPointValue(ctx echo.Context, login Login, name Name) error
 
-	// (GET /points/{login}/{name}/history)
+	// (GET /points/users/{login}/types/{name}/history)
 	GetUserPointHistory(ctx echo.Context, login Login, name Name) error
 }
 
@@ -453,18 +453,18 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/points/party/all", wrapper.GetAllPartyPoints)
-	router.GET(baseURL+"/points/party/:name", wrapper.GetPartyPointValue)
-	router.POST(baseURL+"/points/party/:name", wrapper.ChangePartyPointValue)
-	router.GET(baseURL+"/points/party/:name/history", wrapper.GetPartyPointHistory)
+	router.GET(baseURL+"/points/party", wrapper.GetAllPartyPoints)
+	router.GET(baseURL+"/points/party/types/:name", wrapper.GetPartyPointValue)
+	router.PATCH(baseURL+"/points/party/types/:name", wrapper.ChangePartyPointValue)
+	router.GET(baseURL+"/points/party/types/:name/history", wrapper.GetPartyPointHistory)
 	router.GET(baseURL+"/points/types", wrapper.GetPointTypes)
 	router.POST(baseURL+"/points/types", wrapper.CreatePointType)
 	router.DELETE(baseURL+"/points/types/:name", wrapper.RemovePointType)
 	router.PATCH(baseURL+"/points/types/:name", wrapper.ChangePointType)
-	router.GET(baseURL+"/points/users/all", wrapper.GetAllUserPoints)
-	router.GET(baseURL+"/points/:login", wrapper.GetUserPoints)
-	router.GET(baseURL+"/points/:login/:name", wrapper.GetUserPointValue)
-	router.POST(baseURL+"/points/:login/:name", wrapper.ChangeUserPointValue)
-	router.GET(baseURL+"/points/:login/:name/history", wrapper.GetUserPointHistory)
+	router.GET(baseURL+"/points/users", wrapper.GetAllUserPoints)
+	router.GET(baseURL+"/points/users/:login", wrapper.GetUserPoints)
+	router.GET(baseURL+"/points/users/:login/types/:name", wrapper.GetUserPointValue)
+	router.PATCH(baseURL+"/points/users/:login/types/:name", wrapper.ChangeUserPointValue)
+	router.GET(baseURL+"/points/users/:login/types/:name/history", wrapper.GetUserPointHistory)
 
 }

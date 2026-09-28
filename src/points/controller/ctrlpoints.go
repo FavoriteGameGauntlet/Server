@@ -137,7 +137,7 @@ func (c *Controller) RemovePointType(ctx echo.Context, name genpoints.Name) erro
 
 	return ctx.NoContent(http.StatusNoContent)
 }
-// GetUserPoints (GET /points/{login})
+// GetUserPoints (GET /points/users/{login})
 func (c *Controller) GetUserPoints(ctx echo.Context, login genpoints.Login) error {
 	userId, err := c.userIdFromLogin(ctx, login)
 
@@ -154,7 +154,7 @@ func (c *Controller) GetUserPoints(ctx echo.Context, login genpoints.Login) erro
 	return ctx.JSON(http.StatusOK, convertUserPointsToDto(values))
 }
 
-// GetAllUserPoints (GET /points/users/all)
+// GetAllUserPoints (GET /points/users)
 func (c *Controller) GetAllUserPoints(ctx echo.Context) error {
 	_, err := c.AuthService.GetUserId(ctx)
 
@@ -177,7 +177,7 @@ func (c *Controller) GetAllUserPoints(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, byLoginDto)
 }
 
-// GetUserPointValue (GET /points/{login}/{name})
+// GetUserPointValue (GET /points/users/{login}/types/{name})
 func (c *Controller) GetUserPointValue(ctx echo.Context, login genpoints.Login, name genpoints.Name) error {
 	userId, err := c.userIdFromLogin(ctx, login)
 
@@ -194,7 +194,7 @@ func (c *Controller) GetUserPointValue(ctx echo.Context, login genpoints.Login, 
 	return ctx.JSON(http.StatusOK, value)
 }
 
-// ChangeUserPointValue (POST /points/{login}/{name})
+// ChangeUserPointValue (PATCH /points/users/{login}/types/{name})
 func (c *Controller) ChangeUserPointValue(ctx echo.Context, login genpoints.Login, name genpoints.Name) error {
 	err := common.RequireAdmin(ctx, c.AuthService)
 
@@ -231,7 +231,7 @@ func (c *Controller) ChangeUserPointValue(ctx echo.Context, login genpoints.Logi
 	return ctx.JSON(http.StatusOK, convertChangeResultToDto(result))
 }
 
-// GetUserPointHistory (GET /points/{login}/{name}/history)
+// GetUserPointHistory (GET /points/users/{login}/types/{name}/history)
 func (c *Controller) GetUserPointHistory(ctx echo.Context, login genpoints.Login, name genpoints.Name) error {
 	userId, err := c.userIdFromLogin(ctx, login)
 
@@ -253,7 +253,7 @@ func (c *Controller) GetUserPointHistory(ctx echo.Context, login genpoints.Login
 
 	return ctx.JSON(http.StatusOK, historyDto)
 }
-// GetAllPartyPoints (GET /points/party/all)
+// GetAllPartyPoints (GET /points/party)
 func (c *Controller) GetAllPartyPoints(ctx echo.Context) error {
 	_, err := c.AuthService.GetUserId(ctx)
 
@@ -278,7 +278,7 @@ func (c *Controller) GetAllPartyPoints(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, valuesDto)
 }
 
-// GetPartyPointValue (GET /points/party/{name})
+// GetPartyPointValue (GET /points/party/types/{name})
 func (c *Controller) GetPartyPointValue(ctx echo.Context, name genpoints.Name) error {
 	_, err := c.AuthService.GetUserId(ctx)
 
@@ -295,7 +295,7 @@ func (c *Controller) GetPartyPointValue(ctx echo.Context, name genpoints.Name) e
 	return ctx.JSON(http.StatusOK, value)
 }
 
-// ChangePartyPointValue (POST /points/party/{name})
+// ChangePartyPointValue (PATCH /points/party/types/{name})
 func (c *Controller) ChangePartyPointValue(ctx echo.Context, name genpoints.Name) error {
 	err := common.RequireAdmin(ctx, c.AuthService)
 
@@ -326,7 +326,7 @@ func (c *Controller) ChangePartyPointValue(ctx echo.Context, name genpoints.Name
 	return ctx.JSON(http.StatusOK, convertChangeResultToDto(result))
 }
 
-// GetPartyPointHistory (GET /points/party/{name}/history)
+// GetPartyPointHistory (GET /points/party/types/{name}/history)
 func (c *Controller) GetPartyPointHistory(ctx echo.Context, name genpoints.Name) error {
 	_, err := c.AuthService.GetUserId(ctx)
 
