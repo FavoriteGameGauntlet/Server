@@ -122,6 +122,28 @@ func (s *Service) GetPointTypeByName(partyId int, name string) (pointType typepo
 
 	return
 }
+
+// getUserPointTypeByName resolves a point type that users hold values of, rejecting a shared one.
+func (s *Service) getUserPointTypeByName(partyId int, name string) (pointType typepoints.PointTypeInfo, err error) {
+	pointType, err = s.GetPointTypeByName(partyId, name)
+
+	if err == nil && pointType.IsShared {
+		err = common.NewSharedPointTypeConflictError(name)
+	}
+
+	return
+}
+
+// getSharedPointTypeByName resolves a point type the party holds the value of, rejecting any other.
+func (s *Service) getSharedPointTypeByName(partyId int, name string) (pointType typepoints.PointTypeInfo, err error) {
+	pointType, err = s.GetPointTypeByName(partyId, name)
+
+	if err == nil && !pointType.IsShared {
+		err = common.NewNotSharedPointTypeConflictError(name)
+	}
+
+	return
+}
 // SeedUserPoints gives a user a starting value for every point type of the party. The schema no
 // longer seeds points on signup, so this runs when a user joins a party.
 func (s *Service) SeedUserPoints(userId int, partyId int) (err error) {
@@ -146,19 +168,28 @@ func (s *Service) SeedUserPoints(userId int, partyId int) (err error) {
 	return
 }
 
-// GetUserPoints lists every point type of the party with the value this user holds for it. A shared
-// point type carries the party-wide value, and a type the user has no row for yet reads as its
-// starting value.
-func (s *Service) GetUserPoints(userId int, partyId int) (values []typepoints.UserPointValue, err error) {
+// GetUserPoints lists every point type of the party with the value this user holds for it. Shared
+// point types are left out, since their value belongs to the party rather than to the user (see
+// GetAllPartyPoints). A type the user has no row for yet reads as its starting value.
+func (s *Service) GetUserPoints(userId int, partyId int) (values []typepoints.PointValue, err error) {
 	pointTypes, err := s.Database.GetPointTypesCommand(partyId)
 
 	if err != nil {
 		return
 	}
 
-	values = make([]typepoints.UserPointValue, 0, len(pointTypes))
+	return s.userPointValues(userId, partyId, pointTypes)
+}
+
+// userPointValues reads the user's value for each of the point types that is not shared.
+func (s *Service) userPointValues(userId int, partyId int, pointTypes []typepoints.PointTypeInfo) (values []typepoints.PointValue, err error) {
+	values = make([]typepoints.PointValue, 0, len(pointTypes))
 
 	for _, pointType := range pointTypes {
+		if pointType.IsShared {
+			continue
+		}
+
 		var value int
 		value, err = s.pointValue(userId, partyId, pointType)
 
@@ -166,15 +197,22 @@ func (s *Service) GetUserPoints(userId int, partyId int) (values []typepoints.Us
 			return
 		}
 
-		values = append(values, typepoints.UserPointValue{PointType: pointType, Value: value})
+		values = append(values, typepoints.PointValue{PointType: pointType, Value: value})
 	}
 
 	return
 }
 
-// GetAllUserPoints lists the points of every current member of the party.
+// GetAllUserPoints lists the points of every current member of the party. Shared point types are left
+// out, since their value belongs to the party rather than to any member (see GetAllPartyPoints).
 func (s *Service) GetAllUserPoints(partyId int) (byLogin []typepoints.UserPointValuesByLogin, err error) {
 	members, err := s.PartiesDatabase.GetMembersCommand(partyId)
+
+	if err != nil {
+		return
+	}
+
+	pointTypes, err := s.Database.GetPointTypesCommand(partyId)
 
 	if err != nil {
 		return
@@ -187,14 +225,42 @@ func (s *Service) GetAllUserPoints(partyId int) (byLogin []typepoints.UserPointV
 			continue
 		}
 
-		var values []typepoints.UserPointValue
-		values, err = s.GetUserPoints(member.UserId, partyId)
+		var values []typepoints.PointValue
+		values, err = s.userPointValues(member.UserId, partyId, pointTypes)
 
 		if err != nil {
 			return
 		}
 
 		byLogin = append(byLogin, typepoints.UserPointValuesByLogin{Login: member.Login, Points: values})
+	}
+
+	return
+}
+
+// GetAllPartyPoints lists every shared point type of the party with the value the party holds for it.
+func (s *Service) GetAllPartyPoints(partyId int) (values []typepoints.PointValue, err error) {
+	pointTypes, err := s.Database.GetPointTypesCommand(partyId)
+
+	if err != nil {
+		return
+	}
+
+	values = make([]typepoints.PointValue, 0, len(pointTypes))
+
+	for _, pointType := range pointTypes {
+		if !pointType.IsShared {
+			continue
+		}
+
+		var value int
+		value, err = s.pointValue(0, partyId, pointType)
+
+		if err != nil {
+			return
+		}
+
+		values = append(values, typepoints.PointValue{PointType: pointType, Value: value})
 	}
 
 	return
@@ -223,7 +289,7 @@ func (s *Service) pointValue(userId int, partyId int, pointType typepoints.Point
 }
 
 func (s *Service) GetPartyPointValueByTypeName(partyId int, name string) (value int, err error) {
-	pointType, err := s.GetPointTypeByName(partyId, name)
+	pointType, err := s.getSharedPointTypeByName(partyId, name)
 
 	if err != nil {
 		return
@@ -239,7 +305,7 @@ func (s *Service) GetPartyPointValueByTypeName(partyId int, name string) (value 
 }
 // GetUserPointHistoryByTypeName returns the recorded changes to a user's value for one point type.
 func (s *Service) GetUserPointHistoryByTypeName(userId int, partyId int, name string) (history []typepoints.PointHistoryEntry, err error) {
-	pointType, err := s.GetPointTypeByName(partyId, name)
+	pointType, err := s.getUserPointTypeByName(partyId, name)
 
 	if err != nil {
 		return
@@ -272,7 +338,7 @@ func (s *Service) GetUserPointHistoryByTypeName(userId int, partyId int, name st
 
 // GetPartyPointHistoryByTypeName returns the recorded changes to the party pool for one point type.
 func (s *Service) GetPartyPointHistoryByTypeName(partyId int, name string) (history []typepoints.PointHistoryEntry, err error) {
-	pointType, err := s.GetPointTypeByName(partyId, name)
+	pointType, err := s.getSharedPointTypeByName(partyId, name)
 
 	if err != nil {
 		return

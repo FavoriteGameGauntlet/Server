@@ -154,7 +154,7 @@ func (c *Controller) GetUserPoints(ctx echo.Context, login genpoints.Login) erro
 	return ctx.JSON(http.StatusOK, convertUserPointsToDto(values))
 }
 
-// GetAllUserPoints (GET /points/all)
+// GetAllUserPoints (GET /points/users/all)
 func (c *Controller) GetAllUserPoints(ctx echo.Context) error {
 	_, err := c.AuthService.GetUserId(ctx)
 
@@ -185,7 +185,7 @@ func (c *Controller) GetUserPointValue(ctx echo.Context, login genpoints.Login, 
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	value, err := c.Service.GetPointValueByTypeName(userId, defaultPartyId, name)
+	value, err := c.Service.GetUserPointValueByTypeName(userId, defaultPartyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -253,6 +253,31 @@ func (c *Controller) GetUserPointHistory(ctx echo.Context, login genpoints.Login
 
 	return ctx.JSON(http.StatusOK, historyDto)
 }
+// GetAllPartyPoints (GET /points/party/all)
+func (c *Controller) GetAllPartyPoints(ctx echo.Context) error {
+	_, err := c.AuthService.GetUserId(ctx)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	values, err := c.Service.GetAllPartyPoints(defaultPartyId)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	valuesDto := make(genpoints.PartyPoints, len(values))
+	for i, value := range values {
+		valuesDto[i] = genpoints.PartyPoint{
+			PointType: convertPointTypeToDto(value.PointType),
+			Value:     value.Value,
+		}
+	}
+
+	return ctx.JSON(http.StatusOK, valuesDto)
+}
+
 // GetPartyPointValue (GET /points/party/{name})
 func (c *Controller) GetPartyPointValue(ctx echo.Context, name genpoints.Name) error {
 	_, err := c.AuthService.GetUserId(ctx)
@@ -357,7 +382,7 @@ func convertPointTypesToDto(pointTypes []typepoints.PointTypeInfo) genpoints.Poi
 	return pointTypesDto
 }
 
-func convertUserPointsToDto(values []typepoints.UserPointValue) genpoints.UserPoints {
+func convertUserPointsToDto(values []typepoints.PointValue) genpoints.UserPoints {
 	valuesDto := make(genpoints.UserPoints, len(values))
 
 	for i, value := range values {

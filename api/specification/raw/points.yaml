@@ -9,8 +9,11 @@ paths:
   /points/types/{name}:
     $ref: "../paths/points/types/name.yaml"
 
-  /points/all:
-    $ref: "../paths/points/all.yaml"
+  /points/users/all:
+    $ref: "../paths/points/users/all.yaml"
+
+  /points/party/all:
+    $ref: "../paths/points/party/all.yaml"
 
   /points/party/{name}:
     $ref: "../paths/points/party/name.yaml"

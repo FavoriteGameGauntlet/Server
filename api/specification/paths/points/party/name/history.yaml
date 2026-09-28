@@ -10,5 +10,7 @@ get:
       $ref: "../../../../components/responses/ErrorResponse.yaml"
     "404":
       $ref: "../../../../components/responses/ErrorResponse.yaml"
+    "409":
+      $ref: "../../../../components/responses/ErrorResponse.yaml"
     "500":
       $ref: "../../../../components/responses/ErrorResponse.yaml"

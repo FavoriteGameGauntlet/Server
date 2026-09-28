@@ -24,6 +24,15 @@ type Login = string
 // Name defines model for Name.
 type Name = string
 
+// PartyPoint defines model for PartyPoint.
+type PartyPoint struct {
+	PointType PointType `json:"pointType"`
+	Value     Points    `json:"value"`
+}
+
+// PartyPoints defines model for PartyPoints.
+type PartyPoints = []PartyPoint
+
 // PointChange defines model for PointChange.
 type PointChange struct {
 	DesiredChangeValue int `json:"desiredChangeValue"`
@@ -119,6 +128,9 @@ type UserPointsByLogins = []struct {
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse = Error
 
+// PartyPointsResponse defines model for PartyPointsResponse.
+type PartyPointsResponse = PartyPoints
+
 // PointChangeResultResponse defines model for PointChangeResultResponse.
 type PointChangeResultResponse = PointChangeResult
 
@@ -164,8 +176,8 @@ type ChangeUserPointValueJSONRequestBody = PointChange
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
-	// (GET /points/all)
-	GetAllUserPoints(ctx echo.Context) error
+	// (GET /points/party/all)
+	GetAllPartyPoints(ctx echo.Context) error
 
 	// (GET /points/party/{name})
 	GetPartyPointValue(ctx echo.Context, name Name) error
@@ -188,6 +200,9 @@ type ServerInterface interface {
 	// (PATCH /points/types/{name})
 	ChangePointType(ctx echo.Context, name Name) error
 
+	// (GET /points/users/all)
+	GetAllUserPoints(ctx echo.Context) error
+
 	// (GET /points/{login})
 	GetUserPoints(ctx echo.Context, login Login) error
 
@@ -206,12 +221,12 @@ type ServerInterfaceWrapper struct {
 	Handler ServerInterface
 }
 
-// GetAllUserPoints converts echo context to params.
-func (w *ServerInterfaceWrapper) GetAllUserPoints(ctx echo.Context) error {
+// GetAllPartyPoints converts echo context to params.
+func (w *ServerInterfaceWrapper) GetAllPartyPoints(ctx echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetAllUserPoints(ctx)
+	err = w.Handler.GetAllPartyPoints(ctx)
 	return err
 }
 
@@ -310,6 +325,15 @@ func (w *ServerInterfaceWrapper) ChangePointType(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.ChangePointType(ctx, name)
+	return err
+}
+
+// GetAllUserPoints converts echo context to params.
+func (w *ServerInterfaceWrapper) GetAllUserPoints(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetAllUserPoints(ctx)
 	return err
 }
 
@@ -429,7 +453,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/points/all", wrapper.GetAllUserPoints)
+	router.GET(baseURL+"/points/party/all", wrapper.GetAllPartyPoints)
 	router.GET(baseURL+"/points/party/:name", wrapper.GetPartyPointValue)
 	router.POST(baseURL+"/points/party/:name", wrapper.ChangePartyPointValue)
 	router.GET(baseURL+"/points/party/:name/history", wrapper.GetPartyPointHistory)
@@ -437,6 +461,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/points/types", wrapper.CreatePointType)
 	router.DELETE(baseURL+"/points/types/:name", wrapper.RemovePointType)
 	router.PATCH(baseURL+"/points/types/:name", wrapper.ChangePointType)
+	router.GET(baseURL+"/points/users/all", wrapper.GetAllUserPoints)
 	router.GET(baseURL+"/points/:login", wrapper.GetUserPoints)
 	router.GET(baseURL+"/points/:login/:name", wrapper.GetUserPointValue)
 	router.POST(baseURL+"/points/:login/:name", wrapper.ChangeUserPointValue)

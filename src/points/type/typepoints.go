@@ -82,8 +82,8 @@ type PointChangeResult struct {
 	FinalValue         int
 }
 
-// UserPointValue pairs a point type with the value held for it, for reads that list every type.
-type UserPointValue struct {
+// PointValue pairs a point type with the value held for it, for reads that list every type.
+type PointValue struct {
 	PointType PointTypeInfo
 	Value     int
 }
@@ -91,7 +91,7 @@ type UserPointValue struct {
 // UserPointValuesByLogin is one member's point values, for reads across the whole party.
 type UserPointValuesByLogin struct {
 	Login  string
-	Points []UserPointValue
+	Points []PointValue
 }
 
 // PointHistoryEntry is one recorded change to a point value, whether user- or party-scoped.

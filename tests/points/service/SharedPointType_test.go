@@ -1,6 +1,7 @@
 package srvpoints_test
 
 import (
+	"FGG-Service/src/common"
 	srvpoints "FGG-Service/src/points/service"
 	typepoints "FGG-Service/src/points/type"
 	typehistory "FGG-Service/src/history/types"
@@ -70,6 +71,75 @@ func TestSrvPoints_SharedPointTypeUsesPartyPool(test *testing.T) {
 		databaseMock.AssertExpectations(test)
 	})
 }
+// A shared point type has no value of the user's own, so reading one for a user is a conflict.
+func TestSrvPoints_GetUserPointValueByTypeName_SharedPointType_Conflict(test *testing.T) {
+	// Arrange
+	databaseMock := new(dbpointsmock.DatabaseMock)
+	databaseMock.On("GetPointTypeByNameCommand", 1, sharedPointType.Name).Return(sharedPointType, nil)
+
+	sut := srvpoints.Service{Database: databaseMock}
+
+	// Act
+	_, err := sut.GetUserPointValueByTypeName(2, 1, sharedPointType.Name)
+
+	// Assert
+	var conflict *common.ConflictError
+	require.ErrorAs(test, err, &conflict)
+	databaseMock.AssertNotCalled(test, "GetPartyPointCommand")
+	databaseMock.AssertNotCalled(test, "GetUserPointCommand")
+}
+
+// A shared point type has no history of the user's own, so reading one for a user is a conflict.
+func TestSrvPoints_GetUserPointHistoryByTypeName_SharedPointType_Conflict(test *testing.T) {
+	// Arrange
+	databaseMock := new(dbpointsmock.DatabaseMock)
+	databaseMock.On("GetPointTypeByNameCommand", 1, sharedPointType.Name).Return(sharedPointType, nil)
+
+	sut := srvpoints.Service{Database: databaseMock}
+
+	// Act
+	_, err := sut.GetUserPointHistoryByTypeName(2, 1, sharedPointType.Name)
+
+	// Assert
+	var conflict *common.ConflictError
+	require.ErrorAs(test, err, &conflict)
+	databaseMock.AssertNotCalled(test, "GetUserPointHistoryCommand")
+}
+
+// A point type that is not shared has no party value, so reading one for the party is a conflict.
+func TestSrvPoints_GetPartyPointValueByTypeName_NotSharedPointType_Conflict(test *testing.T) {
+	// Arrange
+	databaseMock := new(dbpointsmock.DatabaseMock)
+	databaseMock.On("GetPointTypeByNameCommand", 1, availableRollsType.Name).Return(availableRollsType, nil)
+
+	sut := srvpoints.Service{Database: databaseMock}
+
+	// Act
+	_, err := sut.GetPartyPointValueByTypeName(1, availableRollsType.Name)
+
+	// Assert
+	var conflict *common.ConflictError
+	require.ErrorAs(test, err, &conflict)
+	databaseMock.AssertNotCalled(test, "GetPartyPointCommand")
+}
+
+// A point type that is not shared has no party history, so reading one for the party is a conflict.
+func TestSrvPoints_GetPartyPointHistoryByTypeName_NotSharedPointType_Conflict(test *testing.T) {
+	// Arrange
+	databaseMock := new(dbpointsmock.DatabaseMock)
+	databaseMock.On("GetPointTypeByNameCommand", 1, availableRollsType.Name).Return(availableRollsType, nil)
+
+	sut := srvpoints.Service{Database: databaseMock}
+
+	// Act
+	_, err := sut.GetPartyPointHistoryByTypeName(1, availableRollsType.Name)
+
+	// Assert
+	var conflict *common.ConflictError
+	require.ErrorAs(test, err, &conflict)
+	databaseMock.AssertNotCalled(test, "GetPartyPointHistoryCommand")
+}
+
 // An administrator's direct change is recorded as a manual history entry, whose id becomes the
 // source event of the resulting point history.
 func TestSrvPoints_ChangeUserPointByTypeName(test *testing.T) {

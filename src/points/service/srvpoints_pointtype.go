@@ -18,6 +18,18 @@ func (s *Service) GetPointValueByTypeName(userId int, partyId int, pointTypeName
 	return s.pointValue(userId, partyId, pointType)
 }
 
+// GetUserPointValueByTypeName reads a user's own value for the named point type. A shared point type
+// has no value of the user's own, so it is rejected rather than read from the party pool.
+func (s *Service) GetUserPointValueByTypeName(userId int, partyId int, pointTypeName string) (value int, err error) {
+	pointType, err := s.getUserPointTypeByName(partyId, pointTypeName)
+
+	if err != nil {
+		return
+	}
+
+	return s.pointValue(userId, partyId, pointType)
+}
+
 // clampedPointChange computes the value actually applied once changeValue is clamped to the point
 // type's Minimum/Maximum, and the value the point ends up at. A nil bound falls back to the range of
 // the INTEGER column the value is stored in, so an unbounded point clamps instead of overflowing.
