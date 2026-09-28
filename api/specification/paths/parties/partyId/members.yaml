@@ -20,7 +20,7 @@ post:
   requestBody:
     $ref: "../../../components/requests/MemberCreateRequest.yaml"
   responses:
-    "200":
+    "201":
       $ref: "../../../components/responses/MemberResponse.yaml"
     "400":
       $ref: "../../../components/responses/ErrorResponse.yaml"

@@ -92,7 +92,7 @@ func (c *Controller) CreateItem(ctx echo.Context) error {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	return ctx.JSON(http.StatusOK, convertItemToDto(item))
+	return ctx.JSON(http.StatusCreated, convertItemToDto(item))
 }
 
 // RemoveItem (DELETE /items/catalog/{name})

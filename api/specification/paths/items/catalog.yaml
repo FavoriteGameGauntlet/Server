@@ -14,7 +14,7 @@ post:
   requestBody:
     $ref: "../../components/requests/ItemCreateRequest.yaml"
   responses:
-    "200":
+    "201":
       $ref: "../../components/responses/ItemResponse.yaml"
     "400":
       $ref: "../../components/responses/ErrorResponse.yaml"

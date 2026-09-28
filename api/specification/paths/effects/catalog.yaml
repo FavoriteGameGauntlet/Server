@@ -14,7 +14,7 @@ post:
   requestBody:
     $ref: "../../components/requests/EffectCreateRequest.yaml"
   responses:
-    "200":
+    "201":
       $ref: "../../components/responses/EffectResponse.yaml"
     "400":
       $ref: "../../components/responses/ErrorResponse.yaml"

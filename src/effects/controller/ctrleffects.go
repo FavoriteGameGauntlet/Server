@@ -100,7 +100,7 @@ func (c *Controller) CreateEffect(ctx echo.Context) error {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	return ctx.JSON(http.StatusOK, convertEffectToDto(effect))
+	return ctx.JSON(http.StatusCreated, convertEffectToDto(effect))
 }
 
 // RemoveEffect (DELETE /effects/catalog/{name})

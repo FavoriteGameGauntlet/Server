@@ -22,7 +22,7 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/EffectCreateRequest'
       responses:
-        '200':
+        '201':
           $ref: '#/components/responses/EffectResponse'
         '400':
           $ref: '#/components/responses/ErrorResponse'

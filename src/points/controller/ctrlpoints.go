@@ -77,7 +77,7 @@ func (c *Controller) CreatePointType(ctx echo.Context) error {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	return ctx.JSON(http.StatusOK, genpoints.PointType{
+	return ctx.JSON(http.StatusCreated, genpoints.PointType{
 		Name:        created.Name,
 		Description: created.Description,
 		StartValue:  created.StartValue,

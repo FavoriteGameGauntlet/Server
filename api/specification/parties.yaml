@@ -22,7 +22,7 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/PartyCreateRequest'
       responses:
-        '200':
+        '201':
           $ref: '#/components/responses/PartyResponse'
         '400':
           $ref: '#/components/responses/ErrorResponse'
@@ -105,7 +105,7 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/MemberCreateRequest'
       responses:
-        '200':
+        '201':
           $ref: '#/components/responses/MemberResponse'
         '400':
           $ref: '#/components/responses/ErrorResponse'

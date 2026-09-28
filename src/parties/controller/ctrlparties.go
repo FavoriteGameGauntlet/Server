@@ -51,7 +51,7 @@ func (c *Controller) CreateParty(ctx echo.Context) error {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	return ctx.JSON(http.StatusOK, convertPartyToDto(party))
+	return ctx.JSON(http.StatusCreated, convertPartyToDto(party))
 }
 
 // GetParties (GET /parties)
@@ -193,7 +193,7 @@ func (c *Controller) AddMember(ctx echo.Context, partyId genparties.PartyId) err
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	return ctx.JSON(http.StatusOK, genparties.Member{
+	return ctx.JSON(http.StatusCreated, genparties.Member{
 		Login:       memberDto.Login,
 		DisplayName: member.DisplayName,
 		IsAdmin:     member.IsAdmin,

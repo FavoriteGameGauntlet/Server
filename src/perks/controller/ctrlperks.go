@@ -86,7 +86,7 @@ func (c *Controller) CreatePerk(ctx echo.Context) error {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	return ctx.JSON(http.StatusOK, convertPerkToDto(perk))
+	return ctx.JSON(http.StatusCreated, convertPerkToDto(perk))
 }
 
 // RemovePerk (DELETE /perks/catalog/{name})

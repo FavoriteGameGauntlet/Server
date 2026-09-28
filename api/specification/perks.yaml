@@ -22,7 +22,7 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/PerkCreateRequest'
       responses:
-        '200':
+        '201':
           $ref: '#/components/responses/PerkResponse'
         '400':
           $ref: '#/components/responses/ErrorResponse'

@@ -14,7 +14,7 @@ post:
   requestBody:
     $ref: "../components/requests/PartyCreateRequest.yaml"
   responses:
-    "200":
+    "201":
       $ref: "../components/responses/PartyResponse.yaml"
     "400":
       $ref: "../components/responses/ErrorResponse.yaml"

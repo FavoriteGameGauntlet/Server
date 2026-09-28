@@ -22,7 +22,7 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/ItemCreateRequest'
       responses:
-        '200':
+        '201':
           $ref: '#/components/responses/ItemResponse'
         '400':
           $ref: '#/components/responses/ErrorResponse'

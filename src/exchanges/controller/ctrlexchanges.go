@@ -92,7 +92,7 @@ func (c *Controller) CreateExchange(ctx echo.Context) error {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	return ctx.JSON(http.StatusOK, convertExchangeToDto(exchange))
+	return ctx.JSON(http.StatusCreated, convertExchangeToDto(exchange))
 }
 
 // RemoveExchange (DELETE /exchanges/catalog/{name})

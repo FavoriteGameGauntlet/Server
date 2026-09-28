@@ -14,7 +14,7 @@ post:
   requestBody:
     $ref: "../../components/requests/ExchangeCreateRequest.yaml"
   responses:
-    "200":
+    "201":
       $ref: "../../components/responses/ExchangeResponse.yaml"
     "400":
       $ref: "../../components/responses/ErrorResponse.yaml"
