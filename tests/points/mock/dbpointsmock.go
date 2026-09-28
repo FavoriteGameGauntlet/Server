@@ -10,14 +10,14 @@ type DatabaseMock struct {
 	mock.Mock
 }
 
-func (m *DatabaseMock) CreatePointTypeCommand(partyId int, name string, description string, startValue int, isPublic bool, isShared bool, minimum int, maximum int) (pointType typepoints.PointType, err error) {
+func (m *DatabaseMock) CreatePointTypeCommand(partyId int, name string, description string, startValue int, isPublic bool, isShared bool, minimum *int, maximum *int) (pointType typepoints.PointType, err error) {
 	args := m.Called(partyId, name, description, startValue, isPublic, isShared, minimum, maximum)
 	pointType = args.Get(0).(typepoints.PointType)
 	err = args.Error(1)
 	return
 }
 
-func (m *DatabaseMock) ChangePointTypeCommand(partyId int, pointTypeId int, name string, description string, isPublic bool, isShared bool, minimum int, maximum int) error {
+func (m *DatabaseMock) ChangePointTypeCommand(partyId int, pointTypeId int, name string, description string, isPublic bool, isShared bool, minimum *int, maximum *int) error {
 	args := m.Called(partyId, pointTypeId, name, description, isPublic, isShared, minimum, maximum)
 	return args.Error(0)
 }

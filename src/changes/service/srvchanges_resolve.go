@@ -3,6 +3,7 @@ package srvchanges
 import (
 	"FGG-Service/src/changes/types"
 	"FGG-Service/src/common"
+	"FGG-Service/src/validator"
 )
 
 // ResolveChangeEntries turns the names an API caller uses into the ids a change entry stores. It
@@ -25,6 +26,12 @@ func (s *Service) ResolveChangeEntries(partyId int, inputs []typechanges.ChangeE
 }
 
 func (s *Service) resolveChangeEntry(partyId int, input typechanges.ChangeEntryInput) (entry typechanges.ChangeEntry, err error) {
+	err = validator.ValidateChangeAmount(input.Amount)
+
+	if err != nil {
+		return
+	}
+
 	entry.Amount = input.Amount
 
 	switch {

@@ -16,7 +16,7 @@ import (
 
 // A shared point type is held once for the whole party rather than per user.
 var sharedPointType = typepoints.PointTypeInfo{
-	Id: 7, PartyId: 1, Name: "partyFunds", StartValue: 4, IsShared: true, Minimum: 0, Maximum: 100,
+	Id: 7, PartyId: 1, Name: "partyFunds", StartValue: 4, IsShared: true, Minimum: ptrInt(0), Maximum: ptrInt(100),
 }
 
 func TestSrvPoints_SharedPointTypeUsesPartyPool(test *testing.T) {

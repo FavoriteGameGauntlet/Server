@@ -18,7 +18,7 @@ import (
 var seize = typeexchanges.Exchange{Id: 2, PartyId: 1, Name: "seize", Description: "takes territory"}
 
 var territoryPoints = typepoints.PointTypeInfo{
-	Id: 6, PartyId: 1, Name: "territoryPoints", Minimum: 0, Maximum: 100,
+	Id: 6, PartyId: 1, Name: "territoryPoints", Minimum: ptr(0), Maximum: ptr(100),
 }
 
 func ptr[T any](value T) *T {

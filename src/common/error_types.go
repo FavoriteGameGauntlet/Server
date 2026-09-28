@@ -582,6 +582,34 @@ func NewEmailUnprocessableError(email string, messageDetails string) error {
 	}
 }
 
+func NewPointTypeBoundsUnprocessableError(messageDetails string) error {
+	message := fmt.Sprintf(
+		"The point type bounds do not match. %s",
+		messageDetails)
+
+	return &UnprocessableError{
+		&BaseError{
+			Code:    "INCORRECT_POINT_TYPE_BOUNDS",
+			Message: message,
+		},
+	}
+}
+
+func NewChangeAmountUnprocessableError(amount int, minimum int, maximum int) error {
+	message := fmt.Sprintf(
+		"The change amount (%d) should be between %d and %d.",
+		amount,
+		minimum,
+		maximum)
+
+	return &UnprocessableError{
+		&BaseError{
+			Code:    "INCORRECT_CHANGE_AMOUNT",
+			Message: message,
+		},
+	}
+}
+
 func NewPasswordUnprocessableError(messageDetails string) error {
 	message := fmt.Sprintf(
 		"The password does not match the format. %s",

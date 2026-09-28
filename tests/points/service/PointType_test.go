@@ -5,13 +5,14 @@ import (
 	"FGG-Service/src/points/type"
 	"FGG-Service/tests/points/mock"
 	"database/sql"
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
 var availableRollsType = typepoints.PointTypeInfo{
-	Id: 5, PartyId: 1, Name: typepoints.PointTypeAvailableRolls, Minimum: 0, Maximum: 10,
+	Id: 5, PartyId: 1, Name: typepoints.PointTypeAvailableRolls, Minimum: ptrInt(0), Maximum: ptrInt(10),
 }
 
 // --- GetPointValueByTypeName ---
@@ -168,6 +169,62 @@ var ChangeUserPointValueClampedTestCases = []ChangeUserPointValueClampedTestCase
 			// 3 - 5 = -2 < Minimum(0) -> clamp to 0, actual change = -3
 			databaseMock.On("ChangeUserPointValueCommand", 2, 1, availableRollsType.Id, -3).Return(nil)
 			databaseMock.On("CreateUserPointHistoryCommand", 2, 1, availableRollsType.Id, 9, -5, -3, 0, 999).
+				Return(typepoints.UserPointHistoryEntry{}, nil)
+			return databaseMock
+		},
+	},
+	{
+		// Without a Maximum nothing clamps the value from above.
+		Name:        "NoMaximum_NoClamp",
+		ChangeValue: 5,
+		SetupMock: func() *dbpointsmock.DatabaseMock {
+			unbounded := availableRollsType
+			unbounded.Maximum = nil
+
+			databaseMock := new(dbpointsmock.DatabaseMock)
+			databaseMock.On("GetPointTypeCommand", 1, availableRollsType.Id).Return(unbounded, nil)
+			databaseMock.On("GetUserPointCommand", 2, 1, availableRollsType.Id).
+				Return(typepoints.UserPoint{Value: 8}, nil)
+			databaseMock.On("ChangeUserPointValueCommand", 2, 1, availableRollsType.Id, 5).Return(nil)
+			databaseMock.On("CreateUserPointHistoryCommand", 2, 1, availableRollsType.Id, 9, 5, 5, 13, 999).
+				Return(typepoints.UserPointHistoryEntry{}, nil)
+			return databaseMock
+		},
+	},
+	{
+		// Without a Maximum the value still clamps to the largest INTEGER instead of overflowing it.
+		Name:        "NoMaximum_ClampToIntegerMaximum",
+		ChangeValue: 10,
+		SetupMock: func() *dbpointsmock.DatabaseMock {
+			unbounded := availableRollsType
+			unbounded.Maximum = nil
+
+			databaseMock := new(dbpointsmock.DatabaseMock)
+			databaseMock.On("GetPointTypeCommand", 1, availableRollsType.Id).Return(unbounded, nil)
+			databaseMock.On("GetUserPointCommand", 2, 1, availableRollsType.Id).
+				Return(typepoints.UserPoint{Value: math.MaxInt32 - 3}, nil)
+			// MaxInt32 - 3 + 10 > MaxInt32 -> clamp to MaxInt32, actual change = 3
+			databaseMock.On("ChangeUserPointValueCommand", 2, 1, availableRollsType.Id, 3).Return(nil)
+			databaseMock.On("CreateUserPointHistoryCommand", 2, 1, availableRollsType.Id, 9, 10, 3, math.MaxInt32, 999).
+				Return(typepoints.UserPointHistoryEntry{}, nil)
+			return databaseMock
+		},
+	},
+	{
+		// Without a Minimum the value still clamps to the smallest INTEGER instead of overflowing it.
+		Name:        "NoMinimum_ClampToIntegerMinimum",
+		ChangeValue: -10,
+		SetupMock: func() *dbpointsmock.DatabaseMock {
+			unbounded := availableRollsType
+			unbounded.Minimum = nil
+
+			databaseMock := new(dbpointsmock.DatabaseMock)
+			databaseMock.On("GetPointTypeCommand", 1, availableRollsType.Id).Return(unbounded, nil)
+			databaseMock.On("GetUserPointCommand", 2, 1, availableRollsType.Id).
+				Return(typepoints.UserPoint{Value: math.MinInt32 + 3}, nil)
+			// MinInt32 + 3 - 10 < MinInt32 -> clamp to MinInt32, actual change = -3
+			databaseMock.On("ChangeUserPointValueCommand", 2, 1, availableRollsType.Id, -3).Return(nil)
+			databaseMock.On("CreateUserPointHistoryCommand", 2, 1, availableRollsType.Id, 9, -10, -3, math.MinInt32, 999).
 				Return(typepoints.UserPointHistoryEntry{}, nil)
 			return databaseMock
 		},

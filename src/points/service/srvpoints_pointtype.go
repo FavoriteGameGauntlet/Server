@@ -3,6 +3,8 @@ package srvpoints
 import (
 	"FGG-Service/src/common"
 	"FGG-Service/src/points/type"
+	"FGG-Service/src/validator"
+	"math"
 )
 
 // GetPointValueByTypeName reads a user's current value for the named point type.
@@ -17,7 +19,8 @@ func (s *Service) GetPointValueByTypeName(userId int, partyId int, pointTypeName
 }
 
 // clampedPointChange computes the value actually applied once changeValue is clamped to the point
-// type's Minimum/Maximum, and the value the point ends up at.
+// type's Minimum/Maximum, and the value the point ends up at. A nil bound falls back to the range of
+// the INTEGER column the value is stored in, so an unbounded point clamps instead of overflowing.
 func (s *Service) clampedPointChange(userId int, partyId int, pointType typepoints.PointTypeInfo, changeValue int) (result typepoints.PointChangeResult, err error) {
 	currentValue, err := s.pointValue(userId, partyId, pointType)
 
@@ -31,13 +34,23 @@ func (s *Service) clampedPointChange(userId int, partyId int, pointType typepoin
 		FinalValue:         currentValue + changeValue,
 	}
 
-	if result.FinalValue < pointType.Minimum {
-		result.FinalValue = pointType.Minimum
+	minimum, maximum := math.MinInt32, math.MaxInt32
+
+	if pointType.Minimum != nil {
+		minimum = *pointType.Minimum
+	}
+
+	if pointType.Maximum != nil {
+		maximum = *pointType.Maximum
+	}
+
+	if result.FinalValue < minimum {
+		result.FinalValue = minimum
 		result.ActualChangeValue = result.FinalValue - currentValue
 	}
 
-	if result.FinalValue > pointType.Maximum {
-		result.FinalValue = pointType.Maximum
+	if result.FinalValue > maximum {
+		result.FinalValue = maximum
 		result.ActualChangeValue = result.FinalValue - currentValue
 	}
 
@@ -146,6 +159,12 @@ func (s *Service) ChangeUserPointByTypeName(
 	partyId int,
 	pointTypeName string,
 	changeValue int) (result typepoints.PointChangeResult, err error) {
+	err = validator.ValidateChangeAmount(changeValue)
+
+	if err != nil {
+		return
+	}
+
 	pointType, err := s.GetPointTypeByName(partyId, pointTypeName)
 
 	if err != nil {
@@ -173,6 +192,12 @@ func (s *Service) ChangePartyPointByTypeName(
 	partyId int,
 	pointTypeName string,
 	changeValue int) (result typepoints.PointChangeResult, err error) {
+	err = validator.ValidateChangeAmount(changeValue)
+
+	if err != nil {
+		return
+	}
+
 	pointType, err := s.GetPointTypeByName(partyId, pointTypeName)
 
 	if err != nil {

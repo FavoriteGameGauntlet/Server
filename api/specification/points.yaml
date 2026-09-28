@@ -30,6 +30,8 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '409':
           $ref: '#/components/responses/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
   /points/types/{name}:
@@ -49,6 +51,8 @@ paths:
         '401':
           $ref: '#/components/responses/ErrorResponse'
         '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '422':
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
@@ -111,6 +115,8 @@ paths:
         '401':
           $ref: '#/components/responses/ErrorResponse'
         '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '422':
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
@@ -181,6 +187,8 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '404':
           $ref: '#/components/responses/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
   /points/{login}/{name}/history:
@@ -224,9 +232,13 @@ components:
         minimum:
           type: integer
           format: int
+          nullable: true
+          description: The lowest value a point can have, or null for no lower bound.
         maximum:
           type: integer
           format: int
+          nullable: true
+          description: The highest value a point can have, or null for no upper bound.
       required:
         - name
         - description
@@ -263,12 +275,19 @@ components:
           type: boolean
         isShared:
           type: boolean
+          default: false
         minimum:
           type: integer
           format: int
+          nullable: true
+          default: 0
+          description: The lowest value a point can have, or null for no lower bound.
         maximum:
           type: integer
           format: int
+          nullable: true
+          default: null
+          description: The highest value a point can have, or null for no upper bound.
       required:
         - name
         - description
@@ -289,9 +308,15 @@ components:
         minimum:
           type: integer
           format: int
+          nullable: true
+          default: 0
+          description: The lowest value a point can have, or null for no lower bound.
         maximum:
           type: integer
           format: int
+          nullable: true
+          default: null
+          description: The highest value a point can have, or null for no upper bound.
       required:
         - description
         - isPublic

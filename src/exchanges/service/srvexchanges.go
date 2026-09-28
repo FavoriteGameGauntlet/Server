@@ -185,7 +185,7 @@ func (s *Service) requireAffordable(partyId int, payingUserIds []int, sourceEntr
 				return
 			}
 
-			if value+entry.Amount < pointType.Minimum {
+			if pointType.Minimum != nil && value+entry.Amount < *pointType.Minimum {
 				return common.NewNotEnoughPointsConflictError(pointType.Name, -entry.Amount)
 			}
 		}

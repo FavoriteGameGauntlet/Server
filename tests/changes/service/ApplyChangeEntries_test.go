@@ -61,7 +61,7 @@ var ApplyChangeEntriesTestCases = []ApplyChangeEntriesTestCase{
 		},
 		SetupMocks: func() (*dbitemsmock.DatabaseMock, *dbperksmock.DatabaseMock, *dbeffectsmock.DatabaseMock, *dbpointsmock.DatabaseMock) {
 			pointsDb := new(dbpointsmock.DatabaseMock)
-			pointsDb.On("GetPointTypeCommand", 1, 7).Return(typepoints.PointTypeInfo{Id: 7, PartyId: 1, Minimum: 0, Maximum: 100}, nil)
+			pointsDb.On("GetPointTypeCommand", 1, 7).Return(typepoints.PointTypeInfo{Id: 7, PartyId: 1, Minimum: ptr(0), Maximum: ptr(100)}, nil)
 			pointsDb.On("GetUserPointCommand", 2, 1, 7).Return(typepoints.UserPoint{Value: 10}, nil)
 			pointsDb.On("ChangeUserPointValueCommand", 2, 1, 7, 5).Return(nil)
 			pointsDb.On("CreateUserPointHistoryCommand", 2, 1, 7, 9, 5, 5, 15, 999).Return(typepoints.UserPointHistoryEntry{}, nil)

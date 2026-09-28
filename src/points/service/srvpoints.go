@@ -7,6 +7,7 @@ import (
 	"FGG-Service/src/parties/database"
 	"FGG-Service/src/points/database"
 	"FGG-Service/src/points/type"
+	"FGG-Service/src/validator"
 	"database/sql"
 	"errors"
 )
@@ -32,6 +33,12 @@ func (s *Service) GetPointTypes(partyId int) (pointTypes []typepoints.PointTypeI
 // CreatePointType adds a point type to the party. Names identify point types across the API, so a
 // duplicate is rejected rather than silently shadowing the existing one.
 func (s *Service) CreatePointType(partyId int, pointType typepoints.PointType) (created typepoints.PointType, err error) {
+	err = validator.ValidatePointTypeBounds(pointType.StartValue, pointType.Minimum, pointType.Maximum)
+
+	if err != nil {
+		return
+	}
+
 	_, err = s.Database.GetPointTypeByNameCommand(partyId, pointType.Name)
 
 	if err == nil {
@@ -55,9 +62,15 @@ func (s *Service) CreatePointType(partyId int, pointType typepoints.PointType) (
 }
 
 // ChangePointType updates the named point type. The name itself is the API identity of the type and
-// is not editable.
+// is not editable, and neither is the start value, which the new bounds still have to contain.
 func (s *Service) ChangePointType(partyId int, name string, pointType typepoints.PointType) (err error) {
 	current, err := s.GetPointTypeByName(partyId, name)
+
+	if err != nil {
+		return
+	}
+
+	err = validator.ValidatePointTypeBounds(current.StartValue, pointType.Minimum, pointType.Maximum)
 
 	if err != nil {
 		return

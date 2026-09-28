@@ -6,8 +6,8 @@ import (
 )
 
 type IDatabase interface {
-	CreatePointTypeCommand(partyId int, name string, description string, startValue int, isPublic bool, isShared bool, minimum int, maximum int) (pointType typepoints.PointType, err error)
-	ChangePointTypeCommand(partyId int, pointTypeId int, name string, description string, isPublic bool, isShared bool, minimum int, maximum int) error
+	CreatePointTypeCommand(partyId int, name string, description string, startValue int, isPublic bool, isShared bool, minimum *int, maximum *int) (pointType typepoints.PointType, err error)
+	ChangePointTypeCommand(partyId int, pointTypeId int, name string, description string, isPublic bool, isShared bool, minimum *int, maximum *int) error
 	RemovePointTypeCommand(partyId int, pointTypeId int) error
 	GetPointTypeByNameCommand(partyId int, name string) (pointType typepoints.PointTypeInfo, err error)
 	GetPointTypeCommand(partyId int, pointTypeId int) (pointType typepoints.PointTypeInfo, err error)
@@ -31,7 +31,7 @@ type Database struct {
 
 var createPointTypeQuery = dbaccess.Query{Name: "CreatePointTypeQuery", SQL: `SELECT * FROM create_point_type($1::integer, $2::text, $3::text, $4::integer, $5::boolean, $6::boolean, $7::integer, $8::integer)`}
 
-func (db *Database) CreatePointTypeCommand(partyId int, name string, description string, startValue int, isPublic bool, isShared bool, minimum int, maximum int) (pointType typepoints.PointType, err error) {
+func (db *Database) CreatePointTypeCommand(partyId int, name string, description string, startValue int, isPublic bool, isShared bool, minimum *int, maximum *int) (pointType typepoints.PointType, err error) {
 	row := dbaccess.QueryRow(createPointTypeQuery, partyId, name, description, startValue, isPublic, isShared, minimum, maximum)
 
 	err = row.Scan(
@@ -53,7 +53,7 @@ func (db *Database) CreatePointTypeCommand(partyId int, name string, description
 
 var changePointTypeQuery = dbaccess.Query{Name: "ChangePointTypeQuery", SQL: `SELECT change_point_type($1::integer, $2::integer, $3::text, $4::text, $5::boolean, $6::boolean, $7::integer, $8::integer)`}
 
-func (db *Database) ChangePointTypeCommand(partyId int, pointTypeId int, name string, description string, isPublic bool, isShared bool, minimum int, maximum int) error {
+func (db *Database) ChangePointTypeCommand(partyId int, pointTypeId int, name string, description string, isPublic bool, isShared bool, minimum *int, maximum *int) error {
 	_, err := dbaccess.Exec(changePointTypeQuery, partyId, pointTypeId, name, description, isPublic, isShared, minimum, maximum)
 
 	dbaccess.LogDbResult(changePointTypeQuery, nil, err)

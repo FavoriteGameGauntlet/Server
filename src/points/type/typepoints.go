@@ -18,8 +18,8 @@ type PointType struct {
 	StartValue  int
 	IsPublic    bool
 	IsShared    bool
-	Minimum     int
-	Maximum     int
+	Minimum     *int
+	Maximum     *int
 	IsRemoved   bool
 }
 
@@ -31,8 +31,8 @@ type PointTypeInfo struct {
 	StartValue  int
 	IsPublic    bool
 	IsShared    bool
-	Minimum     int
-	Maximum     int
+	Minimum     *int
+	Maximum     *int
 }
 
 type UserPoint struct {

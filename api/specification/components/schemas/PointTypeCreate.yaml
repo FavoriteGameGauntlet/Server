@@ -11,10 +11,17 @@ properties:
     type: boolean
   isShared:
     type: boolean
+    default: false
   minimum:
     type: integer
     format: int
+    nullable: true
+    default: 0
+    description: The lowest value a point can have, or null for no lower bound.
   maximum:
     type: integer
     format: int
+    nullable: true
+    default: null
+    description: The highest value a point can have, or null for no upper bound.
 required: [ name, description, startValue, isPublic, isShared, minimum, maximum ]

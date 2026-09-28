@@ -23,7 +23,7 @@ var candidateRows = []typewheeleffects.WheelRow{
 }
 
 var availableRollsPointType = typepoints.PointTypeInfo{
-	Id: 5, PartyId: 1, Name: typepoints.PointTypeAvailableRolls, Minimum: 0, Maximum: 999,
+	Id: 5, PartyId: 1, Name: typepoints.PointTypeAvailableRolls, Minimum: ptr(0), Maximum: ptr(999),
 }
 
 var rolledResult = []typewheeleffects.LastWheelRow{

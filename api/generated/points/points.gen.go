@@ -53,10 +53,14 @@ type PointType struct {
 	Description string `json:"description"`
 	IsPublic    bool   `json:"isPublic"`
 	IsShared    bool   `json:"isShared"`
-	Maximum     int    `json:"maximum"`
-	Minimum     int    `json:"minimum"`
-	Name        Name   `json:"name"`
-	StartValue  int    `json:"startValue"`
+
+	// Maximum The highest value a point can have, or null for no upper bound.
+	Maximum *int `json:"maximum"`
+
+	// Minimum The lowest value a point can have, or null for no lower bound.
+	Minimum    *int `json:"minimum"`
+	Name       Name `json:"name"`
+	StartValue int  `json:"startValue"`
 }
 
 // PointTypeChange defines model for PointTypeChange.
@@ -64,8 +68,12 @@ type PointTypeChange struct {
 	Description string `json:"description"`
 	IsPublic    bool   `json:"isPublic"`
 	IsShared    bool   `json:"isShared"`
-	Maximum     int    `json:"maximum"`
-	Minimum     int    `json:"minimum"`
+
+	// Maximum The highest value a point can have, or null for no upper bound.
+	Maximum *int `json:"maximum"`
+
+	// Minimum The lowest value a point can have, or null for no lower bound.
+	Minimum *int `json:"minimum"`
 }
 
 // PointTypeCreate defines model for PointTypeCreate.
@@ -73,10 +81,14 @@ type PointTypeCreate struct {
 	Description string `json:"description"`
 	IsPublic    bool   `json:"isPublic"`
 	IsShared    bool   `json:"isShared"`
-	Maximum     int    `json:"maximum"`
-	Minimum     int    `json:"minimum"`
-	Name        Name   `json:"name"`
-	StartValue  int    `json:"startValue"`
+
+	// Maximum The highest value a point can have, or null for no upper bound.
+	Maximum *int `json:"maximum"`
+
+	// Minimum The lowest value a point can have, or null for no lower bound.
+	Minimum    *int `json:"minimum"`
+	Name       Name `json:"name"`
+	StartValue int  `json:"startValue"`
 }
 
 // PointTypes defines model for PointTypes.
