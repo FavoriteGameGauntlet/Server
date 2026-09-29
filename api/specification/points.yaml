@@ -426,7 +426,7 @@ components:
           format: int
         finalValue:
           $ref: '#/components/schemas/Points'
-        sourceLogin:
+        actorLogin:
           $ref: '#/components/schemas/Login'
         changedDate:
           type: string

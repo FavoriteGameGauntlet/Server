@@ -32,13 +32,13 @@ func NewController() *Controller {
 
 // GetPointTypes (GET /points/types)
 func (c *Controller) GetPointTypes(ctx echo.Context) error {
-	_, err := c.AuthService.GetUserId(ctx)
+	actorUserId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	pointTypes, err := c.Service.GetPointTypes(defaultPartyId)
+	pointTypes, err := c.Service.GetVisiblePointTypes(actorUserId, defaultPartyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -139,13 +139,19 @@ func (c *Controller) RemovePointType(ctx echo.Context, name genpoints.Name) erro
 }
 // GetUserPoints (GET /points/users/{login})
 func (c *Controller) GetUserPoints(ctx echo.Context, login genpoints.Login) error {
-	userId, err := c.userIdFromLogin(ctx, login)
+	actorUserId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	values, err := c.Service.GetUserPoints(userId, defaultPartyId)
+	affectedUserId, err := c.AuthService.GetUserIdByLogin(login)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	values, err := c.Service.GetUserPoints(actorUserId, affectedUserId, defaultPartyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -156,13 +162,13 @@ func (c *Controller) GetUserPoints(ctx echo.Context, login genpoints.Login) erro
 
 // GetAllUserPoints (GET /points/users)
 func (c *Controller) GetAllUserPoints(ctx echo.Context) error {
-	_, err := c.AuthService.GetUserId(ctx)
+	actorUserId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	byLogin, err := c.Service.GetAllUserPoints(defaultPartyId)
+	byLogin, err := c.Service.GetAllUserPoints(actorUserId, defaultPartyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -179,13 +185,19 @@ func (c *Controller) GetAllUserPoints(ctx echo.Context) error {
 
 // GetUserPointValue (GET /points/users/{login}/types/{name})
 func (c *Controller) GetUserPointValue(ctx echo.Context, login genpoints.Login, name genpoints.Name) error {
-	userId, err := c.userIdFromLogin(ctx, login)
+	actorUserId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	value, err := c.Service.GetUserPointValueByTypeName(userId, defaultPartyId, name)
+	affectedUserId, err := c.AuthService.GetUserIdByLogin(login)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	value, err := c.Service.GetUserPointValueByTypeName(actorUserId, affectedUserId, defaultPartyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -196,13 +208,7 @@ func (c *Controller) GetUserPointValue(ctx echo.Context, login genpoints.Login, 
 
 // ChangeUserPointValue (PATCH /points/users/{login}/types/{name})
 func (c *Controller) ChangeUserPointValue(ctx echo.Context, login genpoints.Login, name genpoints.Name) error {
-	err := common.RequireAdmin(ctx, c.AuthService)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	actorUserId, err := c.AuthService.GetUserId(ctx)
+	actorUserId, err := common.RequireAdminUserId(ctx, c.AuthService)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -216,13 +222,13 @@ func (c *Controller) ChangeUserPointValue(ctx echo.Context, login genpoints.Logi
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	userId, err := c.AuthService.GetUserIdByLogin(login)
+	affectedUserId, err := c.AuthService.GetUserIdByLogin(login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	result, err := c.Service.ChangeUserPointByTypeName(actorUserId, userId, defaultPartyId, name, changeDto.DesiredChangeValue)
+	result, err := c.Service.ChangeUserPointByTypeName(actorUserId, affectedUserId, defaultPartyId, name, changeDto.DesiredChangeValue)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -233,13 +239,19 @@ func (c *Controller) ChangeUserPointValue(ctx echo.Context, login genpoints.Logi
 
 // GetUserPointHistory (GET /points/users/{login}/types/{name}/history)
 func (c *Controller) GetUserPointHistory(ctx echo.Context, login genpoints.Login, name genpoints.Name) error {
-	userId, err := c.userIdFromLogin(ctx, login)
+	actorUserId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	history, err := c.Service.GetUserPointHistoryByTypeName(userId, defaultPartyId, name)
+	affectedUserId, err := c.AuthService.GetUserIdByLogin(login)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	history, err := c.Service.GetUserPointHistoryByTypeName(actorUserId, affectedUserId, defaultPartyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -255,13 +267,13 @@ func (c *Controller) GetUserPointHistory(ctx echo.Context, login genpoints.Login
 }
 // GetAllPartyPoints (GET /points/party)
 func (c *Controller) GetAllPartyPoints(ctx echo.Context) error {
-	_, err := c.AuthService.GetUserId(ctx)
+	actorUserId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	values, err := c.Service.GetAllPartyPoints(defaultPartyId)
+	values, err := c.Service.GetAllPartyPoints(actorUserId, defaultPartyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -280,13 +292,13 @@ func (c *Controller) GetAllPartyPoints(ctx echo.Context) error {
 
 // GetPartyPointValue (GET /points/party/types/{name})
 func (c *Controller) GetPartyPointValue(ctx echo.Context, name genpoints.Name) error {
-	_, err := c.AuthService.GetUserId(ctx)
+	actorUserId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	value, err := c.Service.GetPartyPointValueByTypeName(defaultPartyId, name)
+	value, err := c.Service.GetPartyPointValueByTypeName(actorUserId, defaultPartyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -297,13 +309,7 @@ func (c *Controller) GetPartyPointValue(ctx echo.Context, name genpoints.Name) e
 
 // ChangePartyPointValue (PATCH /points/party/types/{name})
 func (c *Controller) ChangePartyPointValue(ctx echo.Context, name genpoints.Name) error {
-	err := common.RequireAdmin(ctx, c.AuthService)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	actorUserId, err := c.AuthService.GetUserId(ctx)
+	actorUserId, err := common.RequireAdminUserId(ctx, c.AuthService)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -328,13 +334,13 @@ func (c *Controller) ChangePartyPointValue(ctx echo.Context, name genpoints.Name
 
 // GetPartyPointHistory (GET /points/party/types/{name}/history)
 func (c *Controller) GetPartyPointHistory(ctx echo.Context, name genpoints.Name) error {
-	_, err := c.AuthService.GetUserId(ctx)
+	actorUserId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	history, err := c.Service.GetPartyPointHistoryByTypeName(defaultPartyId, name)
+	history, err := c.Service.GetPartyPointHistoryByTypeName(actorUserId, defaultPartyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -347,17 +353,6 @@ func (c *Controller) GetPartyPointHistory(ctx echo.Context, name genpoints.Name)
 	}
 
 	return ctx.JSON(http.StatusOK, historyDto)
-}
-
-// userIdFromLogin resolves a login path parameter, rejecting the request when it carries no session.
-func (c *Controller) userIdFromLogin(ctx echo.Context, login string) (userId int, err error) {
-	_, err = c.AuthService.GetUserId(ctx)
-
-	if err != nil {
-		return
-	}
-
-	return c.AuthService.GetUserIdByLogin(login)
 }
 
 func convertPointTypeToDto(pointType typepoints.PointTypeInfo) genpoints.PointType {
@@ -409,26 +404,26 @@ func (c *Controller) convertHistoryToDto(history []typepoints.PointHistoryEntry)
 	loginsByUserId := make(map[int]string)
 
 	for i, entry := range history {
-		login, isKnown := loginsByUserId[entry.SourceUserId]
+		login, isKnown := loginsByUserId[entry.ActorUserId]
 
 		if !isKnown {
-			resolved, err := c.AuthService.GetLoginByUserId(entry.SourceUserId)
+			resolved, err := c.AuthService.GetLoginByUserId(entry.ActorUserId)
 
 			if err != nil {
 				return nil, err
 			}
 
 			login = resolved
-			loginsByUserId[entry.SourceUserId] = login
+			loginsByUserId[entry.ActorUserId] = login
 		}
 
-		sourceLogin := login
+		actorLogin := login
 
 		historyDto[i] = genpoints.PointHistoryEntry{
 			DesiredChangeValue: entry.DesiredChangeValue,
 			ActualChangeValue:  entry.ActualChangeValue,
 			FinalValue:         entry.FinalValue,
-			SourceLogin:        &sourceLogin,
+			ActorLogin:        &actorLogin,
 			ChangedDate:        entry.ChangedDate,
 		}
 	}

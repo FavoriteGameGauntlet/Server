@@ -12,7 +12,7 @@ import (
 )
 
 var availableRollsType = typepoints.PointTypeInfo{
-	Id: 5, PartyId: 1, Name: typepoints.PointTypeAvailableRolls, Minimum: ptrInt(0), Maximum: ptrInt(10),
+	Id: 5, PartyId: 1, Name: typepoints.PointTypeAvailableRolls, IsPublic: true, Minimum: ptrInt(0), Maximum: ptrInt(10),
 }
 
 // --- GetPointValueByTypeName ---

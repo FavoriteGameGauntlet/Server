@@ -30,6 +30,49 @@ func (s *Service) GetPointTypes(partyId int) (pointTypes []typepoints.PointTypeI
 	return s.Database.GetPointTypesCommand(partyId)
 }
 
+// GetVisiblePointTypes lists the point types the user may see. A type that is not public is left out
+// unless the user is an admin of the party.
+func (s *Service) GetVisiblePointTypes(actorUserId int, partyId int) (pointTypes []typepoints.PointTypeInfo, err error) {
+	pointTypes, err = s.Database.GetPointTypesCommand(partyId)
+
+	if err != nil {
+		return
+	}
+
+	isAdmin, err := s.isAdmin(actorUserId, partyId)
+
+	if err != nil || isAdmin {
+		return
+	}
+
+	visible := make([]typepoints.PointTypeInfo, 0, len(pointTypes))
+
+	for _, pointType := range pointTypes {
+		if pointType.IsPublic {
+			visible = append(visible, pointType)
+		}
+	}
+
+	return visible, nil
+}
+
+// isAdmin reports whether the user is an admin of the party. A user who is not a member of the party
+// is simply not an admin.
+func (s *Service) isAdmin(actorUserId int, partyId int) (isAdmin bool, err error) {
+	member, err := s.PartiesDatabase.GetMemberCommand(actorUserId, partyId)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		err = nil
+		return
+	}
+
+	if err != nil {
+		return
+	}
+
+	return member.IsAdmin, nil
+}
+
 // CreatePointType adds a point type to the party. Names identify point types across the API, so a
 // duplicate is rejected rather than silently shadowing the existing one.
 func (s *Service) CreatePointType(partyId int, pointType typepoints.PointType) (created typepoints.PointType, err error) {
@@ -123,9 +166,27 @@ func (s *Service) GetPointTypeByName(partyId int, name string) (pointType typepo
 	return
 }
 
-// getUserPointTypeByName resolves a point type that users hold values of, rejecting a shared one.
-func (s *Service) getUserPointTypeByName(partyId int, name string) (pointType typepoints.PointTypeInfo, err error) {
+// getVisiblePointTypeByName resolves a point type for a user. A type that is not public reads as not
+// found unless the user is an admin of the party.
+func (s *Service) getVisiblePointTypeByName(actorUserId int, partyId int, name string) (pointType typepoints.PointTypeInfo, err error) {
 	pointType, err = s.GetPointTypeByName(partyId, name)
+
+	if err != nil || pointType.IsPublic {
+		return
+	}
+
+	isAdmin, err := s.isAdmin(actorUserId, partyId)
+
+	if err == nil && !isAdmin {
+		err = common.NewPointTypeNotFoundError(name)
+	}
+
+	return
+}
+
+// getUserPointTypeByName resolves a point type that users hold values of, rejecting a shared one.
+func (s *Service) getUserPointTypeByName(actorUserId int, partyId int, name string) (pointType typepoints.PointTypeInfo, err error) {
+	pointType, err = s.getVisiblePointTypeByName(actorUserId, partyId, name)
 
 	if err == nil && pointType.IsShared {
 		err = common.NewSharedPointTypeConflictError(name)
@@ -135,8 +196,8 @@ func (s *Service) getUserPointTypeByName(partyId int, name string) (pointType ty
 }
 
 // getSharedPointTypeByName resolves a point type the party holds the value of, rejecting any other.
-func (s *Service) getSharedPointTypeByName(partyId int, name string) (pointType typepoints.PointTypeInfo, err error) {
-	pointType, err = s.GetPointTypeByName(partyId, name)
+func (s *Service) getSharedPointTypeByName(actorUserId int, partyId int, name string) (pointType typepoints.PointTypeInfo, err error) {
+	pointType, err = s.getVisiblePointTypeByName(actorUserId, partyId, name)
 
 	if err == nil && !pointType.IsShared {
 		err = common.NewNotSharedPointTypeConflictError(name)
@@ -146,7 +207,7 @@ func (s *Service) getSharedPointTypeByName(partyId int, name string) (pointType 
 }
 // SeedUserPoints gives a user a starting value for every point type of the party. The schema no
 // longer seeds points on signup, so this runs when a user joins a party.
-func (s *Service) SeedUserPoints(userId int, partyId int) (err error) {
+func (s *Service) SeedUserPoints(affectedUserId int, partyId int) (err error) {
 	pointTypes, err := s.Database.GetPointTypesCommand(partyId)
 
 	if err != nil {
@@ -158,7 +219,7 @@ func (s *Service) SeedUserPoints(userId int, partyId int) (err error) {
 			continue
 		}
 
-		_, err = s.Database.CreateUserPointCommand(userId, partyId, pointType.Id, pointType.StartValue)
+		_, err = s.Database.CreateUserPointCommand(affectedUserId, partyId, pointType.Id, pointType.StartValue)
 
 		if err != nil {
 			return
@@ -168,21 +229,22 @@ func (s *Service) SeedUserPoints(userId int, partyId int) (err error) {
 	return
 }
 
-// GetUserPoints lists every point type of the party with the value this user holds for it. Shared
-// point types are left out, since their value belongs to the party rather than to the user (see
-// GetAllPartyPoints). A type the user has no row for yet reads as its starting value.
-func (s *Service) GetUserPoints(userId int, partyId int) (values []typepoints.PointValue, err error) {
-	pointTypes, err := s.Database.GetPointTypesCommand(partyId)
+// GetUserPoints lists every point type of the party with the value the affected user holds for it.
+// Shared point types are left out, since their value belongs to the party rather than to the user (see
+// GetAllPartyPoints). A type the affected user has no row for yet reads as its starting value. A type
+// that is not public is left out unless the user asking is an admin.
+func (s *Service) GetUserPoints(actorUserId int, affectedUserId int, partyId int) (values []typepoints.PointValue, err error) {
+	pointTypes, err := s.GetVisiblePointTypes(actorUserId, partyId)
 
 	if err != nil {
 		return
 	}
 
-	return s.userPointValues(userId, partyId, pointTypes)
+	return s.userPointValues(affectedUserId, partyId, pointTypes)
 }
 
 // userPointValues reads the user's value for each of the point types that is not shared.
-func (s *Service) userPointValues(userId int, partyId int, pointTypes []typepoints.PointTypeInfo) (values []typepoints.PointValue, err error) {
+func (s *Service) userPointValues(affectedUserId int, partyId int, pointTypes []typepoints.PointTypeInfo) (values []typepoints.PointValue, err error) {
 	values = make([]typepoints.PointValue, 0, len(pointTypes))
 
 	for _, pointType := range pointTypes {
@@ -191,7 +253,7 @@ func (s *Service) userPointValues(userId int, partyId int, pointTypes []typepoin
 		}
 
 		var value int
-		value, err = s.pointValue(userId, partyId, pointType)
+		value, err = s.pointValue(affectedUserId, partyId, pointType)
 
 		if err != nil {
 			return
@@ -204,15 +266,16 @@ func (s *Service) userPointValues(userId int, partyId int, pointTypes []typepoin
 }
 
 // GetAllUserPoints lists the points of every current member of the party. Shared point types are left
-// out, since their value belongs to the party rather than to any member (see GetAllPartyPoints).
-func (s *Service) GetAllUserPoints(partyId int) (byLogin []typepoints.UserPointValuesByLogin, err error) {
+// out, since their value belongs to the party rather than to any member (see GetAllPartyPoints). A
+// type that is not public is left out unless the user asking is an admin.
+func (s *Service) GetAllUserPoints(actorUserId int, partyId int) (byLogin []typepoints.UserPointValuesByLogin, err error) {
 	members, err := s.PartiesDatabase.GetMembersCommand(partyId)
 
 	if err != nil {
 		return
 	}
 
-	pointTypes, err := s.Database.GetPointTypesCommand(partyId)
+	pointTypes, err := s.GetVisiblePointTypes(actorUserId, partyId)
 
 	if err != nil {
 		return
@@ -239,8 +302,9 @@ func (s *Service) GetAllUserPoints(partyId int) (byLogin []typepoints.UserPointV
 }
 
 // GetAllPartyPoints lists every shared point type of the party with the value the party holds for it.
-func (s *Service) GetAllPartyPoints(partyId int) (values []typepoints.PointValue, err error) {
-	pointTypes, err := s.Database.GetPointTypesCommand(partyId)
+// A type that is not public is left out unless the user asking is an admin.
+func (s *Service) GetAllPartyPoints(actorUserId int, partyId int) (values []typepoints.PointValue, err error) {
+	pointTypes, err := s.GetVisiblePointTypes(actorUserId, partyId)
 
 	if err != nil {
 		return
@@ -267,7 +331,7 @@ func (s *Service) GetAllPartyPoints(partyId int) (values []typepoints.PointValue
 }
 
 // pointValue reads the value held for one point type, from the party pool when the type is shared.
-func (s *Service) pointValue(userId int, partyId int, pointType typepoints.PointTypeInfo) (value int, err error) {
+func (s *Service) pointValue(affectedUserId int, partyId int, pointType typepoints.PointTypeInfo) (value int, err error) {
 	if pointType.IsShared {
 		var partyPoint typepoints.PartyPoint
 		partyPoint, err = s.Database.GetPartyPointCommand(partyId, pointType.Id)
@@ -279,7 +343,7 @@ func (s *Service) pointValue(userId int, partyId int, pointType typepoints.Point
 		return partyPoint.Value, err
 	}
 
-	point, err := s.Database.GetUserPointCommand(userId, partyId, pointType.Id)
+	point, err := s.Database.GetUserPointCommand(affectedUserId, partyId, pointType.Id)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return pointType.StartValue, nil
@@ -288,8 +352,8 @@ func (s *Service) pointValue(userId int, partyId int, pointType typepoints.Point
 	return point.Value, err
 }
 
-func (s *Service) GetPartyPointValueByTypeName(partyId int, name string) (value int, err error) {
-	pointType, err := s.getSharedPointTypeByName(partyId, name)
+func (s *Service) GetPartyPointValueByTypeName(actorUserId int, partyId int, name string) (value int, err error) {
+	pointType, err := s.getSharedPointTypeByName(actorUserId, partyId, name)
 
 	if err != nil {
 		return
@@ -304,14 +368,14 @@ func (s *Service) GetPartyPointValueByTypeName(partyId int, name string) (value 
 	return partyPoint.Value, err
 }
 // GetUserPointHistoryByTypeName returns the recorded changes to a user's value for one point type.
-func (s *Service) GetUserPointHistoryByTypeName(userId int, partyId int, name string) (history []typepoints.PointHistoryEntry, err error) {
-	pointType, err := s.getUserPointTypeByName(partyId, name)
+func (s *Service) GetUserPointHistoryByTypeName(actorUserId int, affectedUserId int, partyId int, name string) (history []typepoints.PointHistoryEntry, err error) {
+	pointType, err := s.getUserPointTypeByName(actorUserId, partyId, name)
 
 	if err != nil {
 		return
 	}
 
-	entries, err := s.Database.GetUserPointHistoryCommand(userId, partyId)
+	entries, err := s.Database.GetUserPointHistoryCommand(affectedUserId, partyId)
 
 	if err != nil {
 		return
@@ -328,7 +392,7 @@ func (s *Service) GetUserPointHistoryByTypeName(userId int, partyId int, name st
 			DesiredChangeValue: entry.DesiredChangeValue,
 			ActualChangeValue:  entry.ActualChangeValue,
 			FinalValue:         entry.FinalValue,
-			SourceUserId:       entry.SourceUserId,
+			ActorUserId:       entry.ActorUserId,
 			ChangedDate:        entry.ChangedDate,
 		})
 	}
@@ -337,8 +401,8 @@ func (s *Service) GetUserPointHistoryByTypeName(userId int, partyId int, name st
 }
 
 // GetPartyPointHistoryByTypeName returns the recorded changes to the party pool for one point type.
-func (s *Service) GetPartyPointHistoryByTypeName(partyId int, name string) (history []typepoints.PointHistoryEntry, err error) {
-	pointType, err := s.getSharedPointTypeByName(partyId, name)
+func (s *Service) GetPartyPointHistoryByTypeName(actorUserId int, partyId int, name string) (history []typepoints.PointHistoryEntry, err error) {
+	pointType, err := s.getSharedPointTypeByName(actorUserId, partyId, name)
 
 	if err != nil {
 		return
@@ -361,7 +425,7 @@ func (s *Service) GetPartyPointHistoryByTypeName(partyId int, name string) (hist
 			DesiredChangeValue: entry.DesiredChangeValue,
 			ActualChangeValue:  entry.ActualChangeValue,
 			FinalValue:         entry.FinalValue,
-			SourceUserId:       entry.SourceUserId,
+			ActorUserId:       entry.ActorUserId,
 			ChangedDate:        entry.ChangedDate,
 		})
 	}
@@ -372,9 +436,9 @@ func (s *Service) GetPartyPointHistoryByTypeName(partyId int, name string) (hist
 // createManualSourceEvent records a direct point change by an administrator as a manual history
 // entry, whose id becomes the source event of the point history the change produces. Every recorded
 // point change names the event that caused it, and a direct change has no other event behind it.
-func (s *Service) createManualSourceEvent(actorUserId int, userId int, partyId int, pointTypeId int, changeValue int) (sourceEventId int, err error) {
+func (s *Service) createManualSourceEvent(actorUserId int, affectedUserId int, partyId int, pointTypeId int, changeValue int) (sourceEventId int, err error) {
 	entries := []typechanges.ChangeEntry{
-		{Amount: changeValue, PointTypeId: &pointTypeId, UserId: &userId},
+		{Amount: changeValue, PointTypeId: &pointTypeId, UserId: &affectedUserId},
 	}
 
 	created, err := s.HistoryDatabase.CreateManualHistoryCommand(partyId, actorUserId, entries, nil)

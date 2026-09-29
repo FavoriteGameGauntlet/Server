@@ -55,7 +55,7 @@ type UserPointHistoryEntry struct {
 	UserId             int
 	PartyId            int
 	PointTypeId        int
-	SourceUserId       int
+	ActorUserId       int
 	DesiredChangeValue int
 	ActualChangeValue  int
 	FinalValue         int
@@ -67,7 +67,7 @@ type PartyPointHistoryEntry struct {
 	Id                 int
 	PartyId            int
 	PointTypeId        int
-	SourceUserId       int
+	ActorUserId       int
 	DesiredChangeValue int
 	ActualChangeValue  int
 	FinalValue         int
@@ -99,6 +99,6 @@ type PointHistoryEntry struct {
 	DesiredChangeValue int
 	ActualChangeValue  int
 	FinalValue         int
-	SourceUserId       int
+	ActorUserId       int
 	ChangedDate        time.Time
 }

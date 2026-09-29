@@ -20,8 +20,8 @@ type IDatabase interface {
 	GetPartyPointsCommand(partyId int) (points []typepoints.PartyPoint, err error)
 	ChangeUserPointValueCommand(userId int, partyId int, pointTypeId int, changeValue int) error
 	ChangePartyPointValueCommand(partyId int, pointTypeId int, changeValue int) error
-	CreateUserPointHistoryCommand(userId int, partyId int, pointTypeId int, sourceUserId int, desiredChangeValue int, actualChangeValue int, finalValue int, sourceEventId int) (entry typepoints.UserPointHistoryEntry, err error)
-	CreatePartyPointHistoryCommand(partyId int, pointTypeId int, sourceUserId int, desiredChangeValue int, actualChangeValue int, finalValue int, sourceEventId int) (entry typepoints.PartyPointHistoryEntry, err error)
+	CreateUserPointHistoryCommand(userId int, partyId int, pointTypeId int, actorUserId int, desiredChangeValue int, actualChangeValue int, finalValue int, sourceEventId int) (entry typepoints.UserPointHistoryEntry, err error)
+	CreatePartyPointHistoryCommand(partyId int, pointTypeId int, actorUserId int, desiredChangeValue int, actualChangeValue int, finalValue int, sourceEventId int) (entry typepoints.PartyPointHistoryEntry, err error)
 	GetUserPointHistoryCommand(userId int, partyId int) (history []typepoints.UserPointHistoryEntry, err error)
 	GetPartyPointHistoryCommand(partyId int) (history []typepoints.PartyPointHistoryEntry, err error)
 }
@@ -273,15 +273,15 @@ func (db *Database) ChangePartyPointValueCommand(partyId int, pointTypeId int, c
 
 var createUserPointHistoryQuery = dbaccess.Query{Name: "CreateUserPointHistoryQuery", SQL: `SELECT * FROM create_user_point_history($1::integer, $2::integer, $3::integer, $4::integer, $5::integer, $6::integer, $7::integer, $8::integer)`}
 
-func (db *Database) CreateUserPointHistoryCommand(userId int, partyId int, pointTypeId int, sourceUserId int, desiredChangeValue int, actualChangeValue int, finalValue int, sourceEventId int) (entry typepoints.UserPointHistoryEntry, err error) {
-	row := dbaccess.QueryRow(createUserPointHistoryQuery, userId, partyId, pointTypeId, sourceUserId, desiredChangeValue, actualChangeValue, finalValue, sourceEventId)
+func (db *Database) CreateUserPointHistoryCommand(userId int, partyId int, pointTypeId int, actorUserId int, desiredChangeValue int, actualChangeValue int, finalValue int, sourceEventId int) (entry typepoints.UserPointHistoryEntry, err error) {
+	row := dbaccess.QueryRow(createUserPointHistoryQuery, userId, partyId, pointTypeId, actorUserId, desiredChangeValue, actualChangeValue, finalValue, sourceEventId)
 
 	err = row.Scan(
 		&entry.Id,
 		&entry.UserId,
 		&entry.PartyId,
 		&entry.PointTypeId,
-		&entry.SourceUserId,
+		&entry.ActorUserId,
 		&entry.DesiredChangeValue,
 		&entry.ActualChangeValue,
 		&entry.FinalValue,
@@ -295,14 +295,14 @@ func (db *Database) CreateUserPointHistoryCommand(userId int, partyId int, point
 
 var createPartyPointHistoryQuery = dbaccess.Query{Name: "CreatePartyPointHistoryQuery", SQL: `SELECT * FROM create_party_point_history($1::integer, $2::integer, $3::integer, $4::integer, $5::integer, $6::integer, $7::integer)`}
 
-func (db *Database) CreatePartyPointHistoryCommand(partyId int, pointTypeId int, sourceUserId int, desiredChangeValue int, actualChangeValue int, finalValue int, sourceEventId int) (entry typepoints.PartyPointHistoryEntry, err error) {
-	row := dbaccess.QueryRow(createPartyPointHistoryQuery, partyId, pointTypeId, sourceUserId, desiredChangeValue, actualChangeValue, finalValue, sourceEventId)
+func (db *Database) CreatePartyPointHistoryCommand(partyId int, pointTypeId int, actorUserId int, desiredChangeValue int, actualChangeValue int, finalValue int, sourceEventId int) (entry typepoints.PartyPointHistoryEntry, err error) {
+	row := dbaccess.QueryRow(createPartyPointHistoryQuery, partyId, pointTypeId, actorUserId, desiredChangeValue, actualChangeValue, finalValue, sourceEventId)
 
 	err = row.Scan(
 		&entry.Id,
 		&entry.PartyId,
 		&entry.PointTypeId,
-		&entry.SourceUserId,
+		&entry.ActorUserId,
 		&entry.DesiredChangeValue,
 		&entry.ActualChangeValue,
 		&entry.FinalValue,
@@ -330,7 +330,7 @@ func (db *Database) GetUserPointHistoryCommand(userId int, partyId int) (history
 			&entry.UserId,
 			&entry.PartyId,
 			&entry.PointTypeId,
-			&entry.SourceUserId,
+			&entry.ActorUserId,
 			&entry.DesiredChangeValue,
 			&entry.ActualChangeValue,
 			&entry.FinalValue,
@@ -366,7 +366,7 @@ func (db *Database) GetPartyPointHistoryCommand(partyId int) (history []typepoin
 			&entry.Id,
 			&entry.PartyId,
 			&entry.PointTypeId,
-			&entry.SourceUserId,
+			&entry.ActorUserId,
 			&entry.DesiredChangeValue,
 			&entry.ActualChangeValue,
 			&entry.FinalValue,

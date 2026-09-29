@@ -103,21 +103,28 @@ type AdminChecker interface {
 
 // RequireAdmin returns an error unless the request comes from an admin of the party.
 func RequireAdmin(ctx echo.Context, authService AdminChecker) error {
-	userId, err := authService.GetUserId(ctx)
+	_, err := RequireAdminUserId(ctx, authService)
+
+	return err
+}
+
+// RequireAdminUserId is RequireAdmin for callers that also need the id of the admin making the request.
+func RequireAdminUserId(ctx echo.Context, authService AdminChecker) (userId int, err error) {
+	userId, err = authService.GetUserId(ctx)
 
 	if err != nil {
-		return err
+		return
 	}
 
 	isAdmin, err := authService.IsAdmin(userId)
 
 	if err != nil {
-		return err
+		return
 	}
 
 	if !isAdmin {
-		return NewNotAdminUnauthorizedError()
+		err = NewNotAdminUnauthorizedError()
 	}
 
-	return nil
+	return
 }

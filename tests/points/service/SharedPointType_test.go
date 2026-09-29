@@ -17,7 +17,7 @@ import (
 
 // A shared point type is held once for the whole party rather than per user.
 var sharedPointType = typepoints.PointTypeInfo{
-	Id: 7, PartyId: 1, Name: "partyFunds", StartValue: 4, IsShared: true, Minimum: ptrInt(0), Maximum: ptrInt(100),
+	Id: 7, PartyId: 1, Name: "partyFunds", StartValue: 4, IsPublic: true, IsShared: true, Minimum: ptrInt(0), Maximum: ptrInt(100),
 }
 
 func TestSrvPoints_SharedPointTypeUsesPartyPool(test *testing.T) {
@@ -80,7 +80,7 @@ func TestSrvPoints_GetUserPointValueByTypeName_SharedPointType_Conflict(test *te
 	sut := srvpoints.Service{Database: databaseMock}
 
 	// Act
-	_, err := sut.GetUserPointValueByTypeName(2, 1, sharedPointType.Name)
+	_, err := sut.GetUserPointValueByTypeName(9, 2, 1, sharedPointType.Name)
 
 	// Assert
 	var conflict *common.ConflictError
@@ -98,7 +98,7 @@ func TestSrvPoints_GetUserPointHistoryByTypeName_SharedPointType_Conflict(test *
 	sut := srvpoints.Service{Database: databaseMock}
 
 	// Act
-	_, err := sut.GetUserPointHistoryByTypeName(2, 1, sharedPointType.Name)
+	_, err := sut.GetUserPointHistoryByTypeName(9, 2, 1, sharedPointType.Name)
 
 	// Assert
 	var conflict *common.ConflictError
@@ -115,7 +115,7 @@ func TestSrvPoints_GetPartyPointValueByTypeName_NotSharedPointType_Conflict(test
 	sut := srvpoints.Service{Database: databaseMock}
 
 	// Act
-	_, err := sut.GetPartyPointValueByTypeName(1, availableRollsType.Name)
+	_, err := sut.GetPartyPointValueByTypeName(9, 1, availableRollsType.Name)
 
 	// Assert
 	var conflict *common.ConflictError
@@ -132,7 +132,7 @@ func TestSrvPoints_GetPartyPointHistoryByTypeName_NotSharedPointType_Conflict(te
 	sut := srvpoints.Service{Database: databaseMock}
 
 	// Act
-	_, err := sut.GetPartyPointHistoryByTypeName(1, availableRollsType.Name)
+	_, err := sut.GetPartyPointHistoryByTypeName(9, 1, availableRollsType.Name)
 
 	// Assert
 	var conflict *common.ConflictError

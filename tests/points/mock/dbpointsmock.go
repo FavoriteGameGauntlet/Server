@@ -100,15 +100,15 @@ func (m *DatabaseMock) ChangePartyPointValueCommand(partyId int, pointTypeId int
 	return args.Error(0)
 }
 
-func (m *DatabaseMock) CreateUserPointHistoryCommand(userId int, partyId int, pointTypeId int, sourceUserId int, desiredChangeValue int, actualChangeValue int, finalValue int, sourceEventId int) (entry typepoints.UserPointHistoryEntry, err error) {
-	args := m.Called(userId, partyId, pointTypeId, sourceUserId, desiredChangeValue, actualChangeValue, finalValue, sourceEventId)
+func (m *DatabaseMock) CreateUserPointHistoryCommand(userId int, partyId int, pointTypeId int, actorUserId int, desiredChangeValue int, actualChangeValue int, finalValue int, sourceEventId int) (entry typepoints.UserPointHistoryEntry, err error) {
+	args := m.Called(userId, partyId, pointTypeId, actorUserId, desiredChangeValue, actualChangeValue, finalValue, sourceEventId)
 	entry = args.Get(0).(typepoints.UserPointHistoryEntry)
 	err = args.Error(1)
 	return
 }
 
-func (m *DatabaseMock) CreatePartyPointHistoryCommand(partyId int, pointTypeId int, sourceUserId int, desiredChangeValue int, actualChangeValue int, finalValue int, sourceEventId int) (entry typepoints.PartyPointHistoryEntry, err error) {
-	args := m.Called(partyId, pointTypeId, sourceUserId, desiredChangeValue, actualChangeValue, finalValue, sourceEventId)
+func (m *DatabaseMock) CreatePartyPointHistoryCommand(partyId int, pointTypeId int, actorUserId int, desiredChangeValue int, actualChangeValue int, finalValue int, sourceEventId int) (entry typepoints.PartyPointHistoryEntry, err error) {
+	args := m.Called(partyId, pointTypeId, actorUserId, desiredChangeValue, actualChangeValue, finalValue, sourceEventId)
 	entry = args.Get(0).(typepoints.PartyPointHistoryEntry)
 	err = args.Error(1)
 	return

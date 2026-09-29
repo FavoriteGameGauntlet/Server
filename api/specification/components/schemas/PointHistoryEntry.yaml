@@ -8,7 +8,7 @@ properties:
     format: int
   finalValue:
     $ref: "./Points.yaml"
-  sourceLogin:
+  actorLogin:
     $ref: "./Login.yaml"
   changedDate:
     type: string

@@ -50,11 +50,11 @@ type PointHistoryEntries = []PointHistoryEntry
 
 // PointHistoryEntry defines model for PointHistoryEntry.
 type PointHistoryEntry struct {
+	ActorLogin         *Login    `json:"actorLogin,omitempty"`
 	ActualChangeValue  int       `json:"actualChangeValue"`
 	ChangedDate        time.Time `json:"changedDate"`
 	DesiredChangeValue int       `json:"desiredChangeValue"`
 	FinalValue         Points    `json:"finalValue"`
-	SourceLogin        *Login    `json:"sourceLogin,omitempty"`
 }
 
 // PointType defines model for PointType.
