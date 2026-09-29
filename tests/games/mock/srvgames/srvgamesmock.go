@@ -29,17 +29,17 @@ func (m *ServiceMock) GetCurrentGame(userId int) (typegames.CurrentGame, error) 
 	return args.Get(0).(typegames.CurrentGame), args.Error(1)
 }
 
-func (m *ServiceMock) CancelCurrentGame(userId int) error {
+func (m *ServiceMock) CancelCurrentGame(userId int) (typegames.CurrentGame, error) {
 	args := m.Called(userId)
-	return args.Error(0)
+	return args.Get(0).(typegames.CurrentGame), args.Error(1)
 }
 
-func (m *ServiceMock) FinishCurrentGame(userId int) error {
+func (m *ServiceMock) FinishCurrentGame(userId int) (typegames.CurrentGame, error) {
 	args := m.Called(userId)
-	return args.Error(0)
+	return args.Get(0).(typegames.CurrentGame), args.Error(1)
 }
 
-func (m *ServiceMock) MakeGameRoll(userId int) (typegames.CurrentGame, error) {
+func (m *ServiceMock) StartCurrentGame(userId int) (typegames.CurrentGame, error) {
 	args := m.Called(userId)
 	return args.Get(0).(typegames.CurrentGame), args.Error(1)
 }
@@ -59,7 +59,7 @@ func (m *ServiceMock) GetGameReview(userId int, name string) (typegames.GameRevi
 	return args.Get(0).(typegames.GameReview), args.Error(1)
 }
 
-func (m *ServiceMock) GetUnplayedGames(userId int) (typegames.WishlistGames, error) {
+func (m *ServiceMock) GetWishlistGames(userId int) (typegames.WishlistGames, error) {
 	args := m.Called(userId)
 	return args.Get(0).(typegames.WishlistGames), args.Error(1)
 }

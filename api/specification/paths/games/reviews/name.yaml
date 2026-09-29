@@ -1,0 +1,38 @@
+get:
+  operationId: getGameReview
+  tags: [ Games ]
+  parameters:
+    - $ref: "../../../components/parameters/Name.yaml"
+  responses:
+    "200":
+      $ref: "../../../components/responses/GameReviewResponse.yaml"
+    "401":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+    "404":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+    "422":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+put:
+  operationId: putGameReview
+  tags: [ Games ]
+  parameters:
+    - $ref: "../../../components/parameters/Name.yaml"
+  requestBody:
+    $ref: "../../../components/requests/GameReviewRequest.yaml"
+  responses:
+    "201":
+      description: The game was rated for the first time.
+    "204":
+      description: The existing rating was replaced.
+    "400":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+    "401":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+    "404":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+    "422":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../../components/responses/ErrorResponse.yaml"

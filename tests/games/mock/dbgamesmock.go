@@ -46,7 +46,7 @@ func (m *DatabaseMock) CreateWishlistGameCommand(userId int, partyId int, gameId
 	return
 }
 
-func (m *DatabaseMock) DeleteUnplayedGameCommand(userId int, partyId int, gameId int) error {
+func (m *DatabaseMock) DeleteWishlistGameCommand(userId int, partyId int, gameId int) error {
 	args := m.Called(userId, partyId, gameId)
 	return args.Error(0)
 }
@@ -77,14 +77,18 @@ func (m *DatabaseMock) ChangeGameTimeSpentCommand(userId int, partyId int, gameI
 	return args.Error(0)
 }
 
-func (m *DatabaseMock) CancelCurrentGameCommand(userId int, partyId int, gameId int, actorUserId int, sourceEventId *int) error {
+func (m *DatabaseMock) CancelCurrentGameCommand(userId int, partyId int, gameId int, actorUserId int, sourceEventId *int) (game typegames.UserGame, err error) {
 	args := m.Called(userId, partyId, gameId, actorUserId, sourceEventId)
-	return args.Error(0)
+	game = args.Get(0).(typegames.UserGame)
+	err = args.Error(1)
+	return
 }
 
-func (m *DatabaseMock) FinishCurrentGameCommand(userId int, partyId int, gameId int, actorUserId int, sourceEventId *int) error {
+func (m *DatabaseMock) FinishCurrentGameCommand(userId int, partyId int, gameId int, actorUserId int, sourceEventId *int) (game typegames.UserGame, err error) {
 	args := m.Called(userId, partyId, gameId, actorUserId, sourceEventId)
-	return args.Error(0)
+	game = args.Get(0).(typegames.UserGame)
+	err = args.Error(1)
+	return
 }
 
 func (m *DatabaseMock) RateGameCommand(userId int, partyId int, gameId int, rating int, reviewComment *string) (gameRating typegames.GameRating, err error) {

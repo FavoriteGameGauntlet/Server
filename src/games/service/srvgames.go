@@ -18,13 +18,13 @@ const defaultPartyId = 1
 
 type IService interface {
 	GetCurrentGame(userId int) (typegames.CurrentGame, error)
-	CancelCurrentGame(userId int) error
-	FinishCurrentGame(userId int) error
-	MakeGameRoll(userId int) (typegames.CurrentGame, error)
+	CancelCurrentGame(userId int) (typegames.CurrentGame, error)
+	FinishCurrentGame(userId int) (typegames.CurrentGame, error)
+	StartCurrentGame(userId int) (typegames.CurrentGame, error)
 	GetGameHistory(userId int) ([]typegames.GameHistoryEntry, error)
 	RateGame(userId int, name string, rating int, reviewComment *string) (bool, error)
 	GetGameReview(userId int, name string) (typegames.GameReview, error)
-	GetUnplayedGames(userId int) (typegames.WishlistGames, error)
+	GetWishlistGames(userId int) (typegames.WishlistGames, error)
 	AddWishlistGame(userId int, wishlistGame typegames.WishlistGame) error
 	GetAllCurrentGames() ([]typegames.CurrentGameWithLogin, error)
 }
@@ -78,7 +78,7 @@ func (s *Service) AddWishlistGame(userId int, wishlistGame typegames.WishlistGam
 	return err
 }
 
-func (s *Service) GetUnplayedGames(userId int) (typegames.WishlistGames, error) {
+func (s *Service) GetWishlistGames(userId int) (typegames.WishlistGames, error) {
 	return s.GettingService.GetWishlistGames(userId)
 }
 
@@ -86,59 +86,71 @@ func (s *Service) GetCurrentGame(userId int) (typegames.CurrentGame, error) {
 	return s.GettingService.GetCurrentGame(userId)
 }
 
-func (s *Service) CancelCurrentGame(userId int) error {
+// CancelCurrentGame cancels the current game and returns it with the time spent on it in total.
+func (s *Service) CancelCurrentGame(userId int) (typegames.CurrentGame, error) {
 	game, err := s.GettingService.GetCurrentGame(userId)
 
 	if err != nil {
-		return err
+		return typegames.CurrentGame{}, err
 	}
 
 	_, err = s.TimerService.ForceStopCurrentTimer(userId)
 
 	if err != nil {
-		return err
+		return typegames.CurrentGame{}, err
 	}
 
-	err = s.Database.CancelCurrentGameCommand(userId, defaultPartyId, game.Id, userId, nil)
+	cancelledGame, err := s.Database.CancelCurrentGameCommand(userId, defaultPartyId, game.Id, userId, nil)
 
 	if err != nil {
-		return err
+		return typegames.CurrentGame{}, err
 	}
 
-	return nil
+	return typegames.CurrentGame{
+		Id:        cancelledGame.Id,
+		Name:      cancelledGame.Name,
+		TimeSpent: cancelledGame.TimeSpent,
+		StartDate: cancelledGame.StartDate,
+	}, nil
 }
 
-func (s *Service) FinishCurrentGame(userId int) error {
+// FinishCurrentGame finishes the current game and returns it with the time spent on it in total.
+func (s *Service) FinishCurrentGame(userId int) (typegames.CurrentGame, error) {
 	game, err := s.GettingService.GetCurrentGame(userId)
 
 	if err != nil {
-		return err
+		return typegames.CurrentGame{}, err
 	}
 
 	// The current timer's time is added to the game when it is stopped below, so it counts too.
 	timerTimeSpent, err := s.TimerService.GetCurrentTimerTimeSpent(userId)
 
 	if err != nil {
-		return err
+		return typegames.CurrentGame{}, err
 	}
 
 	if game.TimeSpent+timerTimeSpent == 0 {
-		return common.NewGameTimeSpentIsZeroError()
+		return typegames.CurrentGame{}, common.NewGameTimeSpentIsZeroError()
 	}
 
 	_, err = s.TimerService.ForceStopCurrentTimer(userId)
 
 	if err != nil {
-		return err
+		return typegames.CurrentGame{}, err
 	}
 
-	err = s.Database.FinishCurrentGameCommand(userId, defaultPartyId, game.Id, userId, nil)
+	finishedGame, err := s.Database.FinishCurrentGameCommand(userId, defaultPartyId, game.Id, userId, nil)
 
 	if err != nil {
-		return err
+		return typegames.CurrentGame{}, err
 	}
 
-	return nil
+	return typegames.CurrentGame{
+		Id:        finishedGame.Id,
+		Name:      finishedGame.Name,
+		TimeSpent: finishedGame.TimeSpent,
+		StartDate: finishedGame.StartDate,
+	}, nil
 }
 
 // GetGameHistory returns the recorded game events of a user. A history entry is not a current game:
@@ -208,7 +220,7 @@ func (s *Service) getPlayedGameId(userId int, name string) (gameId int, err erro
 	return 0, common.NewPlayedGameNotFoundError(name)
 }
 
-func (s *Service) MakeGameRoll(userId int) (game typegames.CurrentGame, err error) {
+func (s *Service) StartCurrentGame(userId int) (game typegames.CurrentGame, err error) {
 	game, err = s.GettingService.GetCurrentGame(userId)
 
 	var notFoundError *common.NotFoundError
@@ -221,7 +233,7 @@ func (s *Service) MakeGameRoll(userId int) (game typegames.CurrentGame, err erro
 		return
 	}
 
-	unplayedGames, err := s.GettingService.GetWishlistGames(userId)
+	wishlistGames, err := s.GettingService.GetWishlistGames(userId)
 
 	if err != nil {
 		return
@@ -233,28 +245,28 @@ func (s *Service) MakeGameRoll(userId int) (game typegames.CurrentGame, err erro
 		return
 	}
 
-	if unplayedGames == nil || len(unplayedGames) < minimumNumberOfWishlistGames {
-		err = common.NewUnplayedGamesNotFoundError(minimumNumberOfWishlistGames)
+	if wishlistGames == nil || len(wishlistGames) < minimumNumberOfWishlistGames {
+		err = common.NewWishlistGamesNotFoundError(minimumNumberOfWishlistGames)
 		return
 	}
 
-	randomNumber := rand.Intn(len(unplayedGames))
-	randomUnplayedGame := unplayedGames[randomNumber]
+	randomNumber := rand.Intn(len(wishlistGames))
+	randomWishlistGame := wishlistGames[randomNumber]
 
-	createdGame, err := s.Database.CreateCurrentGameCommand(userId, defaultPartyId, randomUnplayedGame.GameId, userId, nil)
+	createdGame, err := s.Database.CreateCurrentGameCommand(userId, defaultPartyId, randomWishlistGame.GameId, userId, nil)
 
 	if err != nil {
 		return
 	}
 
-	err = s.Database.DeleteUnplayedGameCommand(userId, defaultPartyId, randomUnplayedGame.GameId)
+	err = s.Database.DeleteWishlistGameCommand(userId, defaultPartyId, randomWishlistGame.GameId)
 
 	if err != nil {
 		return
 	}
 
-	game.Id = randomUnplayedGame.GameId
-	game.Name = randomUnplayedGame.Name
+	game.Id = randomWishlistGame.GameId
+	game.Name = randomWishlistGame.Name
 	game.StartDate = createdGame.StartedDate
 
 	return

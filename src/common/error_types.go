@@ -119,14 +119,14 @@ func NewGameTimeSpentIsZeroError() error {
 	}
 }
 
-func NewUnplayedGamesNotFoundError(minimum int) error {
+func NewWishlistGamesNotFoundError(minimum int) error {
 	message := fmt.Sprintf(
-		"The user doesn't have unplayed games. Add at least %d to roll the game.",
+		"The user doesn't have wishlist games. Add at least %d to start the game.",
 		minimum)
 
 	return &NotFoundError{
 		&BaseError{
-			Code:    "UNPLAYED_GAMES_NOT_FOUND",
+			Code:    "WISHLIST_GAMES_NOT_FOUND",
 			Message: message,
 		},
 	}
@@ -448,12 +448,12 @@ func NewCurrentTimerIncorrectStateConflictError(timerState typetimers.TimerState
 
 func NewWishlistGameAlreadyExistsConflictError(gameName string) error {
 	message := fmt.Sprintf(
-		"The unplayed game \"%s\" has already been added.",
+		"The wishlist game \"%s\" has already been added.",
 		gameName)
 
 	return &ConflictError{
 		&BaseError{
-			Code:    "UNPLAYED_GAME_ALREADY_EXISTS",
+			Code:    "WISHLIST_GAME_ALREADY_EXISTS",
 			Message: message,
 		},
 	}
@@ -572,6 +572,19 @@ func NewRatingUnprocessableError(rating int, messageDetails string) error {
 	return &UnprocessableError{
 		&BaseError{
 			Code:    "INCORRECT_RATING_FORMAT",
+			Message: message,
+		},
+	}
+}
+
+func NewCurrentGameActionUnprocessableError(action string) error {
+	message := fmt.Sprintf(
+		"'%s' is not a current game action. It should be one of: start, finish, cancel.",
+		action)
+
+	return &UnprocessableError{
+		&BaseError{
+			Code:    "INCORRECT_CURRENT_GAME_ACTION",
 			Message: message,
 		},
 	}

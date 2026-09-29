@@ -9,6 +9,7 @@ import (
 	"FGG-Service/tests/games/mock/srvgames"
 	"FGG-Service/tests/timers/mock"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -17,6 +18,7 @@ type CancelCurrentGameTestCase struct {
 	Name            string
 	UserId          int
 	SetupMock       func() (*dbgamesmock.DatabaseMock, *srvtimersmock.ServiceMock, *srvgamesmock.GettingServiceMock)
+	ExpectedGame    typegames.CurrentGame
 	ExpectedErrorAs interface{}
 	ExpectedErrorIs error
 }
@@ -103,14 +105,14 @@ var CancelCurrentGameTestCases = []CancelCurrentGameTestCase{
 			databaseMock.
 				On("CancelCurrentGameCommand",
 					1, 1, 1, 1, (*int)(nil)).
-				Return(dbError)
+				Return(typegames.UserGame{}, dbError)
 
 			return databaseMock, timerServiceMock, gettingServiceMock
 		},
 		ExpectedErrorIs: dbError,
 	},
 	{
-		// GetCurrentGame, ForceStopCurrentTimer and CancelCurrentGameCommand succeed. Nil will return.
+		// Everything succeeds. The game returns as CancelCurrentGameCommand returned it.
 		Name:   "SuccessReturn",
 		UserId: 1,
 		SetupMock: func() (*dbgamesmock.DatabaseMock, *srvtimersmock.ServiceMock, *srvgamesmock.GettingServiceMock) {
@@ -121,7 +123,7 @@ var CancelCurrentGameTestCases = []CancelCurrentGameTestCase{
 			gettingServiceMock.
 				On("GetCurrentGame",
 					1).
-				Return(typegames.CurrentGame{Id: 1, Name: "Half-Life 1"}, nil)
+				Return(typegames.CurrentGame{Id: 1, Name: "Half-Life 1", TimeSpent: time.Hour}, nil)
 			timerServiceMock.
 				On("ForceStopCurrentTimer",
 					1).
@@ -129,10 +131,11 @@ var CancelCurrentGameTestCases = []CancelCurrentGameTestCase{
 			databaseMock.
 				On("CancelCurrentGameCommand",
 					1, 1, 1, 1, (*int)(nil)).
-				Return(nil)
+				Return(typegames.UserGame{Id: 1, Name: "Half-Life 1", TimeSpent: 90 * time.Minute, StartDate: gameStartDate}, nil)
 
 			return databaseMock, timerServiceMock, gettingServiceMock
 		},
+		ExpectedGame: typegames.CurrentGame{Id: 1, Name: "Half-Life 1", TimeSpent: 90 * time.Minute, StartDate: gameStartDate},
 	},
 }
 
@@ -148,7 +151,7 @@ func TestSrvGames_CancelCurrentGame(test *testing.T) {
 			}
 
 			// Act
-			err := sut.CancelCurrentGame(testCase.UserId)
+			game, err := sut.CancelCurrentGame(testCase.UserId)
 
 			// Assert
 			if testCase.ExpectedErrorAs != nil {
@@ -163,6 +166,8 @@ func TestSrvGames_CancelCurrentGame(test *testing.T) {
 			if testCase.ExpectedErrorAs == nil && testCase.ExpectedErrorIs == nil {
 				require.NoError(test, err)
 			}
+
+			require.Equal(test, testCase.ExpectedGame, game)
 
 			databaseMock.AssertExpectations(test)
 			timerServiceMock.AssertExpectations(test)

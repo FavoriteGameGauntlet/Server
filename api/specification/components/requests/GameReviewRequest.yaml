@@ -2,4 +2,4 @@ required: true
 content:
   application/json:
     schema:
-      $ref: "../schemas/GameRate.yaml"
+      $ref: "../schemas/GameReview.yaml"

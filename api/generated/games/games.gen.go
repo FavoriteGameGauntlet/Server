@@ -12,6 +12,13 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
+// Defines values for CurrentGameActionAction.
+const (
+	Cancel CurrentGameActionAction = "cancel"
+	Finish CurrentGameActionAction = "finish"
+	Start  CurrentGameActionAction = "start"
+)
+
 // Defines values for GameHistoryEntryEndState.
 const (
 	Cancelled GameHistoryEntryEndState = "cancelled"
@@ -27,6 +34,14 @@ type CurrentGame struct {
 	// TimeSpent The duration notation as defined by ISO 8601
 	TimeSpent Duration `json:"timeSpent"`
 }
+
+// CurrentGameAction defines model for CurrentGameAction.
+type CurrentGameAction struct {
+	Action CurrentGameActionAction `json:"action"`
+}
+
+// CurrentGameActionAction defines model for CurrentGameAction.Action.
+type CurrentGameActionAction string
 
 // CurrentGameByLogins defines model for CurrentGameByLogins.
 type CurrentGameByLogins = []struct {
@@ -59,13 +74,6 @@ type GameHistoryEntry struct {
 
 // GameHistoryEntryEndState defines model for GameHistoryEntry.EndState.
 type GameHistoryEntryEndState string
-
-// GameRate defines model for GameRate.
-type GameRate struct {
-	Name          Name    `json:"name"`
-	Rating        int     `json:"rating"`
-	ReviewComment *string `json:"reviewComment,omitempty"`
-}
 
 // GameReview defines model for GameReview.
 type GameReview struct {
@@ -105,14 +113,20 @@ type GameReviewResponse = GameReview
 // WishlistGamesResponse defines model for WishlistGamesResponse.
 type WishlistGamesResponse = WishlistGames
 
-// GameRateRequest defines model for GameRateRequest.
-type GameRateRequest = GameRate
+// CurrentGameActionRequest defines model for CurrentGameActionRequest.
+type CurrentGameActionRequest = CurrentGameAction
+
+// GameReviewRequest defines model for GameReviewRequest.
+type GameReviewRequest = GameReview
 
 // WishlistGameRequest defines model for WishlistGameRequest.
 type WishlistGameRequest = WishlistGame
 
-// RateGameJSONRequestBody defines body for RateGame for application/json ContentType.
-type RateGameJSONRequestBody = GameRate
+// CreateCurrentGameActionJSONRequestBody defines body for CreateCurrentGameAction for application/json ContentType.
+type CreateCurrentGameActionJSONRequestBody = CurrentGameAction
+
+// PutGameReviewJSONRequestBody defines body for PutGameReview for application/json ContentType.
+type PutGameReviewJSONRequestBody = GameReview
 
 // AddUserWishlistGameJSONRequestBody defines body for AddUserWishlistGame for application/json ContentType.
 type AddUserWishlistGameJSONRequestBody = WishlistGame
@@ -120,34 +134,28 @@ type AddUserWishlistGameJSONRequestBody = WishlistGame
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
-	// (GET /games/all/current)
+	// (GET /games/current)
 	GetAllCurrentGame(ctx echo.Context) error
 
-	// (POST /games/current/cancel)
-	CancelCurrentGame(ctx echo.Context) error
+	// (POST /games/current/actions)
+	CreateCurrentGameAction(ctx echo.Context) error
 
-	// (POST /games/current/finish)
-	FinishCurrentGame(ctx echo.Context) error
-
-	// (POST /games/current/roll)
-	RollNewCurrentGame(ctx echo.Context) error
-
-	// (POST /games/rate)
-	RateGame(ctx echo.Context) error
-
-	// (GET /games/rate/{name})
+	// (GET /games/reviews/{name})
 	GetGameReview(ctx echo.Context, name Name) error
 
-	// (GET /games/{login}/current)
+	// (PUT /games/reviews/{name})
+	PutGameReview(ctx echo.Context, name Name) error
+
+	// (GET /games/users/{login}/current)
 	GetUserCurrentGame(ctx echo.Context, login Login) error
 
-	// (GET /games/{login}/history)
+	// (GET /games/users/{login}/history)
 	GetUserGameHistory(ctx echo.Context, login Login) error
 
-	// (GET /games/{login}/wishlist)
+	// (GET /games/users/{login}/wishlist)
 	GetUserWishlistGames(ctx echo.Context, login Login) error
 
-	// (POST /games/{login}/wishlist)
+	// (POST /games/users/{login}/wishlist)
 	AddUserWishlistGame(ctx echo.Context, login Login) error
 }
 
@@ -165,39 +173,12 @@ func (w *ServerInterfaceWrapper) GetAllCurrentGame(ctx echo.Context) error {
 	return err
 }
 
-// CancelCurrentGame converts echo context to params.
-func (w *ServerInterfaceWrapper) CancelCurrentGame(ctx echo.Context) error {
+// CreateCurrentGameAction converts echo context to params.
+func (w *ServerInterfaceWrapper) CreateCurrentGameAction(ctx echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.CancelCurrentGame(ctx)
-	return err
-}
-
-// FinishCurrentGame converts echo context to params.
-func (w *ServerInterfaceWrapper) FinishCurrentGame(ctx echo.Context) error {
-	var err error
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.FinishCurrentGame(ctx)
-	return err
-}
-
-// RollNewCurrentGame converts echo context to params.
-func (w *ServerInterfaceWrapper) RollNewCurrentGame(ctx echo.Context) error {
-	var err error
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.RollNewCurrentGame(ctx)
-	return err
-}
-
-// RateGame converts echo context to params.
-func (w *ServerInterfaceWrapper) RateGame(ctx echo.Context) error {
-	var err error
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.RateGame(ctx)
+	err = w.Handler.CreateCurrentGameAction(ctx)
 	return err
 }
 
@@ -214,6 +195,22 @@ func (w *ServerInterfaceWrapper) GetGameReview(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetGameReview(ctx, name)
+	return err
+}
+
+// PutGameReview converts echo context to params.
+func (w *ServerInterfaceWrapper) PutGameReview(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "name" -------------
+	var name Name
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", ctx.Param("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.PutGameReview(ctx, name)
 	return err
 }
 
@@ -309,15 +306,13 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/games/all/current", wrapper.GetAllCurrentGame)
-	router.POST(baseURL+"/games/current/cancel", wrapper.CancelCurrentGame)
-	router.POST(baseURL+"/games/current/finish", wrapper.FinishCurrentGame)
-	router.POST(baseURL+"/games/current/roll", wrapper.RollNewCurrentGame)
-	router.POST(baseURL+"/games/rate", wrapper.RateGame)
-	router.GET(baseURL+"/games/rate/:name", wrapper.GetGameReview)
-	router.GET(baseURL+"/games/:login/current", wrapper.GetUserCurrentGame)
-	router.GET(baseURL+"/games/:login/history", wrapper.GetUserGameHistory)
-	router.GET(baseURL+"/games/:login/wishlist", wrapper.GetUserWishlistGames)
-	router.POST(baseURL+"/games/:login/wishlist", wrapper.AddUserWishlistGame)
+	router.GET(baseURL+"/games/current", wrapper.GetAllCurrentGame)
+	router.POST(baseURL+"/games/current/actions", wrapper.CreateCurrentGameAction)
+	router.GET(baseURL+"/games/reviews/:name", wrapper.GetGameReview)
+	router.PUT(baseURL+"/games/reviews/:name", wrapper.PutGameReview)
+	router.GET(baseURL+"/games/users/:login/current", wrapper.GetUserCurrentGame)
+	router.GET(baseURL+"/games/users/:login/history", wrapper.GetUserGameHistory)
+	router.GET(baseURL+"/games/users/:login/wishlist", wrapper.GetUserWishlistGames)
+	router.POST(baseURL+"/games/users/:login/wishlist", wrapper.AddUserWishlistGame)
 
 }

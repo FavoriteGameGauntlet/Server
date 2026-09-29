@@ -28,7 +28,7 @@ func NewController(ts srvtimers.IService) *Controller {
 	}
 }
 
-// GetUserCurrentGame (GET /games/{login}/current)
+// GetUserCurrentGame (GET /games/users/{login}/current)
 func (c *Controller) GetUserCurrentGame(ctx echo.Context, login gengames.Login) error {
 	doesExist, err := c.AuthService.DoesUserSessionExist(ctx)
 
@@ -66,60 +66,43 @@ func convertGameToDto(game typegames.CurrentGame) gengames.CurrentGame {
 	}
 }
 
-// CancelCurrentGame (POST /games/current/cancel)
-func (c *Controller) CancelCurrentGame(ctx echo.Context) error {
+// CreateCurrentGameAction (POST /games/current/actions)
+func (c *Controller) CreateCurrentGameAction(ctx echo.Context) error {
 	userId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.CancelCurrentGame(userId)
+	var actionDto gengames.CurrentGameAction
+	err = ctx.Bind(&actionDto)
+
+	if err != nil {
+		err = common.NewBadRequestError(err.Error())
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	var game typegames.CurrentGame
+
+	switch actionDto.Action {
+	case gengames.Start:
+		game, err = c.Service.StartCurrentGame(userId)
+	case gengames.Finish:
+		game, err = c.Service.FinishCurrentGame(userId)
+	case gengames.Cancel:
+		game, err = c.Service.CancelCurrentGame(userId)
+	default:
+		err = common.NewCurrentGameActionUnprocessableError(string(actionDto.Action))
+	}
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	return ctx.NoContent(http.StatusNoContent)
+	return ctx.JSON(http.StatusOK, convertGameToDto(game))
 }
 
-// FinishCurrentGame (POST /games/current/finish)
-func (c *Controller) FinishCurrentGame(ctx echo.Context) error {
-	userId, err := c.AuthService.GetUserId(ctx)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	err = c.Service.FinishCurrentGame(userId)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	return ctx.NoContent(http.StatusNoContent)
-}
-
-// RollNewCurrentGame (POST /games/current/roll)
-func (c *Controller) RollNewCurrentGame(ctx echo.Context) error {
-	userId, err := c.AuthService.GetUserId(ctx)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	game, err := c.Service.MakeGameRoll(userId)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	gameDto := convertGameToDto(game)
-
-	return ctx.JSON(http.StatusCreated, gameDto)
-}
-
-// GetUserGameHistory (GET /games/{login}/history)
+// GetUserGameHistory (GET /games/users/{login}/history)
 func (c *Controller) GetUserGameHistory(ctx echo.Context, login gengames.Login) error {
 	doesExist, err := c.AuthService.DoesUserSessionExist(ctx)
 
@@ -167,7 +150,7 @@ func convertGameHistoryToDto(history []typegames.GameHistoryEntry) gengames.Game
 	return historyDto
 }
 
-// GetUserWishlistGames (GET /games/{login}/wishlist)
+// GetUserWishlistGames (GET /games/users/{login}/wishlist)
 func (c *Controller) GetUserWishlistGames(ctx echo.Context, login gengames.Login) error {
 	doesExist, err := c.AuthService.DoesUserSessionExist(ctx)
 
@@ -186,7 +169,7 @@ func (c *Controller) GetUserWishlistGames(ctx echo.Context, login gengames.Login
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	games, err := c.Service.GetUnplayedGames(userId)
+	games, err := c.Service.GetWishlistGames(userId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -209,7 +192,7 @@ func convertWishlistGamesToDto(games typegames.WishlistGames) gengames.WishlistG
 	return gamesDto
 }
 
-// AddUserWishlistGame (POST /games/{login}/wishlist)
+// AddUserWishlistGame (POST /games/users/{login}/wishlist)
 func (c *Controller) AddUserWishlistGame(ctx echo.Context, login gengames.Login) error {
 	doesExist, err := c.AuthService.DoesUserSessionExist(ctx)
 
@@ -259,7 +242,7 @@ func convertWishlistGameFromDto(gameDto gengames.WishlistGame) typegames.Wishlis
 	}
 }
 
-// GetAllCurrentGame (GET /games/all/current)
+// GetAllCurrentGame (GET /games/current)
 func (c *Controller) GetAllCurrentGame(ctx echo.Context) error {
 	games, err := c.Service.GetAllCurrentGames()
 
@@ -284,35 +267,35 @@ func convertAllCurrentGamesToDto(games []typegames.CurrentGameWithLogin) gengame
 	return dtos
 }
 
-// RateGame (POST /games/rate)
-func (c *Controller) RateGame(ctx echo.Context) error {
+// PutGameReview (PUT /games/reviews/{name})
+func (c *Controller) PutGameReview(ctx echo.Context, name gengames.Name) error {
 	userId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	var rateDto gengames.GameRate
-	err = ctx.Bind(&rateDto)
+	var reviewDto gengames.GameReview
+	err = ctx.Bind(&reviewDto)
 
 	if err != nil {
 		err = common.NewBadRequestError(err.Error())
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = validator.ValidateName(rateDto.Name)
+	err = validator.ValidateName(name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = validator.ValidateRating(rateDto.Rating)
+	err = validator.ValidateRating(reviewDto.Rating)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	created, err := c.Service.RateGame(userId, rateDto.Name, rateDto.Rating, rateDto.ReviewComment)
+	created, err := c.Service.RateGame(userId, name, reviewDto.Rating, reviewDto.ReviewComment)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -325,7 +308,7 @@ func (c *Controller) RateGame(ctx echo.Context) error {
 	return ctx.NoContent(http.StatusNoContent)
 }
 
-// GetGameReview (GET /games/rate/{name})
+// GetGameReview (GET /games/reviews/{name})
 func (c *Controller) GetGameReview(ctx echo.Context, name gengames.Name) error {
 	userId, err := c.AuthService.GetUserId(ctx)
 

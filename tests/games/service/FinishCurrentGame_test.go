@@ -18,6 +18,7 @@ type FinishCurrentGameTestCase struct {
 	Name            string
 	UserId          int
 	SetupMock       func() (*dbgamesmock.DatabaseMock, *srvtimersmock.ServiceMock, *srvgamesmock.GettingServiceMock)
+	ExpectedGame    typegames.CurrentGame
 	ExpectedErrorAs interface{}
 	ExpectedErrorIs error
 }
@@ -57,7 +58,26 @@ var FinishCurrentGameTestCases = []FinishCurrentGameTestCase{
 		ExpectedErrorIs: dbError,
 	},
 	{
-		// The game has no time yet, but the current timer does. The game can be finished.
+		// FinishCurrentGameCommand returns a database error. The error will return.
+		Name:   "FinishCurrentGameCommand_DatabaseError",
+		UserId: 1,
+		SetupMock: func() (*dbgamesmock.DatabaseMock, *srvtimersmock.ServiceMock, *srvgamesmock.GettingServiceMock) {
+			databaseMock := new(dbgamesmock.DatabaseMock)
+			timerServiceMock := new(srvtimersmock.ServiceMock)
+			gettingServiceMock := new(srvgamesmock.GettingServiceMock)
+
+			gettingServiceMock.On("GetCurrentGame", 1).Return(typegames.CurrentGame{Id: 1, Name: "Half-Life 1"}, nil)
+			timerServiceMock.On("GetCurrentTimerTimeSpent", 1).Return(30*time.Minute, nil)
+			timerServiceMock.On("ForceStopCurrentTimer", 1).Return(typetimers.Timer{}, nil)
+			databaseMock.On("FinishCurrentGameCommand", 1, 1, 1, 1, (*int)(nil)).Return(typegames.UserGame{}, dbError)
+
+			return databaseMock, timerServiceMock, gettingServiceMock
+		},
+		ExpectedErrorIs: dbError,
+	},
+	{
+		// The game has no time yet, but the current timer does. The game can be finished and returns
+		// as FinishCurrentGameCommand returned it.
 		Name:   "Success_OnlyTimerTimeSpent",
 		UserId: 1,
 		SetupMock: func() (*dbgamesmock.DatabaseMock, *srvtimersmock.ServiceMock, *srvgamesmock.GettingServiceMock) {
@@ -68,10 +88,12 @@ var FinishCurrentGameTestCases = []FinishCurrentGameTestCase{
 			gettingServiceMock.On("GetCurrentGame", 1).Return(typegames.CurrentGame{Id: 1, Name: "Half-Life 1"}, nil)
 			timerServiceMock.On("GetCurrentTimerTimeSpent", 1).Return(30*time.Minute, nil)
 			timerServiceMock.On("ForceStopCurrentTimer", 1).Return(typetimers.Timer{}, nil)
-			databaseMock.On("FinishCurrentGameCommand", 1, 1, 1, 1, (*int)(nil)).Return(nil)
+			databaseMock.On("FinishCurrentGameCommand", 1, 1, 1, 1, (*int)(nil)).
+				Return(typegames.UserGame{Id: 1, Name: "Half-Life 1", TimeSpent: 30 * time.Minute, StartDate: gameStartDate}, nil)
 
 			return databaseMock, timerServiceMock, gettingServiceMock
 		},
+		ExpectedGame: typegames.CurrentGame{Id: 1, Name: "Half-Life 1", TimeSpent: 30 * time.Minute, StartDate: gameStartDate},
 	},
 }
 
@@ -87,7 +109,7 @@ func TestSrvGames_FinishCurrentGame(test *testing.T) {
 			}
 
 			// Act
-			err := sut.FinishCurrentGame(testCase.UserId)
+			game, err := sut.FinishCurrentGame(testCase.UserId)
 
 			// Assert
 			if testCase.ExpectedErrorAs != nil {
@@ -102,6 +124,8 @@ func TestSrvGames_FinishCurrentGame(test *testing.T) {
 			if testCase.ExpectedErrorAs == nil && testCase.ExpectedErrorIs == nil {
 				require.NoError(test, err)
 			}
+
+			require.Equal(test, testCase.ExpectedGame, game)
 
 			databaseMock.AssertExpectations(test)
 			timerServiceMock.AssertExpectations(test)
