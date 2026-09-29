@@ -433,7 +433,7 @@ func (s *Service) GetPartyPointHistoryByTypeName(actorUserId int, partyId int, n
 	return
 }
 
-// createManualSourceEvent records a direct point change by an administrator as a manual history
+// createManualSourceEvent records a direct point change made by a user as a manual history
 // entry, whose id becomes the source event of the point history the change produces. Every recorded
 // point change names the event that caused it, and a direct change has no other event behind it.
 func (s *Service) createManualSourceEvent(actorUserId int, affectedUserId int, partyId int, pointTypeId int, changeValue int) (sourceEventId int, err error) {

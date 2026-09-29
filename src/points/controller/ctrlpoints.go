@@ -208,7 +208,7 @@ func (c *Controller) GetUserPointValue(ctx echo.Context, login genpoints.Login, 
 
 // ChangeUserPointValue (PATCH /points/users/{login}/types/{name})
 func (c *Controller) ChangeUserPointValue(ctx echo.Context, login genpoints.Login, name genpoints.Name) error {
-	actorUserId, err := common.RequireAdminUserId(ctx, c.AuthService)
+	actorUserId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -309,7 +309,7 @@ func (c *Controller) GetPartyPointValue(ctx echo.Context, name genpoints.Name) e
 
 // ChangePartyPointValue (PATCH /points/party/types/{name})
 func (c *Controller) ChangePartyPointValue(ctx echo.Context, name genpoints.Name) error {
-	actorUserId, err := common.RequireAdminUserId(ctx, c.AuthService)
+	actorUserId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)

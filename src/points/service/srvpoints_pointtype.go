@@ -164,7 +164,7 @@ func (s *Service) ChangeUserPointValueClamped(affectedUserId int, partyId int, p
 	return
 }
 
-// ChangeUserPointByTypeName applies an administrator's direct change to one user's points, recorded
+// ChangeUserPointByTypeName applies a direct change made by the acting user to one user's points, recorded
 // against a manual history entry as its source event.
 func (s *Service) ChangeUserPointByTypeName(
 	actorUserId int,
@@ -198,7 +198,7 @@ func (s *Service) ChangeUserPointByTypeName(
 	return s.changePointValue(affectedUserId, partyId, pointType, actorUserId, changeValue, &sourceEventId)
 }
 
-// ChangePartyPointByTypeName applies an administrator's direct change to the party pool of a shared
+// ChangePartyPointByTypeName applies a direct change made by the acting user to the party pool of a shared
 // point type, recorded against a manual history entry as its source event.
 func (s *Service) ChangePartyPointByTypeName(
 	actorUserId int,
