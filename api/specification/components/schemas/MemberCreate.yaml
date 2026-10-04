@@ -3,7 +3,10 @@ properties:
   login:
     $ref: "./Login.yaml"
   displayName:
-    $ref: "./Name.yaml"
+    allOf:
+      - $ref: "./Name.yaml"
+    nullable: true
+    default: null
   isAdmin:
     type: boolean
 required: [ login, isAdmin ]

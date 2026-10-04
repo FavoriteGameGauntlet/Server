@@ -31,13 +31,13 @@ type Member struct {
 
 // MemberChange Updates whichever of the two is given.
 type MemberChange struct {
-	DisplayName *Name `json:"displayName,omitempty"`
+	DisplayName *Name `json:"displayName"`
 	IsAdmin     *bool `json:"isAdmin,omitempty"`
 }
 
 // MemberCreate defines model for MemberCreate.
 type MemberCreate struct {
-	DisplayName *Name `json:"displayName,omitempty"`
+	DisplayName *Name `json:"displayName"`
 	IsAdmin     bool  `json:"isAdmin"`
 	Login       Login `json:"login"`
 }

@@ -134,6 +134,7 @@ func (c *Controller) DeleteParty(ctx echo.Context, partyId genparties.PartyId) e
 
 	return ctx.NoContent(http.StatusNoContent)
 }
+
 // GetMembers (GET /parties/{partyId}/members)
 func (c *Controller) GetMembers(ctx echo.Context, partyId genparties.PartyId) error {
 	_, err := c.AuthService.GetUserId(ctx)
@@ -223,6 +224,18 @@ func (c *Controller) ChangeMember(ctx echo.Context, partyId genparties.PartyId, 
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
+	if memberDto.IsAdmin != nil && !*memberDto.IsAdmin {
+		currentUserId, err := c.AuthService.GetUserId(ctx)
+
+		if err != nil {
+			return common.SendJSONErrorResponse(ctx, err)
+		}
+
+		if currentUserId == userId {
+			return common.SendJSONErrorResponse(ctx, common.NewOwnAdminRightsRevokeConflictError())
+		}
+	}
+
 	err = c.Service.ChangeMember(userId, partyId, memberDto.DisplayName, memberDto.IsAdmin)
 
 	if err != nil {
@@ -234,7 +247,7 @@ func (c *Controller) ChangeMember(ctx echo.Context, partyId genparties.PartyId, 
 
 // RemoveMember (DELETE /parties/{partyId}/members/{login})
 func (c *Controller) RemoveMember(ctx echo.Context, partyId genparties.PartyId, login genparties.Login) error {
-	err := common.RequireAdmin(ctx, c.AuthService)
+	currentUserId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -244,6 +257,14 @@ func (c *Controller) RemoveMember(ctx echo.Context, partyId genparties.PartyId, 
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	if userId != currentUserId {
+		err = common.RequireAdmin(ctx, c.AuthService)
+
+		if err != nil {
+			return common.SendJSONErrorResponse(ctx, err)
+		}
 	}
 
 	err = c.Service.RemoveMember(userId, partyId)

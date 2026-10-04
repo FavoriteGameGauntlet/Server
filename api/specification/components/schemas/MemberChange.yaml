@@ -2,6 +2,9 @@ type: object
 description: Updates whichever of the two is given.
 properties:
   displayName:
-    $ref: "./Name.yaml"
+    allOf:
+      - $ref: "./Name.yaml"
+    nullable: true
+    default: null
   isAdmin:
     type: boolean

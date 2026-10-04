@@ -100,7 +100,7 @@ func (s *Service) AddMember(userId int, partyId int, displayName *string, isAdmi
 
 // ChangeMember updates whichever of a member's display name and admin flag were given.
 func (s *Service) ChangeMember(userId int, partyId int, displayName *string, isAdmin *bool) (err error) {
-	err = s.requireMember(userId, partyId)
+	_, err = s.requireMember(userId, partyId)
 
 	if err != nil {
 		return
@@ -121,18 +121,66 @@ func (s *Service) ChangeMember(userId int, partyId int, displayName *string, isA
 	return
 }
 
+// RemoveMember takes a user out of the party. If that leaves the party without an admin, the
+// remaining member who joined earliest is made one, so the party never has nobody to administer it.
 func (s *Service) RemoveMember(userId int, partyId int) (err error) {
-	err = s.requireMember(userId, partyId)
+	leaving, err := s.requireMember(userId, partyId)
 
 	if err != nil {
 		return
 	}
 
+	if leaving.IsAdmin {
+		var successor *typeparties.MemberWithLogin
+
+		successor, err = s.findAdminSuccessor(userId, partyId)
+
+		if err != nil {
+			return
+		}
+
+		if successor != nil {
+			err = s.Database.ChangeMemberAdminStatusCommand(successor.UserId, partyId, true)
+
+			if err != nil {
+				return
+			}
+		}
+	}
+
 	return s.Database.RemoveMemberCommand(userId, partyId)
 }
 
-func (s *Service) requireMember(userId int, partyId int) (err error) {
-	_, err = s.Database.GetMemberCommand(userId, partyId)
+// findAdminSuccessor returns the member to promote when the admin leavingUserId leaves the party,
+// or nil if another admin remains or nobody remains.
+func (s *Service) findAdminSuccessor(leavingUserId int, partyId int) (successor *typeparties.MemberWithLogin, err error) {
+	members, err := s.Database.GetMembersCommand(partyId)
+
+	if err != nil {
+		return
+	}
+
+	for i := range members {
+		member := &members[i]
+
+		if member.LeftDate != nil || member.UserId == leavingUserId {
+			continue
+		}
+
+		if member.IsAdmin {
+			return nil, nil
+		}
+
+		if successor == nil || member.JoinedDate.Before(successor.JoinedDate) {
+			successor = member
+		}
+	}
+
+	return
+}
+
+func (s *Service) requireMember(userId int, partyId int) (member typeparties.MemberWithLogin, err error) {
+	member, err = s.Database.GetMemberCommand(userId, partyId)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = common.NewMemberNotFoundError()

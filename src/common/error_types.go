@@ -411,6 +411,15 @@ func NewMemberAlreadyExistsConflictError() error {
 		},
 	}
 }
+
+func NewOwnAdminRightsRevokeConflictError() error {
+	return &ConflictError{
+		&BaseError{
+			Code:    "OWN_ADMIN_RIGHTS_REVOKE",
+			Message: "An administrator can't revoke their own admin rights.",
+		},
+	}
+}
 func NewWheelEffectNameNotFoundError() error {
 	return &NotFoundError{
 		&BaseError{

@@ -136,6 +136,8 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '404':
           $ref: '#/components/responses/ErrorResponse'
+        '409':
+          $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
     delete:
@@ -237,7 +239,10 @@ components:
         login:
           $ref: '#/components/schemas/Login'
         displayName:
-          $ref: '#/components/schemas/Name'
+          allOf:
+            - $ref: '#/components/schemas/Name'
+          nullable: true
+          default: null
         isAdmin:
           type: boolean
       required:
@@ -248,7 +253,10 @@ components:
       description: Updates whichever of the two is given.
       properties:
         displayName:
-          $ref: '#/components/schemas/Name'
+          allOf:
+            - $ref: '#/components/schemas/Name'
+          nullable: true
+          default: null
         isAdmin:
           type: boolean
   responses:
