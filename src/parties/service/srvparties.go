@@ -14,7 +14,6 @@ type IService interface {
 	GetParties() ([]typeparties.Party, error)
 	GetParty(partyId int) (typeparties.Party, error)
 	ChangePartyName(partyId int, name string) error
-	DeleteParty(partyId int) error
 	GetMembers(partyId int) ([]typeparties.MemberWithLogin, error)
 	AddMember(userId int, partyId int, displayName *string, isAdmin bool) (typeparties.Member, error)
 	ChangeMember(userId int, partyId int, displayName *string, isAdmin *bool) error
@@ -63,10 +62,6 @@ func (s *Service) GetParty(partyId int) (party typeparties.Party, err error) {
 
 func (s *Service) ChangePartyName(partyId int, name string) error {
 	return s.Database.ChangePartyNameCommand(partyId, name)
-}
-
-func (s *Service) DeleteParty(partyId int) error {
-	return s.Database.DeletePartyCommand(partyId)
 }
 
 func (s *Service) GetMembers(partyId int) (members []typeparties.MemberWithLogin, err error) {

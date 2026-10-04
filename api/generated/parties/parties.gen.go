@@ -119,9 +119,6 @@ type ServerInterface interface {
 	// (POST /parties)
 	CreateParty(ctx echo.Context) error
 
-	// (DELETE /parties/{partyId})
-	DeleteParty(ctx echo.Context, partyId PartyId) error
-
 	// (GET /parties/{partyId})
 	GetParty(ctx echo.Context, partyId PartyId) error
 
@@ -161,22 +158,6 @@ func (w *ServerInterfaceWrapper) CreateParty(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.CreateParty(ctx)
-	return err
-}
-
-// DeleteParty converts echo context to params.
-func (w *ServerInterfaceWrapper) DeleteParty(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "partyId" -------------
-	var partyId PartyId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.DeleteParty(ctx, partyId)
 	return err
 }
 
@@ -322,7 +303,6 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 
 	router.GET(baseURL+"/parties", wrapper.GetParties)
 	router.POST(baseURL+"/parties", wrapper.CreateParty)
-	router.DELETE(baseURL+"/parties/:partyId", wrapper.DeleteParty)
 	router.GET(baseURL+"/parties/:partyId", wrapper.GetParty)
 	router.PATCH(baseURL+"/parties/:partyId", wrapper.ChangeParty)
 	router.GET(baseURL+"/parties/:partyId/members", wrapper.GetMembers)

@@ -30,17 +30,3 @@ patch:
       $ref: "../../components/responses/ErrorResponse.yaml"
     "500":
       $ref: "../../components/responses/ErrorResponse.yaml"
-delete:
-  operationId: deleteParty
-  tags: [ Parties ]
-  parameters:
-    - $ref: "../../components/parameters/PartyId.yaml"
-  responses:
-    "204":
-      description: Success.
-    "401":
-      $ref: "../../components/responses/ErrorResponse.yaml"
-    "404":
-      $ref: "../../components/responses/ErrorResponse.yaml"
-    "500":
-      $ref: "../../components/responses/ErrorResponse.yaml"

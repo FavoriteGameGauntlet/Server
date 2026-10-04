@@ -118,23 +118,6 @@ func (c *Controller) ChangeParty(ctx echo.Context, partyId genparties.PartyId) e
 	return ctx.NoContent(http.StatusNoContent)
 }
 
-// DeleteParty (DELETE /parties/{partyId})
-func (c *Controller) DeleteParty(ctx echo.Context, partyId genparties.PartyId) error {
-	err := common.RequireAdmin(ctx, c.AuthService)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	err = c.Service.DeleteParty(partyId)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	return ctx.NoContent(http.StatusNoContent)
-}
-
 // GetMembers (GET /parties/{partyId}/members)
 func (c *Controller) GetMembers(ctx echo.Context, partyId genparties.PartyId) error {
 	_, err := c.AuthService.GetUserId(ctx)

@@ -65,21 +65,6 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-    delete:
-      operationId: deleteParty
-      tags:
-        - Parties
-      parameters:
-        - $ref: '#/components/parameters/PartyId'
-      responses:
-        '204':
-          description: Success.
-        '401':
-          $ref: '#/components/responses/ErrorResponse'
-        '404':
-          $ref: '#/components/responses/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/ErrorResponse'
   /parties/{partyId}/members:
     get:
       operationId: getMembers

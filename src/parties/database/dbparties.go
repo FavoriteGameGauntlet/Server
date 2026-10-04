@@ -10,7 +10,6 @@ type IDatabase interface {
 	GetPartyCommand(partyId int) (party typeparties.Party, err error)
 	GetPartiesCommand() (parties []typeparties.Party, err error)
 	ChangePartyNameCommand(partyId int, name string) error
-	DeletePartyCommand(partyId int) error
 	CreateMemberCommand(userId int, partyId int, displayName *string, isAdmin bool) (member typeparties.Member, err error)
 	GetMemberCommand(userId int, partyId int) (member typeparties.MemberWithLogin, err error)
 	GetMembersCommand(partyId int) (members []typeparties.MemberWithLogin, err error)
@@ -78,16 +77,6 @@ func (db *Database) ChangePartyNameCommand(partyId int, name string) error {
 	_, err := dbaccess.Exec(changePartyNameQuery, partyId, name)
 
 	dbaccess.LogDbResult(changePartyNameQuery, nil, err)
-
-	return err
-}
-
-var deletePartyQuery = dbaccess.Query{Name: "DeletePartyQuery", SQL: `SELECT delete_party($1::integer)`}
-
-func (db *Database) DeletePartyCommand(partyId int) error {
-	_, err := dbaccess.Exec(deletePartyQuery, partyId)
-
-	dbaccess.LogDbResult(deletePartyQuery, nil, err)
 
 	return err
 }
