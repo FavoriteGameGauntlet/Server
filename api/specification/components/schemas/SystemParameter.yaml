@@ -4,4 +4,7 @@ properties:
     $ref: "../schemas/Name.yaml"
   value:
     type: string
-required: [ name, value ]
+  isDefault:
+    type: boolean
+    description: True if the party has no override of the parameter, so the value is the default one.
+required: [ name, value, isDefault ]

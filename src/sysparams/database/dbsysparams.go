@@ -27,7 +27,7 @@ func (db *Database) GetAllSystemParametersCommand(partyId int) (parameters []typ
 
 	for rows.Next() {
 		parameter := typesysparams.SystemParameter{}
-		err = rows.Scan(&parameter.Id, &parameter.Code, &parameter.Name, &parameter.Description, &parameter.Value)
+		err = rows.Scan(&parameter.Id, &parameter.Code, &parameter.Name, &parameter.Description, &parameter.Value, &parameter.IsDefault)
 
 		if err != nil {
 			_ = rows.Close()
@@ -48,7 +48,7 @@ var getSystemParameterQuery = dbaccess.Query{Name: "GetSystemParameterQuery", SQ
 func (db *Database) GetSystemParameterCommand(partyId int, code string) (parameter typesysparams.SystemParameter, err error) {
 	row := dbaccess.QueryRow(getSystemParameterQuery, partyId, code)
 
-	err = row.Scan(&parameter.Id, &parameter.Code, &parameter.Name, &parameter.Description, &parameter.Value)
+	err = row.Scan(&parameter.Id, &parameter.Code, &parameter.Name, &parameter.Description, &parameter.Value, &parameter.IsDefault)
 
 	dbaccess.LogDbResult(getSystemParameterQuery, parameter, err)
 

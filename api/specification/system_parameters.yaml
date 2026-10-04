@@ -3,9 +3,9 @@ info:
   title: Favorite Game Gauntlet
   version: 0.3.0
 paths:
-  /system-parameters/admin/all:
+  /system-parameters:
     get:
-      operationId: getAllAdminSystemParameters
+      operationId: getSystemParameters
       tags:
         - SystemParameters
       responses:
@@ -15,9 +15,9 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /system-parameters/admin/{name}:
+  /system-parameters/{name}:
     post:
-      operationId: changeAdminSystemParameter
+      operationId: changeSystemParameter
       tags:
         - SystemParameters
       parameters:
@@ -38,7 +38,7 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorResponse'
     get:
-      operationId: getAdminSystemParameter
+      operationId: getSystemParameter
       tags:
         - SystemParameters
       parameters:
@@ -55,7 +55,7 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorResponse'
     delete:
-      operationId: resetAdminSystemParameter
+      operationId: resetSystemParameter
       tags:
         - SystemParameters
       parameters:
@@ -83,9 +83,13 @@ components:
           $ref: '#/components/schemas/Name'
         value:
           type: string
+        isDefault:
+          type: boolean
+          description: True if the party has no override of the parameter, so the value is the default one.
       required:
         - name
         - value
+        - isDefault
     SystemParameters:
       type: array
       items:

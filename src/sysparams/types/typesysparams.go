@@ -6,6 +6,7 @@ type SystemParameter struct {
 	Name        string
 	Description string
 	Value       string
+	IsDefault   bool
 }
 
 type DefaultSystemParameter struct {

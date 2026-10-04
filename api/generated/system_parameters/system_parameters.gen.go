@@ -22,8 +22,10 @@ type Name = string
 
 // SystemParameter defines model for SystemParameter.
 type SystemParameter struct {
-	Name  Name   `json:"name"`
-	Value string `json:"value"`
+	// IsDefault True if the party has no override of the parameter, so the value is the default one.
+	IsDefault bool   `json:"isDefault"`
+	Name      Name   `json:"name"`
+	Value     string `json:"value"`
 }
 
 // SystemParameterChange defines model for SystemParameterChange.
@@ -46,23 +48,23 @@ type SystemParametersResponse = SystemParameters
 // SystemParameterRequest defines model for SystemParameterRequest.
 type SystemParameterRequest = SystemParameterChange
 
-// ChangeAdminSystemParameterJSONRequestBody defines body for ChangeAdminSystemParameter for application/json ContentType.
-type ChangeAdminSystemParameterJSONRequestBody = SystemParameterChange
+// ChangeSystemParameterJSONRequestBody defines body for ChangeSystemParameter for application/json ContentType.
+type ChangeSystemParameterJSONRequestBody = SystemParameterChange
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
-	// (GET /system-parameters/admin/all)
-	GetAllAdminSystemParameters(ctx echo.Context) error
+	// (GET /system-parameters)
+	GetSystemParameters(ctx echo.Context) error
 
-	// (DELETE /system-parameters/admin/{name})
-	ResetAdminSystemParameter(ctx echo.Context, name Name) error
+	// (DELETE /system-parameters/{name})
+	ResetSystemParameter(ctx echo.Context, name Name) error
 
-	// (GET /system-parameters/admin/{name})
-	GetAdminSystemParameter(ctx echo.Context, name Name) error
+	// (GET /system-parameters/{name})
+	GetSystemParameter(ctx echo.Context, name Name) error
 
-	// (POST /system-parameters/admin/{name})
-	ChangeAdminSystemParameter(ctx echo.Context, name Name) error
+	// (POST /system-parameters/{name})
+	ChangeSystemParameter(ctx echo.Context, name Name) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -70,17 +72,17 @@ type ServerInterfaceWrapper struct {
 	Handler ServerInterface
 }
 
-// GetAllAdminSystemParameters converts echo context to params.
-func (w *ServerInterfaceWrapper) GetAllAdminSystemParameters(ctx echo.Context) error {
+// GetSystemParameters converts echo context to params.
+func (w *ServerInterfaceWrapper) GetSystemParameters(ctx echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetAllAdminSystemParameters(ctx)
+	err = w.Handler.GetSystemParameters(ctx)
 	return err
 }
 
-// ResetAdminSystemParameter converts echo context to params.
-func (w *ServerInterfaceWrapper) ResetAdminSystemParameter(ctx echo.Context) error {
+// ResetSystemParameter converts echo context to params.
+func (w *ServerInterfaceWrapper) ResetSystemParameter(ctx echo.Context) error {
 	var err error
 	// ------------- Path parameter "name" -------------
 	var name Name
@@ -91,12 +93,12 @@ func (w *ServerInterfaceWrapper) ResetAdminSystemParameter(ctx echo.Context) err
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ResetAdminSystemParameter(ctx, name)
+	err = w.Handler.ResetSystemParameter(ctx, name)
 	return err
 }
 
-// GetAdminSystemParameter converts echo context to params.
-func (w *ServerInterfaceWrapper) GetAdminSystemParameter(ctx echo.Context) error {
+// GetSystemParameter converts echo context to params.
+func (w *ServerInterfaceWrapper) GetSystemParameter(ctx echo.Context) error {
 	var err error
 	// ------------- Path parameter "name" -------------
 	var name Name
@@ -107,12 +109,12 @@ func (w *ServerInterfaceWrapper) GetAdminSystemParameter(ctx echo.Context) error
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetAdminSystemParameter(ctx, name)
+	err = w.Handler.GetSystemParameter(ctx, name)
 	return err
 }
 
-// ChangeAdminSystemParameter converts echo context to params.
-func (w *ServerInterfaceWrapper) ChangeAdminSystemParameter(ctx echo.Context) error {
+// ChangeSystemParameter converts echo context to params.
+func (w *ServerInterfaceWrapper) ChangeSystemParameter(ctx echo.Context) error {
 	var err error
 	// ------------- Path parameter "name" -------------
 	var name Name
@@ -123,7 +125,7 @@ func (w *ServerInterfaceWrapper) ChangeAdminSystemParameter(ctx echo.Context) er
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ChangeAdminSystemParameter(ctx, name)
+	err = w.Handler.ChangeSystemParameter(ctx, name)
 	return err
 }
 
@@ -155,9 +157,9 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/system-parameters/admin/all", wrapper.GetAllAdminSystemParameters)
-	router.DELETE(baseURL+"/system-parameters/admin/:name", wrapper.ResetAdminSystemParameter)
-	router.GET(baseURL+"/system-parameters/admin/:name", wrapper.GetAdminSystemParameter)
-	router.POST(baseURL+"/system-parameters/admin/:name", wrapper.ChangeAdminSystemParameter)
+	router.GET(baseURL+"/system-parameters", wrapper.GetSystemParameters)
+	router.DELETE(baseURL+"/system-parameters/:name", wrapper.ResetSystemParameter)
+	router.GET(baseURL+"/system-parameters/:name", wrapper.GetSystemParameter)
+	router.POST(baseURL+"/system-parameters/:name", wrapper.ChangeSystemParameter)
 
 }

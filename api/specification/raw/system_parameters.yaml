@@ -3,8 +3,8 @@ info:
   title: Favorite Game Gauntlet
   version: 0.3.0
 paths:
-  /system-parameters/admin/all:
-    $ref: "../paths/system-parameters/admin/all.yaml"
+  /system-parameters:
+    $ref: "../paths/system-parameters.yaml"
 
-  /system-parameters/admin/{name}:
-    $ref: "../paths/system-parameters/admin/name.yaml"
+  /system-parameters/{name}:
+    $ref: "../paths/system-parameters/name.yaml"

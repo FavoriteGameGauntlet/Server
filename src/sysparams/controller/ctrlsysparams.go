@@ -26,9 +26,9 @@ func NewController() *Controller {
 	}
 }
 
-// GetAllAdminSystemParameters (GET /system-parameters/admin/all)
-func (c *Controller) GetAllAdminSystemParameters(ctx echo.Context) error {
-	err := common.RequireAdmin(ctx, &c.AuthService)
+// GetSystemParameters (GET /system-parameters)
+func (c *Controller) GetSystemParameters(ctx echo.Context) error {
+	_, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -45,9 +45,9 @@ func (c *Controller) GetAllAdminSystemParameters(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, parametersDto)
 }
 
-// GetAdminSystemParameter (GET /system-parameters/admin/{name})
-func (c *Controller) GetAdminSystemParameter(ctx echo.Context, name gensysparams.Name) error {
-	err := common.RequireAdmin(ctx, &c.AuthService)
+// GetSystemParameter (GET /system-parameters/{name})
+func (c *Controller) GetSystemParameter(ctx echo.Context, name gensysparams.Name) error {
+	_, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -64,8 +64,8 @@ func (c *Controller) GetAdminSystemParameter(ctx echo.Context, name gensysparams
 	return ctx.JSON(http.StatusOK, parameterDto)
 }
 
-// ChangeAdminSystemParameter (POST /system-parameters/admin/{name})
-func (c *Controller) ChangeAdminSystemParameter(ctx echo.Context, name gensysparams.Name) error {
+// ChangeSystemParameter (POST /system-parameters/{name})
+func (c *Controller) ChangeSystemParameter(ctx echo.Context, name gensysparams.Name) error {
 	err := common.RequireAdmin(ctx, &c.AuthService)
 
 	if err != nil {
@@ -93,8 +93,8 @@ func (c *Controller) ChangeAdminSystemParameter(ctx echo.Context, name gensyspar
 	return ctx.NoContent(http.StatusNoContent)
 }
 
-// ResetAdminSystemParameter (DELETE /system-parameters/admin/{name})
-func (c *Controller) ResetAdminSystemParameter(ctx echo.Context, name gensysparams.Name) error {
+// ResetSystemParameter (DELETE /system-parameters/{name})
+func (c *Controller) ResetSystemParameter(ctx echo.Context, name gensysparams.Name) error {
 	err := common.RequireAdmin(ctx, &c.AuthService)
 
 	if err != nil {
@@ -112,8 +112,9 @@ func (c *Controller) ResetAdminSystemParameter(ctx echo.Context, name gensyspara
 
 func convertParameterToDto(parameter typesysparams.SystemParameter) gensysparams.SystemParameter {
 	return gensysparams.SystemParameter{
-		Name:  parameter.Name,
-		Value: parameter.Value,
+		Name:      parameter.Name,
+		Value:     parameter.Value,
+		IsDefault: parameter.IsDefault,
 	}
 }
 
