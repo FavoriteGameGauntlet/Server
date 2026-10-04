@@ -8,7 +8,7 @@ import (
 type IDatabase interface {
 	CreatePartyCommand(name string) (party typeparties.Party, err error)
 	GetPartyCommand(partyId int) (party typeparties.Party, err error)
-	GetPartiesCommand() (parties []typeparties.Party, err error)
+	GetUserPartiesCommand(userId int) (parties []typeparties.Party, err error)
 	ChangePartyNameCommand(partyId int, name string) error
 	CreateMemberCommand(userId int, partyId int, displayName *string, isAdmin bool) (member typeparties.Member, err error)
 	GetMemberCommand(userId int, partyId int) (member typeparties.MemberWithLogin, err error)
@@ -44,10 +44,10 @@ func (db *Database) GetPartyCommand(partyId int) (party typeparties.Party, err e
 	return
 }
 
-var getPartiesQuery = dbaccess.Query{Name: "GetPartiesQuery", SQL: `SELECT * FROM get_parties()`}
+var getUserPartiesQuery = dbaccess.Query{Name: "GetUserPartiesQuery", SQL: `SELECT * FROM get_user_parties($1::integer)`}
 
-func (db *Database) GetPartiesCommand() (parties []typeparties.Party, err error) {
-	rows, err := dbaccess.QueryRows(getPartiesQuery)
+func (db *Database) GetUserPartiesCommand(userId int) (parties []typeparties.Party, err error) {
+	rows, err := dbaccess.QueryRows(getUserPartiesQuery, userId)
 
 	if err != nil {
 		return
@@ -65,7 +65,7 @@ func (db *Database) GetPartiesCommand() (parties []typeparties.Party, err error)
 		parties = append(parties, party)
 	}
 
-	dbaccess.LogDbResult(getPartiesQuery, parties, err)
+	dbaccess.LogDbResult(getUserPartiesQuery, parties, err)
 
 	_ = rows.Close()
 	return

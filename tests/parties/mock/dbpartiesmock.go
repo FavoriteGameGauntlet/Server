@@ -24,8 +24,8 @@ func (m *DatabaseMock) GetPartyCommand(partyId int) (party typeparties.Party, er
 	return
 }
 
-func (m *DatabaseMock) GetPartiesCommand() (parties []typeparties.Party, err error) {
-	args := m.Called()
+func (m *DatabaseMock) GetUserPartiesCommand(userId int) (parties []typeparties.Party, err error) {
+	args := m.Called(userId)
 	parties = args.Get(0).([]typeparties.Party)
 	err = args.Error(1)
 	return

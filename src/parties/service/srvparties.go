@@ -11,7 +11,9 @@ import (
 
 type IService interface {
 	CreateParty(creatorUserId int, name string) (typeparties.Party, error)
-	GetParties() ([]typeparties.Party, error)
+	GetUserParties(userId int) ([]typeparties.Party, error)
+	RequireMember(userId int, partyId int) error
+	RequireAdmin(userId int, partyId int) error
 	GetParty(partyId int) (typeparties.Party, error)
 	ChangePartyName(partyId int, name string) error
 	GetMembers(partyId int) ([]typeparties.MemberWithLogin, error)
@@ -46,8 +48,43 @@ func (s *Service) CreateParty(creatorUserId int, name string) (party typeparties
 	return
 }
 
-func (s *Service) GetParties() (parties []typeparties.Party, err error) {
-	return s.Database.GetPartiesCommand()
+// GetUserParties lists the parties the user is a member of.
+func (s *Service) GetUserParties(userId int) (parties []typeparties.Party, err error) {
+	return s.Database.GetUserPartiesCommand(userId)
+}
+
+// RequireMember returns an error unless the user is a current member of the party. Anyone else gets
+// the same not-found error as for a party that doesn't exist, so the answer doesn't reveal which
+// parties exist.
+func (s *Service) RequireMember(userId int, partyId int) (err error) {
+	_, err = s.requireCurrentMember(userId, partyId)
+
+	return
+}
+
+// RequireAdmin returns an error unless the user is a current member of the party and an admin of it.
+func (s *Service) RequireAdmin(userId int, partyId int) (err error) {
+	member, err := s.requireCurrentMember(userId, partyId)
+
+	if err != nil {
+		return
+	}
+
+	if !member.IsAdmin {
+		err = common.NewNotAdminUnauthorizedError()
+	}
+
+	return
+}
+
+func (s *Service) requireCurrentMember(userId int, partyId int) (member typeparties.MemberWithLogin, err error) {
+	member, err = s.Database.GetMemberCommand(userId, partyId)
+
+	if errors.Is(err, sql.ErrNoRows) || (err == nil && member.LeftDate != nil) {
+		err = common.NewPartyNotFoundError(partyId)
+	}
+
+	return
 }
 
 func (s *Service) GetParty(partyId int) (party typeparties.Party, err error) {

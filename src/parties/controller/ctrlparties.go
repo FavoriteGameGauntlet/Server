@@ -56,13 +56,13 @@ func (c *Controller) CreateParty(ctx echo.Context) error {
 
 // GetParties (GET /parties)
 func (c *Controller) GetParties(ctx echo.Context) error {
-	err := common.RequireAdmin(ctx, c.AuthService)
+	userId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	parties, err := c.Service.GetParties()
+	parties, err := c.Service.GetUserParties(userId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -78,7 +78,13 @@ func (c *Controller) GetParties(ctx echo.Context) error {
 
 // GetParty (GET /parties/{partyId})
 func (c *Controller) GetParty(ctx echo.Context, partyId genparties.PartyId) error {
-	_, err := c.AuthService.GetUserId(ctx)
+	currentUserId, err := c.AuthService.GetUserId(ctx)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	err = c.Service.RequireMember(currentUserId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -95,7 +101,13 @@ func (c *Controller) GetParty(ctx echo.Context, partyId genparties.PartyId) erro
 
 // ChangeParty (PATCH /parties/{partyId})
 func (c *Controller) ChangeParty(ctx echo.Context, partyId genparties.PartyId) error {
-	err := common.RequireAdmin(ctx, c.AuthService)
+	currentUserId, err := c.AuthService.GetUserId(ctx)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	err = c.Service.RequireAdmin(currentUserId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -120,7 +132,13 @@ func (c *Controller) ChangeParty(ctx echo.Context, partyId genparties.PartyId) e
 
 // GetMembers (GET /parties/{partyId}/members)
 func (c *Controller) GetMembers(ctx echo.Context, partyId genparties.PartyId) error {
-	_, err := c.AuthService.GetUserId(ctx)
+	currentUserId, err := c.AuthService.GetUserId(ctx)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	err = c.Service.RequireMember(currentUserId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -151,7 +169,13 @@ func (c *Controller) GetMembers(ctx echo.Context, partyId genparties.PartyId) er
 
 // AddMember (POST /parties/{partyId}/members)
 func (c *Controller) AddMember(ctx echo.Context, partyId genparties.PartyId) error {
-	err := common.RequireAdmin(ctx, c.AuthService)
+	currentUserId, err := c.AuthService.GetUserId(ctx)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	err = c.Service.RequireAdmin(currentUserId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -187,7 +211,13 @@ func (c *Controller) AddMember(ctx echo.Context, partyId genparties.PartyId) err
 
 // ChangeMember (PATCH /parties/{partyId}/members/{login})
 func (c *Controller) ChangeMember(ctx echo.Context, partyId genparties.PartyId, login genparties.Login) error {
-	err := common.RequireAdmin(ctx, c.AuthService)
+	currentUserId, err := c.AuthService.GetUserId(ctx)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	err = c.Service.RequireAdmin(currentUserId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -207,16 +237,8 @@ func (c *Controller) ChangeMember(ctx echo.Context, partyId genparties.PartyId, 
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	if memberDto.IsAdmin != nil && !*memberDto.IsAdmin {
-		currentUserId, err := c.AuthService.GetUserId(ctx)
-
-		if err != nil {
-			return common.SendJSONErrorResponse(ctx, err)
-		}
-
-		if currentUserId == userId {
-			return common.SendJSONErrorResponse(ctx, common.NewOwnAdminRightsRevokeConflictError())
-		}
+	if memberDto.IsAdmin != nil && !*memberDto.IsAdmin && currentUserId == userId {
+		return common.SendJSONErrorResponse(ctx, common.NewOwnAdminRightsRevokeConflictError())
 	}
 
 	err = c.Service.ChangeMember(userId, partyId, memberDto.DisplayName, memberDto.IsAdmin)
@@ -242,12 +264,14 @@ func (c *Controller) RemoveMember(ctx echo.Context, partyId genparties.PartyId, 
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	if userId != currentUserId {
-		err = common.RequireAdmin(ctx, c.AuthService)
+	if userId == currentUserId {
+		err = c.Service.RequireMember(currentUserId, partyId)
+	} else {
+		err = c.Service.RequireAdmin(currentUserId, partyId)
+	}
 
-		if err != nil {
-			return common.SendJSONErrorResponse(ctx, err)
-		}
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
 	}
 
 	err = c.Service.RemoveMember(userId, partyId)
