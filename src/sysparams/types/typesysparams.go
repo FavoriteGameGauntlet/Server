@@ -18,23 +18,10 @@ type DefaultSystemParameter struct {
 }
 
 const (
-	ParamMinimumNumberOfWishlistGames = "MinimumNumberOfWishlistGames"
-
-	ParamTimerDurationInS                  = "TimerDurationInS"
-	ParamTimerFinisherSchedulerIntervalInS = "TimerFinisherSchedulerIntervalInS"
-	ParamEffectFinisherSchedulerIntervalInS = "EffectFinisherSchedulerIntervalInS"
-	ParamMaximumAvailableRollCountForTimer = "MaximumAvailableRollCountForTimer"
-
-	ParamAvailableRollChangeByRoll        = "AvailableRollChangeByRoll"
-	ParamExperiencePointByLevelUp         ="ExperiencePointChangeByLevelUp"
-	ParamTerritoryHourChangeBySeizeSlice  = "TerritoryHourChangeBySeizeSlice"
-	ParamTerritoryPointChangeBySeizeSlice = "TerritoryPointChangeBySeizeSlice"
-	ParamFreePointChangeBySandstorm       = "FreePointChangeBySandstorm"
-	ParamFreePointChangeByBaseTeleport    = "FreePointChangeByBaseTeleport"
-	ParamFreePointsMinimum                = "FreePointsMinimum"
-	ParamShouldLimitFreePoints            = "ShouldLimitFreePoints"
-	ParamSeizePenaltyPoints               = "SeizePenaltyPoints"
-
+	ParamMinimumNumberOfWishlistGames        = "MinimumNumberOfWishlistGames"
+	ParamTimerDurationInS                    = "TimerDurationInS"
+	ParamMaximumAvailableRollCountForTimer   = "MaximumAvailableRollCountForTimer"
+	ParamAvailableRollChangeByRoll           = "AvailableRollChangeByRoll"
 	ParamMinimumAvailableRollCountForRoll    = "MinimumAvailableRollCountForRoll"
 	ParamMinimumAvailableWheelEffectsForRoll = "MinimumAvailableWheelEffectsForRoll"
 )

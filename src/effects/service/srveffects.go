@@ -9,7 +9,6 @@ import (
 	"FGG-Service/src/effects/types"
 	"FGG-Service/src/points/service"
 	"FGG-Service/src/sysparams/service"
-	"FGG-Service/src/sysparams/types"
 	"database/sql"
 	"errors"
 	"time"
@@ -239,14 +238,8 @@ func (s *Service) StartEndedEffectsScheduler() {
 		panic(err)
 	}
 
-	intervalInS, err := s.SysParamsService.GetInt(srvsysparams.SchedulerPartyId, typesysparams.ParamEffectFinisherSchedulerIntervalInS)
-
-	if err != nil {
-		panic(err)
-	}
-
 	_, err = scheduler.NewJob(
-		gocron.DurationJob(time.Duration(intervalInS)*time.Second),
+		gocron.DurationJob(common.SchedulerInterval),
 		gocron.NewTask(s.StopEndedUserEffects),
 		gocron.WithSingletonMode(gocron.LimitModeReschedule),
 	)

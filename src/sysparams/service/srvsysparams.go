@@ -21,10 +21,6 @@ type IService interface {
 	ChangeValue(partyId int, name string, value string) (bool, error)
 }
 
-// SchedulerPartyId is the party whose parameters configure the schedulers. A scheduler runs for
-// every party at once, so its interval can't come from the party of a request.
-const SchedulerPartyId = 1
-
 type Service struct {
 	Database dbsysparams.IDatabase
 }
