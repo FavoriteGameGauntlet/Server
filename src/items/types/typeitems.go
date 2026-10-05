@@ -39,7 +39,7 @@ type ItemHistory struct {
 	PartyId       int
 	ItemId        int
 	Action        string
-	UsesLeft      int
+	UsesLeft      *int
 	SourceEventId *int
 	CreatedDate   time.Time
 }
@@ -57,6 +57,6 @@ type ItemHistoryDetail struct {
 	Name        string
 	Action      string
 	ActorUserId int
-	UsesLeft    int
+	UsesLeft    *int
 	CreatedDate time.Time
 }

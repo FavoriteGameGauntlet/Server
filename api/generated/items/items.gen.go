@@ -54,7 +54,7 @@ type ItemHistoryEntry struct {
 	ActorLogin  Login     `json:"actorLogin"`
 	CreatedDate time.Time `json:"createdDate"`
 	Name        Name      `json:"name"`
-	UsesLeft    int       `json:"usesLeft"`
+	UsesLeft    *int      `json:"usesLeft"`
 }
 
 // Items defines model for Items.

@@ -252,6 +252,7 @@ components:
         usesLeft:
           type: integer
           format: int
+          nullable: true
         createdDate:
           type: string
           format: date-time
