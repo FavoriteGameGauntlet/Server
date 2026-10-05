@@ -34,8 +34,8 @@ var FinishCurrentGameTestCases = []FinishCurrentGameTestCase{
 			timerServiceMock := new(srvtimersmock.ServiceMock)
 			gettingServiceMock := new(srvgamesmock.GettingServiceMock)
 
-			gettingServiceMock.On("GetCurrentGame", 1).Return(typegames.CurrentGame{Id: 1, Name: "Half-Life 1"}, nil)
-			timerServiceMock.On("GetCurrentTimerTimeSpent", 1).Return(time.Duration(0), nil)
+			gettingServiceMock.On("GetCurrentGame", 1, 1).Return(typegames.CurrentGame{Id: 1, Name: "Half-Life 1"}, nil)
+			timerServiceMock.On("GetCurrentTimerTimeSpent", 1, 1).Return(time.Duration(0), nil)
 
 			return databaseMock, timerServiceMock, gettingServiceMock
 		},
@@ -50,8 +50,8 @@ var FinishCurrentGameTestCases = []FinishCurrentGameTestCase{
 			timerServiceMock := new(srvtimersmock.ServiceMock)
 			gettingServiceMock := new(srvgamesmock.GettingServiceMock)
 
-			gettingServiceMock.On("GetCurrentGame", 1).Return(typegames.CurrentGame{Id: 1, Name: "Half-Life 1"}, nil)
-			timerServiceMock.On("GetCurrentTimerTimeSpent", 1).Return(time.Duration(0), dbError)
+			gettingServiceMock.On("GetCurrentGame", 1, 1).Return(typegames.CurrentGame{Id: 1, Name: "Half-Life 1"}, nil)
+			timerServiceMock.On("GetCurrentTimerTimeSpent", 1, 1).Return(time.Duration(0), dbError)
 
 			return databaseMock, timerServiceMock, gettingServiceMock
 		},
@@ -66,9 +66,9 @@ var FinishCurrentGameTestCases = []FinishCurrentGameTestCase{
 			timerServiceMock := new(srvtimersmock.ServiceMock)
 			gettingServiceMock := new(srvgamesmock.GettingServiceMock)
 
-			gettingServiceMock.On("GetCurrentGame", 1).Return(typegames.CurrentGame{Id: 1, Name: "Half-Life 1"}, nil)
-			timerServiceMock.On("GetCurrentTimerTimeSpent", 1).Return(30*time.Minute, nil)
-			timerServiceMock.On("ForceStopCurrentTimer", 1).Return(typetimers.Timer{}, nil)
+			gettingServiceMock.On("GetCurrentGame", 1, 1).Return(typegames.CurrentGame{Id: 1, Name: "Half-Life 1"}, nil)
+			timerServiceMock.On("GetCurrentTimerTimeSpent", 1, 1).Return(30*time.Minute, nil)
+			timerServiceMock.On("ForceStopCurrentTimer", 1, 1).Return(typetimers.Timer{}, nil)
 			databaseMock.On("FinishCurrentGameCommand", 1, 1, 1, 1, (*int)(nil)).Return(typegames.UserGame{}, dbError)
 
 			return databaseMock, timerServiceMock, gettingServiceMock
@@ -85,9 +85,9 @@ var FinishCurrentGameTestCases = []FinishCurrentGameTestCase{
 			timerServiceMock := new(srvtimersmock.ServiceMock)
 			gettingServiceMock := new(srvgamesmock.GettingServiceMock)
 
-			gettingServiceMock.On("GetCurrentGame", 1).Return(typegames.CurrentGame{Id: 1, Name: "Half-Life 1"}, nil)
-			timerServiceMock.On("GetCurrentTimerTimeSpent", 1).Return(30*time.Minute, nil)
-			timerServiceMock.On("ForceStopCurrentTimer", 1).Return(typetimers.Timer{}, nil)
+			gettingServiceMock.On("GetCurrentGame", 1, 1).Return(typegames.CurrentGame{Id: 1, Name: "Half-Life 1"}, nil)
+			timerServiceMock.On("GetCurrentTimerTimeSpent", 1, 1).Return(30*time.Minute, nil)
+			timerServiceMock.On("ForceStopCurrentTimer", 1, 1).Return(typetimers.Timer{}, nil)
 			databaseMock.On("FinishCurrentGameCommand", 1, 1, 1, 1, (*int)(nil)).
 				Return(typegames.UserGame{Id: 1, Name: "Half-Life 1", TimeSpent: 30 * time.Minute, StartDate: gameStartDate}, nil)
 
@@ -109,7 +109,7 @@ func TestSrvGames_FinishCurrentGame(test *testing.T) {
 			}
 
 			// Act
-			game, err := sut.FinishCurrentGame(testCase.UserId)
+			game, err := sut.FinishCurrentGame(testCase.UserId, 1)
 
 			// Assert
 			if testCase.ExpectedErrorAs != nil {

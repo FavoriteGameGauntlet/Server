@@ -98,18 +98,18 @@ func ConvertIntSliceToString(intSlice []int) string {
 // declared here instead of imported so that common keeps no dependency on the auth service.
 type AdminChecker interface {
 	GetUserId(ctx echo.Context) (userId int, err error)
-	IsAdmin(userId int) (isAdmin bool, err error)
+	IsAdmin(userId int, partyId int) (isAdmin bool, err error)
 }
 
 // RequireAdmin returns an error unless the request comes from an admin of the party.
-func RequireAdmin(ctx echo.Context, authService AdminChecker) error {
+func RequireAdmin(ctx echo.Context, authService AdminChecker, partyId int) error {
 	userId, err := authService.GetUserId(ctx)
 
 	if err != nil {
 		return err
 	}
 
-	isAdmin, err := authService.IsAdmin(userId)
+	isAdmin, err := authService.IsAdmin(userId, partyId)
 
 	if err != nil {
 		return err

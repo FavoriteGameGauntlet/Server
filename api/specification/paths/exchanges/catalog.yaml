@@ -1,6 +1,8 @@
 get:
   operationId: getExchanges
   tags: [ Exchanges ]
+  parameters:
+    - $ref: "../../components/parameters/PartyId.yaml"
   responses:
     "200":
       $ref: "../../components/responses/ExchangesResponse.yaml"
@@ -11,6 +13,8 @@ get:
 post:
   operationId: createExchange
   tags: [ Exchanges ]
+  parameters:
+    - $ref: "../../components/parameters/PartyId.yaml"
   requestBody:
     $ref: "../../components/requests/ExchangeCreateRequest.yaml"
   responses:

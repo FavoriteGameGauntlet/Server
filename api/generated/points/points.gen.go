@@ -125,6 +125,9 @@ type UserPointsByLogins = []struct {
 	Points UserPoints `json:"points"`
 }
 
+// PartyId defines model for PartyId.
+type PartyId = int
+
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse = Error
 
@@ -176,44 +179,44 @@ type ChangeUserPointValueJSONRequestBody = PointChange
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
-	// (GET /points/party)
-	GetAllPartyPoints(ctx echo.Context) error
+	// (GET /parties/{partyId}/points/party)
+	GetAllPartyPoints(ctx echo.Context, partyId PartyId) error
 
-	// (GET /points/party/types/{name})
-	GetPartyPointValue(ctx echo.Context, name Name) error
+	// (GET /parties/{partyId}/points/party/types/{name})
+	GetPartyPointValue(ctx echo.Context, partyId PartyId, name Name) error
 
-	// (PATCH /points/party/types/{name})
-	ChangePartyPointValue(ctx echo.Context, name Name) error
+	// (PATCH /parties/{partyId}/points/party/types/{name})
+	ChangePartyPointValue(ctx echo.Context, partyId PartyId, name Name) error
 
-	// (GET /points/party/types/{name}/history)
-	GetPartyPointHistory(ctx echo.Context, name Name) error
+	// (GET /parties/{partyId}/points/party/types/{name}/history)
+	GetPartyPointHistory(ctx echo.Context, partyId PartyId, name Name) error
 
-	// (GET /points/types)
-	GetPointTypes(ctx echo.Context) error
+	// (GET /parties/{partyId}/points/types)
+	GetPointTypes(ctx echo.Context, partyId PartyId) error
 
-	// (POST /points/types)
-	CreatePointType(ctx echo.Context) error
+	// (POST /parties/{partyId}/points/types)
+	CreatePointType(ctx echo.Context, partyId PartyId) error
 
-	// (DELETE /points/types/{name})
-	RemovePointType(ctx echo.Context, name Name) error
+	// (DELETE /parties/{partyId}/points/types/{name})
+	RemovePointType(ctx echo.Context, partyId PartyId, name Name) error
 
-	// (PATCH /points/types/{name})
-	ChangePointType(ctx echo.Context, name Name) error
+	// (PATCH /parties/{partyId}/points/types/{name})
+	ChangePointType(ctx echo.Context, partyId PartyId, name Name) error
 
-	// (GET /points/users)
-	GetAllUserPoints(ctx echo.Context) error
+	// (GET /parties/{partyId}/points/users)
+	GetAllUserPoints(ctx echo.Context, partyId PartyId) error
 
-	// (GET /points/users/{login})
-	GetUserPoints(ctx echo.Context, login Login) error
+	// (GET /parties/{partyId}/points/users/{login})
+	GetUserPoints(ctx echo.Context, partyId PartyId, login Login) error
 
-	// (GET /points/users/{login}/types/{name})
-	GetUserPointValue(ctx echo.Context, login Login, name Name) error
+	// (GET /parties/{partyId}/points/users/{login}/types/{name})
+	GetUserPointValue(ctx echo.Context, partyId PartyId, login Login, name Name) error
 
-	// (PATCH /points/users/{login}/types/{name})
-	ChangeUserPointValue(ctx echo.Context, login Login, name Name) error
+	// (PATCH /parties/{partyId}/points/users/{login}/types/{name})
+	ChangeUserPointValue(ctx echo.Context, partyId PartyId, login Login, name Name) error
 
-	// (GET /points/users/{login}/types/{name}/history)
-	GetUserPointHistory(ctx echo.Context, login Login, name Name) error
+	// (GET /parties/{partyId}/points/users/{login}/types/{name}/history)
+	GetUserPointHistory(ctx echo.Context, partyId PartyId, login Login, name Name) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -224,15 +227,30 @@ type ServerInterfaceWrapper struct {
 // GetAllPartyPoints converts echo context to params.
 func (w *ServerInterfaceWrapper) GetAllPartyPoints(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetAllPartyPoints(ctx)
+	err = w.Handler.GetAllPartyPoints(ctx, partyId)
 	return err
 }
 
 // GetPartyPointValue converts echo context to params.
 func (w *ServerInterfaceWrapper) GetPartyPointValue(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "name" -------------
 	var name Name
 
@@ -242,13 +260,21 @@ func (w *ServerInterfaceWrapper) GetPartyPointValue(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetPartyPointValue(ctx, name)
+	err = w.Handler.GetPartyPointValue(ctx, partyId, name)
 	return err
 }
 
 // ChangePartyPointValue converts echo context to params.
 func (w *ServerInterfaceWrapper) ChangePartyPointValue(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "name" -------------
 	var name Name
 
@@ -258,13 +284,21 @@ func (w *ServerInterfaceWrapper) ChangePartyPointValue(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ChangePartyPointValue(ctx, name)
+	err = w.Handler.ChangePartyPointValue(ctx, partyId, name)
 	return err
 }
 
 // GetPartyPointHistory converts echo context to params.
 func (w *ServerInterfaceWrapper) GetPartyPointHistory(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "name" -------------
 	var name Name
 
@@ -274,31 +308,53 @@ func (w *ServerInterfaceWrapper) GetPartyPointHistory(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetPartyPointHistory(ctx, name)
+	err = w.Handler.GetPartyPointHistory(ctx, partyId, name)
 	return err
 }
 
 // GetPointTypes converts echo context to params.
 func (w *ServerInterfaceWrapper) GetPointTypes(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetPointTypes(ctx)
+	err = w.Handler.GetPointTypes(ctx, partyId)
 	return err
 }
 
 // CreatePointType converts echo context to params.
 func (w *ServerInterfaceWrapper) CreatePointType(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.CreatePointType(ctx)
+	err = w.Handler.CreatePointType(ctx, partyId)
 	return err
 }
 
 // RemovePointType converts echo context to params.
 func (w *ServerInterfaceWrapper) RemovePointType(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "name" -------------
 	var name Name
 
@@ -308,13 +364,21 @@ func (w *ServerInterfaceWrapper) RemovePointType(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.RemovePointType(ctx, name)
+	err = w.Handler.RemovePointType(ctx, partyId, name)
 	return err
 }
 
 // ChangePointType converts echo context to params.
 func (w *ServerInterfaceWrapper) ChangePointType(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "name" -------------
 	var name Name
 
@@ -324,22 +388,37 @@ func (w *ServerInterfaceWrapper) ChangePointType(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ChangePointType(ctx, name)
+	err = w.Handler.ChangePointType(ctx, partyId, name)
 	return err
 }
 
 // GetAllUserPoints converts echo context to params.
 func (w *ServerInterfaceWrapper) GetAllUserPoints(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetAllUserPoints(ctx)
+	err = w.Handler.GetAllUserPoints(ctx, partyId)
 	return err
 }
 
 // GetUserPoints converts echo context to params.
 func (w *ServerInterfaceWrapper) GetUserPoints(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "login" -------------
 	var login Login
 
@@ -349,13 +428,21 @@ func (w *ServerInterfaceWrapper) GetUserPoints(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetUserPoints(ctx, login)
+	err = w.Handler.GetUserPoints(ctx, partyId, login)
 	return err
 }
 
 // GetUserPointValue converts echo context to params.
 func (w *ServerInterfaceWrapper) GetUserPointValue(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "login" -------------
 	var login Login
 
@@ -373,13 +460,21 @@ func (w *ServerInterfaceWrapper) GetUserPointValue(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetUserPointValue(ctx, login, name)
+	err = w.Handler.GetUserPointValue(ctx, partyId, login, name)
 	return err
 }
 
 // ChangeUserPointValue converts echo context to params.
 func (w *ServerInterfaceWrapper) ChangeUserPointValue(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "login" -------------
 	var login Login
 
@@ -397,13 +492,21 @@ func (w *ServerInterfaceWrapper) ChangeUserPointValue(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ChangeUserPointValue(ctx, login, name)
+	err = w.Handler.ChangeUserPointValue(ctx, partyId, login, name)
 	return err
 }
 
 // GetUserPointHistory converts echo context to params.
 func (w *ServerInterfaceWrapper) GetUserPointHistory(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "login" -------------
 	var login Login
 
@@ -421,7 +524,7 @@ func (w *ServerInterfaceWrapper) GetUserPointHistory(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetUserPointHistory(ctx, login, name)
+	err = w.Handler.GetUserPointHistory(ctx, partyId, login, name)
 	return err
 }
 
@@ -453,18 +556,18 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/points/party", wrapper.GetAllPartyPoints)
-	router.GET(baseURL+"/points/party/types/:name", wrapper.GetPartyPointValue)
-	router.PATCH(baseURL+"/points/party/types/:name", wrapper.ChangePartyPointValue)
-	router.GET(baseURL+"/points/party/types/:name/history", wrapper.GetPartyPointHistory)
-	router.GET(baseURL+"/points/types", wrapper.GetPointTypes)
-	router.POST(baseURL+"/points/types", wrapper.CreatePointType)
-	router.DELETE(baseURL+"/points/types/:name", wrapper.RemovePointType)
-	router.PATCH(baseURL+"/points/types/:name", wrapper.ChangePointType)
-	router.GET(baseURL+"/points/users", wrapper.GetAllUserPoints)
-	router.GET(baseURL+"/points/users/:login", wrapper.GetUserPoints)
-	router.GET(baseURL+"/points/users/:login/types/:name", wrapper.GetUserPointValue)
-	router.PATCH(baseURL+"/points/users/:login/types/:name", wrapper.ChangeUserPointValue)
-	router.GET(baseURL+"/points/users/:login/types/:name/history", wrapper.GetUserPointHistory)
+	router.GET(baseURL+"/parties/:partyId/points/party", wrapper.GetAllPartyPoints)
+	router.GET(baseURL+"/parties/:partyId/points/party/types/:name", wrapper.GetPartyPointValue)
+	router.PATCH(baseURL+"/parties/:partyId/points/party/types/:name", wrapper.ChangePartyPointValue)
+	router.GET(baseURL+"/parties/:partyId/points/party/types/:name/history", wrapper.GetPartyPointHistory)
+	router.GET(baseURL+"/parties/:partyId/points/types", wrapper.GetPointTypes)
+	router.POST(baseURL+"/parties/:partyId/points/types", wrapper.CreatePointType)
+	router.DELETE(baseURL+"/parties/:partyId/points/types/:name", wrapper.RemovePointType)
+	router.PATCH(baseURL+"/parties/:partyId/points/types/:name", wrapper.ChangePointType)
+	router.GET(baseURL+"/parties/:partyId/points/users", wrapper.GetAllUserPoints)
+	router.GET(baseURL+"/parties/:partyId/points/users/:login", wrapper.GetUserPoints)
+	router.GET(baseURL+"/parties/:partyId/points/users/:login/types/:name", wrapper.GetUserPointValue)
+	router.PATCH(baseURL+"/parties/:partyId/points/users/:login/types/:name", wrapper.ChangeUserPointValue)
+	router.GET(baseURL+"/parties/:partyId/points/users/:login/types/:name/history", wrapper.GetUserPointHistory)
 
 }

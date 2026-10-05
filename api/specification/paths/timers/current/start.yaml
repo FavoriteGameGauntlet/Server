@@ -1,6 +1,8 @@
 post:
   operationId: startCurrentTimer
   tags: [ Timers ]
+  parameters:
+    - $ref: "../../../components/parameters/PartyId.yaml"
   responses:
     "200":
       $ref: "../../../components/responses/TimerResponse.yaml"

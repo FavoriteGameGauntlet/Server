@@ -93,7 +93,7 @@ var MakeEffectRollTestCases = []MakeEffectRollTestCase{
 		UserId: 1,
 		SetupWheelEffectMock: func() *dbwheeleffectsmock.DatabaseMock {
 			databaseMock := new(dbwheeleffectsmock.DatabaseMock)
-			databaseMock.On("GetAvailableRollsCountCommand", 1).Return(0, dbError)
+			databaseMock.On("GetAvailableRollsCountCommand", 1, 1).Return(0, dbError)
 			return databaseMock
 		},
 		SetupPointsMock: func() *dbpointsmock.DatabaseMock { return new(dbpointsmock.DatabaseMock) },
@@ -106,13 +106,13 @@ var MakeEffectRollTestCases = []MakeEffectRollTestCase{
 		UserId: 1,
 		SetupWheelEffectMock: func() *dbwheeleffectsmock.DatabaseMock {
 			databaseMock := new(dbwheeleffectsmock.DatabaseMock)
-			databaseMock.On("GetAvailableRollsCountCommand", 1).Return(5, nil)
+			databaseMock.On("GetAvailableRollsCountCommand", 1, 1).Return(5, nil)
 			return databaseMock
 		},
 		SetupPointsMock: func() *dbpointsmock.DatabaseMock { return new(dbpointsmock.DatabaseMock) },
 		SetupSysParams: func() *srvsysparamsmock.ServiceMock {
 			spSvc := new(srvsysparamsmock.ServiceMock)
-			spSvc.On("GetInt", typesysparams.ParamMinimumAvailableRollCountForRoll).Return(0, dbError)
+			spSvc.On("GetInt", 1, typesysparams.ParamMinimumAvailableRollCountForRoll).Return(0, dbError)
 			return spSvc
 		},
 		ExpectedError: dbError,
@@ -123,13 +123,13 @@ var MakeEffectRollTestCases = []MakeEffectRollTestCase{
 		UserId: 1,
 		SetupWheelEffectMock: func() *dbwheeleffectsmock.DatabaseMock {
 			databaseMock := new(dbwheeleffectsmock.DatabaseMock)
-			databaseMock.On("GetAvailableRollsCountCommand", 1).Return(0, nil)
+			databaseMock.On("GetAvailableRollsCountCommand", 1, 1).Return(0, nil)
 			return databaseMock
 		},
 		SetupPointsMock: func() *dbpointsmock.DatabaseMock { return new(dbpointsmock.DatabaseMock) },
 		SetupSysParams: func() *srvsysparamsmock.ServiceMock {
 			spSvc := new(srvsysparamsmock.ServiceMock)
-			spSvc.On("GetInt", typesysparams.ParamMinimumAvailableRollCountForRoll).Return(1, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamMinimumAvailableRollCountForRoll).Return(1, nil)
 			return spSvc
 		},
 		ExpectedErrorCode: "AVAILABLE_ROLLS_NOT_FOUND",
@@ -140,14 +140,14 @@ var MakeEffectRollTestCases = []MakeEffectRollTestCase{
 		UserId: 1,
 		SetupWheelEffectMock: func() *dbwheeleffectsmock.DatabaseMock {
 			databaseMock := new(dbwheeleffectsmock.DatabaseMock)
-			databaseMock.On("GetAvailableRollsCountCommand", 1).Return(1, nil)
+			databaseMock.On("GetAvailableRollsCountCommand", 1, 1).Return(1, nil)
 			databaseMock.On("GetAvailableWheelRowsCommand", 1, 1, 1).Return([]typewheeleffects.WheelRow(nil), dbError)
 			return databaseMock
 		},
 		SetupPointsMock: func() *dbpointsmock.DatabaseMock { return new(dbpointsmock.DatabaseMock) },
 		SetupSysParams: func() *srvsysparamsmock.ServiceMock {
 			spSvc := new(srvsysparamsmock.ServiceMock)
-			spSvc.On("GetInt", typesysparams.ParamMinimumAvailableRollCountForRoll).Return(1, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamMinimumAvailableRollCountForRoll).Return(1, nil)
 			return spSvc
 		},
 		ExpectedError: dbError,
@@ -158,15 +158,15 @@ var MakeEffectRollTestCases = []MakeEffectRollTestCase{
 		UserId: 1,
 		SetupWheelEffectMock: func() *dbwheeleffectsmock.DatabaseMock {
 			databaseMock := new(dbwheeleffectsmock.DatabaseMock)
-			databaseMock.On("GetAvailableRollsCountCommand", 1).Return(1, nil)
+			databaseMock.On("GetAvailableRollsCountCommand", 1, 1).Return(1, nil)
 			databaseMock.On("GetAvailableWheelRowsCommand", 1, 1, 1).Return(candidateRows, nil)
 			return databaseMock
 		},
 		SetupPointsMock: func() *dbpointsmock.DatabaseMock { return new(dbpointsmock.DatabaseMock) },
 		SetupSysParams: func() *srvsysparamsmock.ServiceMock {
 			spSvc := new(srvsysparamsmock.ServiceMock)
-			spSvc.On("GetInt", typesysparams.ParamMinimumAvailableRollCountForRoll).Return(1, nil)
-			spSvc.On("GetInt", typesysparams.ParamMinimumAvailableWheelEffectsForRoll).Return(0, dbError)
+			spSvc.On("GetInt", 1, typesysparams.ParamMinimumAvailableRollCountForRoll).Return(1, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamMinimumAvailableWheelEffectsForRoll).Return(0, dbError)
 			return spSvc
 		},
 		ExpectedError: dbError,
@@ -177,15 +177,15 @@ var MakeEffectRollTestCases = []MakeEffectRollTestCase{
 		UserId: 1,
 		SetupWheelEffectMock: func() *dbwheeleffectsmock.DatabaseMock {
 			databaseMock := new(dbwheeleffectsmock.DatabaseMock)
-			databaseMock.On("GetAvailableRollsCountCommand", 1).Return(1, nil)
+			databaseMock.On("GetAvailableRollsCountCommand", 1, 1).Return(1, nil)
 			databaseMock.On("GetAvailableWheelRowsCommand", 1, 1, 1).Return(candidateRows[:1], nil)
 			return databaseMock
 		},
 		SetupPointsMock: func() *dbpointsmock.DatabaseMock { return new(dbpointsmock.DatabaseMock) },
 		SetupSysParams: func() *srvsysparamsmock.ServiceMock {
 			spSvc := new(srvsysparamsmock.ServiceMock)
-			spSvc.On("GetInt", typesysparams.ParamMinimumAvailableRollCountForRoll).Return(1, nil)
-			spSvc.On("GetInt", typesysparams.ParamMinimumAvailableWheelEffectsForRoll).Return(3, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamMinimumAvailableRollCountForRoll).Return(1, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamMinimumAvailableWheelEffectsForRoll).Return(3, nil)
 			return spSvc
 		},
 		ExpectedErrorCode: "NOT_ENOUGH_AVAILABLE_WHEEL_EFFECTS",
@@ -196,16 +196,16 @@ var MakeEffectRollTestCases = []MakeEffectRollTestCase{
 		UserId: 1,
 		SetupWheelEffectMock: func() *dbwheeleffectsmock.DatabaseMock {
 			databaseMock := new(dbwheeleffectsmock.DatabaseMock)
-			databaseMock.On("GetAvailableRollsCountCommand", 1).Return(1, nil)
+			databaseMock.On("GetAvailableRollsCountCommand", 1, 1).Return(1, nil)
 			databaseMock.On("GetAvailableWheelRowsCommand", 1, 1, 1).Return(candidateRows, nil)
 			return databaseMock
 		},
 		SetupPointsMock: func() *dbpointsmock.DatabaseMock { return new(dbpointsmock.DatabaseMock) },
 		SetupSysParams: func() *srvsysparamsmock.ServiceMock {
 			spSvc := new(srvsysparamsmock.ServiceMock)
-			spSvc.On("GetInt", typesysparams.ParamMinimumAvailableRollCountForRoll).Return(1, nil)
-			spSvc.On("GetInt", typesysparams.ParamMinimumAvailableWheelEffectsForRoll).Return(3, nil)
-			spSvc.On("GetInt", typesysparams.ParamAvailableRollChangeByRoll).Return(0, dbError)
+			spSvc.On("GetInt", 1, typesysparams.ParamMinimumAvailableRollCountForRoll).Return(1, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamMinimumAvailableWheelEffectsForRoll).Return(3, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamAvailableRollChangeByRoll).Return(0, dbError)
 			return spSvc
 		},
 		ExpectedError: dbError,
@@ -216,7 +216,7 @@ var MakeEffectRollTestCases = []MakeEffectRollTestCase{
 		UserId: 1,
 		SetupWheelEffectMock: func() *dbwheeleffectsmock.DatabaseMock {
 			databaseMock := new(dbwheeleffectsmock.DatabaseMock)
-			databaseMock.On("GetAvailableRollsCountCommand", 1).Return(1, nil)
+			databaseMock.On("GetAvailableRollsCountCommand", 1, 1).Return(1, nil)
 			databaseMock.On("GetAvailableWheelRowsCommand", 1, 1, 1).Return(candidateRows, nil)
 			return databaseMock
 		},
@@ -230,9 +230,9 @@ var MakeEffectRollTestCases = []MakeEffectRollTestCase{
 		},
 		SetupSysParams: func() *srvsysparamsmock.ServiceMock {
 			spSvc := new(srvsysparamsmock.ServiceMock)
-			spSvc.On("GetInt", typesysparams.ParamMinimumAvailableRollCountForRoll).Return(1, nil)
-			spSvc.On("GetInt", typesysparams.ParamMinimumAvailableWheelEffectsForRoll).Return(3, nil)
-			spSvc.On("GetInt", typesysparams.ParamAvailableRollChangeByRoll).Return(-1, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamMinimumAvailableRollCountForRoll).Return(1, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamMinimumAvailableWheelEffectsForRoll).Return(3, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamAvailableRollChangeByRoll).Return(-1, nil)
 			return spSvc
 		},
 		ExpectedError: dbError,
@@ -243,7 +243,7 @@ var MakeEffectRollTestCases = []MakeEffectRollTestCase{
 		UserId: 1,
 		SetupWheelEffectMock: func() *dbwheeleffectsmock.DatabaseMock {
 			databaseMock := new(dbwheeleffectsmock.DatabaseMock)
-			databaseMock.On("GetAvailableRollsCountCommand", 1).Return(1, nil)
+			databaseMock.On("GetAvailableRollsCountCommand", 1, 1).Return(1, nil)
 			databaseMock.On("GetAvailableWheelRowsCommand", 1, 1, 1).Return(candidateRows, nil)
 			databaseMock.On("ClearLastWheelEffectsCommand", 1, 1).Return(dbError)
 			return databaseMock
@@ -255,9 +255,9 @@ var MakeEffectRollTestCases = []MakeEffectRollTestCase{
 		},
 		SetupSysParams: func() *srvsysparamsmock.ServiceMock {
 			spSvc := new(srvsysparamsmock.ServiceMock)
-			spSvc.On("GetInt", typesysparams.ParamMinimumAvailableRollCountForRoll).Return(1, nil)
-			spSvc.On("GetInt", typesysparams.ParamMinimumAvailableWheelEffectsForRoll).Return(3, nil)
-			spSvc.On("GetInt", typesysparams.ParamAvailableRollChangeByRoll).Return(-1, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamMinimumAvailableRollCountForRoll).Return(1, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamMinimumAvailableWheelEffectsForRoll).Return(3, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamAvailableRollChangeByRoll).Return(-1, nil)
 			return spSvc
 		},
 		ExpectedError: dbError,
@@ -268,7 +268,7 @@ var MakeEffectRollTestCases = []MakeEffectRollTestCase{
 		UserId: 1,
 		SetupWheelEffectMock: func() *dbwheeleffectsmock.DatabaseMock {
 			databaseMock := new(dbwheeleffectsmock.DatabaseMock)
-			databaseMock.On("GetAvailableRollsCountCommand", 1).Return(1, nil)
+			databaseMock.On("GetAvailableRollsCountCommand", 1, 1).Return(1, nil)
 			databaseMock.On("GetAvailableWheelRowsCommand", 1, 1, 1).Return(candidateRows, nil)
 			databaseMock.On("ClearLastWheelEffectsCommand", 1, 1).Return(nil)
 			databaseMock.On("AddLastRolledWheelEffectsCommand", 1, 1, matchRolledRows(10, 11, 12)).
@@ -282,9 +282,9 @@ var MakeEffectRollTestCases = []MakeEffectRollTestCase{
 		},
 		SetupSysParams: func() *srvsysparamsmock.ServiceMock {
 			spSvc := new(srvsysparamsmock.ServiceMock)
-			spSvc.On("GetInt", typesysparams.ParamMinimumAvailableRollCountForRoll).Return(1, nil)
-			spSvc.On("GetInt", typesysparams.ParamMinimumAvailableWheelEffectsForRoll).Return(3, nil)
-			spSvc.On("GetInt", typesysparams.ParamAvailableRollChangeByRoll).Return(-1, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamMinimumAvailableRollCountForRoll).Return(1, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamMinimumAvailableWheelEffectsForRoll).Return(3, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamAvailableRollChangeByRoll).Return(-1, nil)
 			return spSvc
 		},
 		ExpectedError: dbError,
@@ -295,7 +295,7 @@ var MakeEffectRollTestCases = []MakeEffectRollTestCase{
 		UserId: 1,
 		SetupWheelEffectMock: func() *dbwheeleffectsmock.DatabaseMock {
 			databaseMock := new(dbwheeleffectsmock.DatabaseMock)
-			databaseMock.On("GetAvailableRollsCountCommand", 1).Return(1, nil)
+			databaseMock.On("GetAvailableRollsCountCommand", 1, 1).Return(1, nil)
 			databaseMock.On("GetAvailableWheelRowsCommand", 1, 1, 1).Return(candidateRows, nil)
 			databaseMock.On("ClearLastWheelEffectsCommand", 1, 1).Return(nil)
 			databaseMock.On("AddLastRolledWheelEffectsCommand", 1, 1, matchRolledRows(10, 11, 12)).
@@ -310,9 +310,9 @@ var MakeEffectRollTestCases = []MakeEffectRollTestCase{
 		},
 		SetupSysParams: func() *srvsysparamsmock.ServiceMock {
 			spSvc := new(srvsysparamsmock.ServiceMock)
-			spSvc.On("GetInt", typesysparams.ParamMinimumAvailableRollCountForRoll).Return(1, nil)
-			spSvc.On("GetInt", typesysparams.ParamMinimumAvailableWheelEffectsForRoll).Return(3, nil)
-			spSvc.On("GetInt", typesysparams.ParamAvailableRollChangeByRoll).Return(-1, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamMinimumAvailableRollCountForRoll).Return(1, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamMinimumAvailableWheelEffectsForRoll).Return(3, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamAvailableRollChangeByRoll).Return(-1, nil)
 			return spSvc
 		},
 		ExpectedError: dbError,
@@ -323,7 +323,7 @@ var MakeEffectRollTestCases = []MakeEffectRollTestCase{
 		UserId: 1,
 		SetupWheelEffectMock: func() *dbwheeleffectsmock.DatabaseMock {
 			databaseMock := new(dbwheeleffectsmock.DatabaseMock)
-			databaseMock.On("GetAvailableRollsCountCommand", 1).Return(1, nil)
+			databaseMock.On("GetAvailableRollsCountCommand", 1, 1).Return(1, nil)
 			databaseMock.On("GetAvailableWheelRowsCommand", 1, 1, 1).Return(candidateRows, nil)
 			databaseMock.On("ClearLastWheelEffectsCommand", 1, 1).Return(nil)
 			databaseMock.On("AddLastRolledWheelEffectsCommand", 1, 1, matchRolledRows(10, 11, 12)).
@@ -338,9 +338,9 @@ var MakeEffectRollTestCases = []MakeEffectRollTestCase{
 		},
 		SetupSysParams: func() *srvsysparamsmock.ServiceMock {
 			spSvc := new(srvsysparamsmock.ServiceMock)
-			spSvc.On("GetInt", typesysparams.ParamMinimumAvailableRollCountForRoll).Return(1, nil)
-			spSvc.On("GetInt", typesysparams.ParamMinimumAvailableWheelEffectsForRoll).Return(3, nil)
-			spSvc.On("GetInt", typesysparams.ParamAvailableRollChangeByRoll).Return(-1, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamMinimumAvailableRollCountForRoll).Return(1, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamMinimumAvailableWheelEffectsForRoll).Return(3, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamAvailableRollChangeByRoll).Return(-1, nil)
 			return spSvc
 		},
 		ExpectedEffects: rolledResult,
@@ -362,7 +362,7 @@ var MakeEffectRollTestCases = []MakeEffectRollTestCase{
 		SetupPointsMock: func() *dbpointsmock.DatabaseMock { return new(dbpointsmock.DatabaseMock) },
 		SetupSysParams: func() *srvsysparamsmock.ServiceMock {
 			spSvc := new(srvsysparamsmock.ServiceMock)
-			spSvc.On("GetInt", typesysparams.ParamMinimumAvailableWheelEffectsForRoll).Return(3, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamMinimumAvailableWheelEffectsForRoll).Return(3, nil)
 			return spSvc
 		},
 		ExpectedEffects: rolledResult,
@@ -384,7 +384,7 @@ func TestSrvWheelEffects_MakeEffectRoll(test *testing.T) {
 			}
 
 			// Act
-			effects, err := sut.MakeEffectRoll(testCase.UserId, testCase.IsReroll)
+			effects, err := sut.MakeEffectRoll(testCase.UserId, 1, testCase.IsReroll)
 
 			// Assert
 			if testCase.ExpectedErrorCode != "" {

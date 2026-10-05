@@ -1,6 +1,8 @@
 get:
   operationId: getAvailableWheelEffectRollsCount
   tags: [ WheelEffects ]
+  parameters:
+    - $ref: "../../../../components/parameters/PartyId.yaml"
   responses:
     "200":
       $ref: "../../../../components/responses/PointsResponse.yaml"

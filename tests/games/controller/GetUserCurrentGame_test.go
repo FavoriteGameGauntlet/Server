@@ -6,6 +6,7 @@ import (
 	"FGG-Service/src/games/types"
 	"FGG-Service/tests/auth/mock"
 	"FGG-Service/tests/games/mock/srvgames"
+	"FGG-Service/tests/parties/srvmock"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -25,30 +26,30 @@ var currentGame = typegames.CurrentGame{Name: "Half-Life 1"}
 
 var GetUserCurrentGameTestCases = []GetUserCurrentGameTestCase{
 	{
-		// DoesUserSessionExist returns an error. The error will return.
-		Name: "DoesUserSessionExist_Error",
+		// GetUserId returns an error. The error will return.
+		Name: "GetUserId_Error",
 		SetupMock: func() (*srvgamesmock.ServiceMock, *srvauthmock.ServiceMock) {
 			gameServiceMock := new(srvgamesmock.ServiceMock)
 			authServiceMock := new(srvauthmock.ServiceMock)
 
 			authServiceMock.
-				On("DoesUserSessionExist", mock.Anything).
-				Return(false, dbError)
+				On("GetUserId", mock.Anything).
+				Return(0, dbError)
 
 			return gameServiceMock, authServiceMock
 		},
 		ExpectedStatus: http.StatusInternalServerError,
 	},
 	{
-		// DoesUserSessionExist returns false. 401 will return.
+		// GetUserId returns UnauthorizedError. 401 will return.
 		Name: "NoActiveSession",
 		SetupMock: func() (*srvgamesmock.ServiceMock, *srvauthmock.ServiceMock) {
 			gameServiceMock := new(srvgamesmock.ServiceMock)
 			authServiceMock := new(srvauthmock.ServiceMock)
 
 			authServiceMock.
-				On("DoesUserSessionExist", mock.Anything).
-				Return(false, nil)
+				On("GetUserId", mock.Anything).
+				Return(0, common.NewActiveSessionNotFoundUnauthorizedError())
 
 			return gameServiceMock, authServiceMock
 		},
@@ -62,8 +63,8 @@ var GetUserCurrentGameTestCases = []GetUserCurrentGameTestCase{
 			authServiceMock := new(srvauthmock.ServiceMock)
 
 			authServiceMock.
-				On("DoesUserSessionExist", mock.Anything).
-				Return(true, nil)
+				On("GetUserId", mock.Anything).
+				Return(1, nil)
 			authServiceMock.
 				On("GetUserIdByLogin", login).
 				Return(0, common.NewUserLoginNotFoundError(login))
@@ -80,8 +81,8 @@ var GetUserCurrentGameTestCases = []GetUserCurrentGameTestCase{
 			authServiceMock := new(srvauthmock.ServiceMock)
 
 			authServiceMock.
-				On("DoesUserSessionExist", mock.Anything).
-				Return(true, nil)
+				On("GetUserId", mock.Anything).
+				Return(1, nil)
 			authServiceMock.
 				On("GetUserIdByLogin", login).
 				Return(0, dbError)
@@ -98,13 +99,13 @@ var GetUserCurrentGameTestCases = []GetUserCurrentGameTestCase{
 			authServiceMock := new(srvauthmock.ServiceMock)
 
 			authServiceMock.
-				On("DoesUserSessionExist", mock.Anything).
-				Return(true, nil)
+				On("GetUserId", mock.Anything).
+				Return(1, nil)
 			authServiceMock.
 				On("GetUserIdByLogin", login).
 				Return(1, nil)
 			gameServiceMock.
-				On("GetCurrentGame", 1).
+				On("GetCurrentGame", 1, 1).
 				Return(typegames.CurrentGame{}, common.NewCurrentGameNotFoundError())
 
 			return gameServiceMock, authServiceMock
@@ -119,13 +120,13 @@ var GetUserCurrentGameTestCases = []GetUserCurrentGameTestCase{
 			authServiceMock := new(srvauthmock.ServiceMock)
 
 			authServiceMock.
-				On("DoesUserSessionExist", mock.Anything).
-				Return(true, nil)
+				On("GetUserId", mock.Anything).
+				Return(1, nil)
 			authServiceMock.
 				On("GetUserIdByLogin", login).
 				Return(1, nil)
 			gameServiceMock.
-				On("GetCurrentGame", 1).
+				On("GetCurrentGame", 1, 1).
 				Return(typegames.CurrentGame{}, dbError)
 
 			return gameServiceMock, authServiceMock
@@ -140,13 +141,13 @@ var GetUserCurrentGameTestCases = []GetUserCurrentGameTestCase{
 			authServiceMock := new(srvauthmock.ServiceMock)
 
 			authServiceMock.
-				On("DoesUserSessionExist", mock.Anything).
-				Return(true, nil)
+				On("GetUserId", mock.Anything).
+				Return(1, nil)
 			authServiceMock.
 				On("GetUserIdByLogin", login).
 				Return(1, nil)
 			gameServiceMock.
-				On("GetCurrentGame", 1).
+				On("GetCurrentGame", 1, 1).
 				Return(currentGame, nil)
 
 			return gameServiceMock, authServiceMock
@@ -167,13 +168,16 @@ func TestCtrlGames_GetUserCurrentGame(test *testing.T) {
 			ctx.SetParamValues(login)
 
 			gameServiceMock, authServiceMock := testCase.SetupMock()
+			partyServiceMock := new(srvpartiesmock.ServiceMock)
+			partyServiceMock.On("RequireMember", mock.Anything, 1).Return(nil).Maybe()
 			sut := ctrlgames.Controller{
-				Service:     gameServiceMock,
-				AuthService: authServiceMock,
+				Service:      gameServiceMock,
+				AuthService:  authServiceMock,
+				PartyService: partyServiceMock,
 			}
 
 			// Act
-			sut.GetUserCurrentGame(ctx, login)
+			sut.GetUserCurrentGame(ctx, 1, login)
 
 			// Assert
 			require.Equal(test, testCase.ExpectedStatus, rec.Code)
@@ -182,4 +186,37 @@ func TestCtrlGames_GetUserCurrentGame(test *testing.T) {
 			authServiceMock.AssertExpectations(test)
 		})
 	}
+}
+
+// A user outside the party is turned away before anything is read or changed.
+func TestCtrlGames_GetUserCurrentGame_NotPartyMember(test *testing.T) {
+	// Arrange
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	ctx := e.NewContext(req, rec)
+	ctx.SetParamNames("login")
+	ctx.SetParamValues(login)
+
+	gameServiceMock := new(srvgamesmock.ServiceMock)
+	authServiceMock := new(srvauthmock.ServiceMock)
+	authServiceMock.On("GetUserId", mock.Anything).Return(1, nil)
+	partyServiceMock := new(srvpartiesmock.ServiceMock)
+	partyServiceMock.On("RequireMember", 1, 1).Return(common.NewPartyNotFoundError(1))
+	sut := ctrlgames.Controller{
+		Service:      gameServiceMock,
+		AuthService:  authServiceMock,
+		PartyService: partyServiceMock,
+	}
+
+	// Act
+	sut.GetUserCurrentGame(ctx, 1, login)
+
+	// Assert
+	require.Equal(test, http.StatusNotFound, rec.Code)
+
+	gameServiceMock.AssertExpectations(test)
+	authServiceMock.AssertExpectations(test)
+	partyServiceMock.AssertExpectations(test)
 }

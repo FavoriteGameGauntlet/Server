@@ -2,6 +2,7 @@ get:
   operationId: getPartyPointHistory
   tags: [ Points ]
   parameters:
+    - $ref: "../../../../../components/parameters/PartyId.yaml"
     - $ref: "../../../../../components/parameters/Name.yaml"
   responses:
     "200":

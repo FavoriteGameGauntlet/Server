@@ -2,6 +2,7 @@ get:
   operationId: getUserCurrentGame
   tags: [ Games ]
   parameters:
+    - $ref: "../../../../components/parameters/PartyId.yaml"
     - $ref: "../../../../components/parameters/Login.yaml"
   responses:
     "200":

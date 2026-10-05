@@ -1,6 +1,8 @@
 post:
   operationId: clearLastRolledWheelEffects
   tags: [ WheelEffects ]
+  parameters:
+    - $ref: "../../../../../components/parameters/PartyId.yaml"
   responses:
     "204":
       description: Success.

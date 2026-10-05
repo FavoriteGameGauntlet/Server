@@ -36,6 +36,9 @@ type SystemParameterChange struct {
 // SystemParameters defines model for SystemParameters.
 type SystemParameters = []SystemParameter
 
+// PartyId defines model for PartyId.
+type PartyId = int
+
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse = Error
 
@@ -54,17 +57,17 @@ type ChangeSystemParameterJSONRequestBody = SystemParameterChange
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
-	// (GET /system-parameters)
-	GetSystemParameters(ctx echo.Context) error
+	// (GET /parties/{partyId}/system-parameters)
+	GetSystemParameters(ctx echo.Context, partyId PartyId) error
 
-	// (DELETE /system-parameters/{name})
-	ResetSystemParameter(ctx echo.Context, name Name) error
+	// (DELETE /parties/{partyId}/system-parameters/{name})
+	ResetSystemParameter(ctx echo.Context, partyId PartyId, name Name) error
 
-	// (GET /system-parameters/{name})
-	GetSystemParameter(ctx echo.Context, name Name) error
+	// (GET /parties/{partyId}/system-parameters/{name})
+	GetSystemParameter(ctx echo.Context, partyId PartyId, name Name) error
 
-	// (POST /system-parameters/{name})
-	ChangeSystemParameter(ctx echo.Context, name Name) error
+	// (POST /parties/{partyId}/system-parameters/{name})
+	ChangeSystemParameter(ctx echo.Context, partyId PartyId, name Name) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -75,15 +78,30 @@ type ServerInterfaceWrapper struct {
 // GetSystemParameters converts echo context to params.
 func (w *ServerInterfaceWrapper) GetSystemParameters(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetSystemParameters(ctx)
+	err = w.Handler.GetSystemParameters(ctx, partyId)
 	return err
 }
 
 // ResetSystemParameter converts echo context to params.
 func (w *ServerInterfaceWrapper) ResetSystemParameter(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "name" -------------
 	var name Name
 
@@ -93,13 +111,21 @@ func (w *ServerInterfaceWrapper) ResetSystemParameter(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ResetSystemParameter(ctx, name)
+	err = w.Handler.ResetSystemParameter(ctx, partyId, name)
 	return err
 }
 
 // GetSystemParameter converts echo context to params.
 func (w *ServerInterfaceWrapper) GetSystemParameter(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "name" -------------
 	var name Name
 
@@ -109,13 +135,21 @@ func (w *ServerInterfaceWrapper) GetSystemParameter(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetSystemParameter(ctx, name)
+	err = w.Handler.GetSystemParameter(ctx, partyId, name)
 	return err
 }
 
 // ChangeSystemParameter converts echo context to params.
 func (w *ServerInterfaceWrapper) ChangeSystemParameter(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "name" -------------
 	var name Name
 
@@ -125,7 +159,7 @@ func (w *ServerInterfaceWrapper) ChangeSystemParameter(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ChangeSystemParameter(ctx, name)
+	err = w.Handler.ChangeSystemParameter(ctx, partyId, name)
 	return err
 }
 
@@ -157,9 +191,9 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/system-parameters", wrapper.GetSystemParameters)
-	router.DELETE(baseURL+"/system-parameters/:name", wrapper.ResetSystemParameter)
-	router.GET(baseURL+"/system-parameters/:name", wrapper.GetSystemParameter)
-	router.POST(baseURL+"/system-parameters/:name", wrapper.ChangeSystemParameter)
+	router.GET(baseURL+"/parties/:partyId/system-parameters", wrapper.GetSystemParameters)
+	router.DELETE(baseURL+"/parties/:partyId/system-parameters/:name", wrapper.ResetSystemParameter)
+	router.GET(baseURL+"/parties/:partyId/system-parameters/:name", wrapper.GetSystemParameter)
+	router.POST(baseURL+"/parties/:partyId/system-parameters/:name", wrapper.ChangeSystemParameter)
 
 }

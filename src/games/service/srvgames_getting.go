@@ -9,8 +9,8 @@ import (
 )
 
 type IGettingService interface {
-	GetWishlistGames(userId int) (typegames.WishlistGames, error)
-	GetCurrentGame(userId int) (typegames.CurrentGame, error)
+	GetWishlistGames(userId int, partyId int) (typegames.WishlistGames, error)
+	GetCurrentGame(userId int, partyId int) (typegames.CurrentGame, error)
 }
 
 type GettingService struct {
@@ -25,8 +25,8 @@ func NewGettingService() IGettingService {
 	}
 }
 
-func (s *GettingService) GetCurrentGame(userId int) (game typegames.CurrentGame, err error) {
-	userGame, err := s.Database.GetCurrentGameCommand(userId, defaultPartyId)
+func (s *GettingService) GetCurrentGame(userId int, partyId int) (game typegames.CurrentGame, err error) {
+	userGame, err := s.Database.GetCurrentGameCommand(userId, partyId)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = common.NewCurrentGameNotFoundError()
@@ -47,6 +47,6 @@ func (s *GettingService) GetCurrentGame(userId int) (game typegames.CurrentGame,
 	return
 }
 
-func (s *GettingService) GetWishlistGames(userId int) (typegames.WishlistGames, error) {
-	return s.Database.GetWishlistGamesCommand(userId, defaultPartyId)
+func (s *GettingService) GetWishlistGames(userId int, partyId int) (typegames.WishlistGames, error) {
+	return s.Database.GetWishlistGamesCommand(userId, partyId)
 }

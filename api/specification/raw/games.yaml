@@ -3,20 +3,20 @@ info:
   title: Favorite Game Gauntlet
   version: 0.15.0
 paths:
-  /games/users/{login}/wishlist:
+  /parties/{partyId}/games/users/{login}/wishlist:
     $ref: "../paths/games/users/login/wishlist.yaml"
 
-  /games/users/{login}/current:
+  /parties/{partyId}/games/users/{login}/current:
     $ref: "../paths/games/users/login/current.yaml"
 
-  /games/users/{login}/history:
+  /parties/{partyId}/games/users/{login}/history:
     $ref: "../paths/games/users/login/history.yaml"
 
-  /games/current:
+  /parties/{partyId}/games/current:
     $ref: "../paths/games/current.yaml"
 
-  /games/current/actions:
+  /parties/{partyId}/games/current/actions:
     $ref: "../paths/games/current/actions.yaml"
 
-  /games/reviews/{name}:
+  /parties/{partyId}/games/reviews/{name}:
     $ref: "../paths/games/reviews/name.yaml"

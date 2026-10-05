@@ -2,6 +2,7 @@ post:
   operationId: addUserWishlistGame
   tags: [ Games ]
   parameters:
+    - $ref: "../../../../components/parameters/PartyId.yaml"
     - $ref: "../../../../components/parameters/Login.yaml"
   requestBody:
     $ref: "../../../../components/requests/WishlistGameRequest.yaml"
@@ -20,6 +21,7 @@ get:
   operationId: getUserWishlistGames
   tags: [ Games ]
   parameters:
+    - $ref: "../../../../components/parameters/PartyId.yaml"
     - $ref: "../../../../components/parameters/Login.yaml"
   responses:
     "200":

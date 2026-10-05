@@ -1,6 +1,8 @@
 get:
   operationId: getTimerReward
   tags: [ Timers ]
+  parameters:
+    - $ref: "../../components/parameters/PartyId.yaml"
   responses:
     "200":
       $ref: "../../components/responses/TimerRewardResponse.yaml"
@@ -11,6 +13,8 @@ get:
 put:
   operationId: setTimerReward
   tags: [ Timers ]
+  parameters:
+    - $ref: "../../components/parameters/PartyId.yaml"
   requestBody:
     $ref: "../../components/requests/TimerRewardRequest.yaml"
   responses:
@@ -29,6 +33,8 @@ put:
 delete:
   operationId: removeTimerReward
   tags: [ Timers ]
+  parameters:
+    - $ref: "../../components/parameters/PartyId.yaml"
   responses:
     "204":
       description: Success.

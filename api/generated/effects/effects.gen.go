@@ -100,6 +100,9 @@ type UserEffect struct {
 // UserEffects defines model for UserEffects.
 type UserEffects = []UserEffect
 
+// PartyId defines model for PartyId.
+type PartyId = int
+
 // EffectHistoriesResponse defines model for EffectHistoriesResponse.
 type EffectHistoriesResponse = EffectHistoryEntries
 
@@ -124,29 +127,29 @@ type CreateEffectJSONRequestBody = EffectCreate
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
-	// (GET /effects/catalog)
-	GetEffects(ctx echo.Context) error
+	// (GET /parties/{partyId}/effects/catalog)
+	GetEffects(ctx echo.Context, partyId PartyId) error
 
-	// (POST /effects/catalog)
-	CreateEffect(ctx echo.Context) error
+	// (POST /parties/{partyId}/effects/catalog)
+	CreateEffect(ctx echo.Context, partyId PartyId) error
 
-	// (GET /effects/catalog/removed)
-	GetRemovedEffects(ctx echo.Context) error
+	// (GET /parties/{partyId}/effects/catalog/removed)
+	GetRemovedEffects(ctx echo.Context, partyId PartyId) error
 
-	// (DELETE /effects/catalog/{name})
-	RemoveEffect(ctx echo.Context, name Name) error
+	// (DELETE /parties/{partyId}/effects/catalog/{name})
+	RemoveEffect(ctx echo.Context, partyId PartyId, name Name) error
 
-	// (GET /effects/{login})
-	GetUserEffects(ctx echo.Context, login Login) error
+	// (GET /parties/{partyId}/effects/{login})
+	GetUserEffects(ctx echo.Context, partyId PartyId, login Login) error
 
-	// (GET /effects/{login}/history)
-	GetUserEffectHistory(ctx echo.Context, login Login) error
+	// (GET /parties/{partyId}/effects/{login}/history)
+	GetUserEffectHistory(ctx echo.Context, partyId PartyId, login Login) error
 
-	// (DELETE /effects/{login}/{name})
-	EndUserEffect(ctx echo.Context, login Login, name Name) error
+	// (DELETE /parties/{partyId}/effects/{login}/{name})
+	EndUserEffect(ctx echo.Context, partyId PartyId, login Login, name Name) error
 
-	// (POST /effects/{login}/{name}/use)
-	UseUserEffect(ctx echo.Context, login Login, name Name) error
+	// (POST /parties/{partyId}/effects/{login}/{name}/use)
+	UseUserEffect(ctx echo.Context, partyId PartyId, login Login, name Name) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -157,33 +160,62 @@ type ServerInterfaceWrapper struct {
 // GetEffects converts echo context to params.
 func (w *ServerInterfaceWrapper) GetEffects(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetEffects(ctx)
+	err = w.Handler.GetEffects(ctx, partyId)
 	return err
 }
 
 // CreateEffect converts echo context to params.
 func (w *ServerInterfaceWrapper) CreateEffect(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.CreateEffect(ctx)
+	err = w.Handler.CreateEffect(ctx, partyId)
 	return err
 }
 
 // GetRemovedEffects converts echo context to params.
 func (w *ServerInterfaceWrapper) GetRemovedEffects(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetRemovedEffects(ctx)
+	err = w.Handler.GetRemovedEffects(ctx, partyId)
 	return err
 }
 
 // RemoveEffect converts echo context to params.
 func (w *ServerInterfaceWrapper) RemoveEffect(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "name" -------------
 	var name Name
 
@@ -193,13 +225,21 @@ func (w *ServerInterfaceWrapper) RemoveEffect(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.RemoveEffect(ctx, name)
+	err = w.Handler.RemoveEffect(ctx, partyId, name)
 	return err
 }
 
 // GetUserEffects converts echo context to params.
 func (w *ServerInterfaceWrapper) GetUserEffects(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "login" -------------
 	var login Login
 
@@ -209,13 +249,21 @@ func (w *ServerInterfaceWrapper) GetUserEffects(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetUserEffects(ctx, login)
+	err = w.Handler.GetUserEffects(ctx, partyId, login)
 	return err
 }
 
 // GetUserEffectHistory converts echo context to params.
 func (w *ServerInterfaceWrapper) GetUserEffectHistory(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "login" -------------
 	var login Login
 
@@ -225,13 +273,21 @@ func (w *ServerInterfaceWrapper) GetUserEffectHistory(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetUserEffectHistory(ctx, login)
+	err = w.Handler.GetUserEffectHistory(ctx, partyId, login)
 	return err
 }
 
 // EndUserEffect converts echo context to params.
 func (w *ServerInterfaceWrapper) EndUserEffect(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "login" -------------
 	var login Login
 
@@ -249,13 +305,21 @@ func (w *ServerInterfaceWrapper) EndUserEffect(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.EndUserEffect(ctx, login, name)
+	err = w.Handler.EndUserEffect(ctx, partyId, login, name)
 	return err
 }
 
 // UseUserEffect converts echo context to params.
 func (w *ServerInterfaceWrapper) UseUserEffect(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "login" -------------
 	var login Login
 
@@ -273,7 +337,7 @@ func (w *ServerInterfaceWrapper) UseUserEffect(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.UseUserEffect(ctx, login, name)
+	err = w.Handler.UseUserEffect(ctx, partyId, login, name)
 	return err
 }
 
@@ -305,13 +369,13 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/effects/catalog", wrapper.GetEffects)
-	router.POST(baseURL+"/effects/catalog", wrapper.CreateEffect)
-	router.GET(baseURL+"/effects/catalog/removed", wrapper.GetRemovedEffects)
-	router.DELETE(baseURL+"/effects/catalog/:name", wrapper.RemoveEffect)
-	router.GET(baseURL+"/effects/:login", wrapper.GetUserEffects)
-	router.GET(baseURL+"/effects/:login/history", wrapper.GetUserEffectHistory)
-	router.DELETE(baseURL+"/effects/:login/:name", wrapper.EndUserEffect)
-	router.POST(baseURL+"/effects/:login/:name/use", wrapper.UseUserEffect)
+	router.GET(baseURL+"/parties/:partyId/effects/catalog", wrapper.GetEffects)
+	router.POST(baseURL+"/parties/:partyId/effects/catalog", wrapper.CreateEffect)
+	router.GET(baseURL+"/parties/:partyId/effects/catalog/removed", wrapper.GetRemovedEffects)
+	router.DELETE(baseURL+"/parties/:partyId/effects/catalog/:name", wrapper.RemoveEffect)
+	router.GET(baseURL+"/parties/:partyId/effects/:login", wrapper.GetUserEffects)
+	router.GET(baseURL+"/parties/:partyId/effects/:login/history", wrapper.GetUserEffectHistory)
+	router.DELETE(baseURL+"/parties/:partyId/effects/:login/:name", wrapper.EndUserEffect)
+	router.POST(baseURL+"/parties/:partyId/effects/:login/:name/use", wrapper.UseUserEffect)
 
 }

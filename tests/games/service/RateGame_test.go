@@ -41,7 +41,7 @@ func TestSrvGames_RateGame_Created(test *testing.T) {
 			sut := srvgames.Service{Database: databaseMock}
 
 			// Act
-			created, err := sut.RateGame(1, "Doom", 8, nil)
+			created, err := sut.RateGame(1, 1, "Doom", 8, nil)
 
 			// Assert
 			require.NoError(test, err)

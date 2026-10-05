@@ -3,12 +3,13 @@ info:
   title: Favorite Game Gauntlet
   version: 0.15.0
 paths:
-  /games/users/{login}/wishlist:
+  /parties/{partyId}/games/users/{login}/wishlist:
     post:
       operationId: addUserWishlistGame
       tags:
         - Games
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Login'
       requestBody:
         $ref: '#/components/requestBodies/WishlistGameRequest'
@@ -28,6 +29,7 @@ paths:
       tags:
         - Games
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Login'
       responses:
         '200':
@@ -38,12 +40,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /games/users/{login}/current:
+  /parties/{partyId}/games/users/{login}/current:
     get:
       operationId: getUserCurrentGame
       tags:
         - Games
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Login'
       responses:
         '200':
@@ -54,12 +57,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /games/users/{login}/history:
+  /parties/{partyId}/games/users/{login}/history:
     get:
       operationId: getUserGameHistory
       tags:
         - Games
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Login'
       responses:
         '200':
@@ -70,11 +74,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /games/current:
+  /parties/{partyId}/games/current:
     get:
       operationId: getAllCurrentGame
       tags:
         - Games
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       responses:
         '200':
           $ref: '#/components/responses/CurrentGameByLoginsResponse'
@@ -84,11 +90,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /games/current/actions:
+  /parties/{partyId}/games/current/actions:
     post:
       operationId: createCurrentGameAction
       tags:
         - Games
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       requestBody:
         $ref: '#/components/requestBodies/CurrentGameActionRequest'
       responses:
@@ -106,12 +114,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /games/reviews/{name}:
+  /parties/{partyId}/games/reviews/{name}:
     get:
       operationId: getGameReview
       tags:
         - Games
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Name'
       responses:
         '200':
@@ -129,6 +138,7 @@ paths:
       tags:
         - Games
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Name'
       requestBody:
         $ref: '#/components/requestBodies/GameReviewRequest'
@@ -148,6 +158,26 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorResponse'
 components:
+  parameters:
+    PartyId:
+      name: partyId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int
+    Login:
+      name: login
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Login'
+    Name:
+      name: name
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Name'
   schemas:
     Login:
       type: string
@@ -260,19 +290,6 @@ components:
           type: string
       required:
         - rating
-  parameters:
-    Login:
-      name: login
-      in: path
-      required: true
-      schema:
-        $ref: '#/components/schemas/Login'
-    Name:
-      name: name
-      in: path
-      required: true
-      schema:
-        $ref: '#/components/schemas/Name'
   responses:
     WishlistGamesResponse:
       description: Success.

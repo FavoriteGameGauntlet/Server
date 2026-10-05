@@ -6,6 +6,7 @@ import (
 	"FGG-Service/src/games/types"
 	"FGG-Service/tests/auth/mock"
 	"FGG-Service/tests/games/mock/srvgames"
+	"FGG-Service/tests/parties/srvmock"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -100,7 +101,7 @@ var CreateCurrentGameActionTestCases = []CreateCurrentGameActionTestCase{
 				On("GetUserId", mock.Anything).
 				Return(1, nil)
 			gameServiceMock.
-				On("StartCurrentGame", 1).
+				On("StartCurrentGame", 1, 1).
 				Return(typegames.CurrentGame{}, common.NewCurrentGameAlreadyExistsConflictError())
 
 			return gameServiceMock, authServiceMock
@@ -119,7 +120,7 @@ var CreateCurrentGameActionTestCases = []CreateCurrentGameActionTestCase{
 				On("GetUserId", mock.Anything).
 				Return(1, nil)
 			gameServiceMock.
-				On("StartCurrentGame", 1).
+				On("StartCurrentGame", 1, 1).
 				Return(currentGame, nil)
 
 			return gameServiceMock, authServiceMock
@@ -138,7 +139,7 @@ var CreateCurrentGameActionTestCases = []CreateCurrentGameActionTestCase{
 				On("GetUserId", mock.Anything).
 				Return(1, nil)
 			gameServiceMock.
-				On("FinishCurrentGame", 1).
+				On("FinishCurrentGame", 1, 1).
 				Return(typegames.CurrentGame{}, common.NewCurrentGameNotFoundError())
 
 			return gameServiceMock, authServiceMock
@@ -157,7 +158,7 @@ var CreateCurrentGameActionTestCases = []CreateCurrentGameActionTestCase{
 				On("GetUserId", mock.Anything).
 				Return(1, nil)
 			gameServiceMock.
-				On("FinishCurrentGame", 1).
+				On("FinishCurrentGame", 1, 1).
 				Return(currentGame, nil)
 
 			return gameServiceMock, authServiceMock
@@ -176,7 +177,7 @@ var CreateCurrentGameActionTestCases = []CreateCurrentGameActionTestCase{
 				On("GetUserId", mock.Anything).
 				Return(1, nil)
 			gameServiceMock.
-				On("CancelCurrentGame", 1).
+				On("CancelCurrentGame", 1, 1).
 				Return(typegames.CurrentGame{}, dbError)
 
 			return gameServiceMock, authServiceMock
@@ -195,7 +196,7 @@ var CreateCurrentGameActionTestCases = []CreateCurrentGameActionTestCase{
 				On("GetUserId", mock.Anything).
 				Return(1, nil)
 			gameServiceMock.
-				On("CancelCurrentGame", 1).
+				On("CancelCurrentGame", 1, 1).
 				Return(currentGame, nil)
 
 			return gameServiceMock, authServiceMock
@@ -215,13 +216,16 @@ func TestCtrlGames_CreateCurrentGameAction(test *testing.T) {
 			ctx := e.NewContext(req, rec)
 
 			gameServiceMock, authServiceMock := testCase.SetupMock()
+			partyServiceMock := new(srvpartiesmock.ServiceMock)
+			partyServiceMock.On("RequireMember", mock.Anything, 1).Return(nil).Maybe()
 			sut := ctrlgames.Controller{
-				Service:     gameServiceMock,
-				AuthService: authServiceMock,
+				Service:      gameServiceMock,
+				AuthService:  authServiceMock,
+				PartyService: partyServiceMock,
 			}
 
 			// Act
-			sut.CreateCurrentGameAction(ctx)
+			sut.CreateCurrentGameAction(ctx, 1)
 
 			// Assert
 			require.Equal(test, testCase.ExpectedStatus, rec.Code)
@@ -230,4 +234,35 @@ func TestCtrlGames_CreateCurrentGameAction(test *testing.T) {
 			authServiceMock.AssertExpectations(test)
 		})
 	}
+}
+
+// A user outside the party is turned away before anything is read or changed.
+func TestCtrlGames_CreateCurrentGameAction_NotPartyMember(test *testing.T) {
+	// Arrange
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"action":"start"}`))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	ctx := e.NewContext(req, rec)
+
+	gameServiceMock := new(srvgamesmock.ServiceMock)
+	authServiceMock := new(srvauthmock.ServiceMock)
+	authServiceMock.On("GetUserId", mock.Anything).Return(1, nil)
+	partyServiceMock := new(srvpartiesmock.ServiceMock)
+	partyServiceMock.On("RequireMember", 1, 1).Return(common.NewPartyNotFoundError(1))
+	sut := ctrlgames.Controller{
+		Service:      gameServiceMock,
+		AuthService:  authServiceMock,
+		PartyService: partyServiceMock,
+	}
+
+	// Act
+	sut.CreateCurrentGameAction(ctx, 1)
+
+	// Assert
+	require.Equal(test, http.StatusNotFound, rec.Code)
+
+	gameServiceMock.AssertExpectations(test)
+	authServiceMock.AssertExpectations(test)
+	partyServiceMock.AssertExpectations(test)
 }

@@ -11,12 +11,12 @@ type ServiceMock struct {
 	mock.Mock
 }
 
-func (m *ServiceMock) GetCurrentTimerTimeSpent(userId int) (time.Duration, error) {
-	args := m.Called(userId)
+func (m *ServiceMock) GetCurrentTimerTimeSpent(userId int, partyId int) (time.Duration, error) {
+	args := m.Called(userId, partyId)
 	return args.Get(0).(time.Duration), args.Error(1)
 }
 
-func (m *ServiceMock) ForceStopCurrentTimer(userId int) (typetimers.Timer, error) {
-	args := m.Called(userId)
+func (m *ServiceMock) ForceStopCurrentTimer(userId int, partyId int) (typetimers.Timer, error) {
+	args := m.Called(userId, partyId)
 	return args.Get(0).(typetimers.Timer), args.Error(1)
 }

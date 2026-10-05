@@ -1,6 +1,8 @@
 get:
   operationId: getRemovedEffects
   tags: [ Effects ]
+  parameters:
+    - $ref: "../../../components/parameters/PartyId.yaml"
   responses:
     "200":
       $ref: "../../../components/responses/EffectsResponse.yaml"

@@ -195,7 +195,7 @@ func TestSrvTimers_StartCurrentTimer(test *testing.T) {
 			}
 
 			// Act
-			timer, err := sut.StartCurrentTimer(testCase.UserId)
+			timer, err := sut.StartCurrentTimer(testCase.UserId, 1)
 
 			// Assert
 			if testCase.ExpectedErrorAs != nil {

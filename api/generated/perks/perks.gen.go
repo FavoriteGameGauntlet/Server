@@ -61,6 +61,9 @@ type UserPerk struct {
 // UserPerks defines model for UserPerks.
 type UserPerks = []UserPerk
 
+// PartyId defines model for PartyId.
+type PartyId = int
+
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse = Error
 
@@ -85,26 +88,26 @@ type CreatePerkJSONRequestBody = PerkCreate
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
-	// (GET /perks/catalog)
-	GetPerks(ctx echo.Context) error
+	// (GET /parties/{partyId}/perks/catalog)
+	GetPerks(ctx echo.Context, partyId PartyId) error
 
-	// (POST /perks/catalog)
-	CreatePerk(ctx echo.Context) error
+	// (POST /parties/{partyId}/perks/catalog)
+	CreatePerk(ctx echo.Context, partyId PartyId) error
 
-	// (GET /perks/catalog/removed)
-	GetRemovedPerks(ctx echo.Context) error
+	// (GET /parties/{partyId}/perks/catalog/removed)
+	GetRemovedPerks(ctx echo.Context, partyId PartyId) error
 
-	// (DELETE /perks/catalog/{name})
-	RemovePerk(ctx echo.Context, name Name) error
+	// (DELETE /parties/{partyId}/perks/catalog/{name})
+	RemovePerk(ctx echo.Context, partyId PartyId, name Name) error
 
-	// (GET /perks/{login})
-	GetUserPerks(ctx echo.Context, login Login) error
+	// (GET /parties/{partyId}/perks/{login})
+	GetUserPerks(ctx echo.Context, partyId PartyId, login Login) error
 
-	// (GET /perks/{login}/history)
-	GetUserPerkHistory(ctx echo.Context, login Login) error
+	// (GET /parties/{partyId}/perks/{login}/history)
+	GetUserPerkHistory(ctx echo.Context, partyId PartyId, login Login) error
 
-	// (DELETE /perks/{login}/{name})
-	RevokeUserPerk(ctx echo.Context, login Login, name Name) error
+	// (DELETE /parties/{partyId}/perks/{login}/{name})
+	RevokeUserPerk(ctx echo.Context, partyId PartyId, login Login, name Name) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -115,33 +118,62 @@ type ServerInterfaceWrapper struct {
 // GetPerks converts echo context to params.
 func (w *ServerInterfaceWrapper) GetPerks(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetPerks(ctx)
+	err = w.Handler.GetPerks(ctx, partyId)
 	return err
 }
 
 // CreatePerk converts echo context to params.
 func (w *ServerInterfaceWrapper) CreatePerk(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.CreatePerk(ctx)
+	err = w.Handler.CreatePerk(ctx, partyId)
 	return err
 }
 
 // GetRemovedPerks converts echo context to params.
 func (w *ServerInterfaceWrapper) GetRemovedPerks(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetRemovedPerks(ctx)
+	err = w.Handler.GetRemovedPerks(ctx, partyId)
 	return err
 }
 
 // RemovePerk converts echo context to params.
 func (w *ServerInterfaceWrapper) RemovePerk(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "name" -------------
 	var name Name
 
@@ -151,13 +183,21 @@ func (w *ServerInterfaceWrapper) RemovePerk(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.RemovePerk(ctx, name)
+	err = w.Handler.RemovePerk(ctx, partyId, name)
 	return err
 }
 
 // GetUserPerks converts echo context to params.
 func (w *ServerInterfaceWrapper) GetUserPerks(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "login" -------------
 	var login Login
 
@@ -167,13 +207,21 @@ func (w *ServerInterfaceWrapper) GetUserPerks(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetUserPerks(ctx, login)
+	err = w.Handler.GetUserPerks(ctx, partyId, login)
 	return err
 }
 
 // GetUserPerkHistory converts echo context to params.
 func (w *ServerInterfaceWrapper) GetUserPerkHistory(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "login" -------------
 	var login Login
 
@@ -183,13 +231,21 @@ func (w *ServerInterfaceWrapper) GetUserPerkHistory(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetUserPerkHistory(ctx, login)
+	err = w.Handler.GetUserPerkHistory(ctx, partyId, login)
 	return err
 }
 
 // RevokeUserPerk converts echo context to params.
 func (w *ServerInterfaceWrapper) RevokeUserPerk(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "login" -------------
 	var login Login
 
@@ -207,7 +263,7 @@ func (w *ServerInterfaceWrapper) RevokeUserPerk(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.RevokeUserPerk(ctx, login, name)
+	err = w.Handler.RevokeUserPerk(ctx, partyId, login, name)
 	return err
 }
 
@@ -239,12 +295,12 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/perks/catalog", wrapper.GetPerks)
-	router.POST(baseURL+"/perks/catalog", wrapper.CreatePerk)
-	router.GET(baseURL+"/perks/catalog/removed", wrapper.GetRemovedPerks)
-	router.DELETE(baseURL+"/perks/catalog/:name", wrapper.RemovePerk)
-	router.GET(baseURL+"/perks/:login", wrapper.GetUserPerks)
-	router.GET(baseURL+"/perks/:login/history", wrapper.GetUserPerkHistory)
-	router.DELETE(baseURL+"/perks/:login/:name", wrapper.RevokeUserPerk)
+	router.GET(baseURL+"/parties/:partyId/perks/catalog", wrapper.GetPerks)
+	router.POST(baseURL+"/parties/:partyId/perks/catalog", wrapper.CreatePerk)
+	router.GET(baseURL+"/parties/:partyId/perks/catalog/removed", wrapper.GetRemovedPerks)
+	router.DELETE(baseURL+"/parties/:partyId/perks/catalog/:name", wrapper.RemovePerk)
+	router.GET(baseURL+"/parties/:partyId/perks/:login", wrapper.GetUserPerks)
+	router.GET(baseURL+"/parties/:partyId/perks/:login/history", wrapper.GetUserPerkHistory)
+	router.DELETE(baseURL+"/parties/:partyId/perks/:login/:name", wrapper.RevokeUserPerk)
 
 }

@@ -3,11 +3,13 @@ info:
   title: Favorite Game Gauntlet
   version: 0.3.0
 paths:
-  /system-parameters:
+  /parties/{partyId}/system-parameters:
     get:
       operationId: getSystemParameters
       tags:
         - SystemParameters
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       responses:
         '200':
           $ref: '#/components/responses/SystemParametersResponse'
@@ -15,12 +17,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /system-parameters/{name}:
+  /parties/{partyId}/system-parameters/{name}:
     post:
       operationId: changeSystemParameter
       tags:
         - SystemParameters
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Name'
       requestBody:
         $ref: '#/components/requestBodies/SystemParameterRequest'
@@ -42,6 +45,7 @@ paths:
       tags:
         - SystemParameters
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Name'
       responses:
         '200':
@@ -59,6 +63,7 @@ paths:
       tags:
         - SystemParameters
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Name'
       responses:
         '204':
@@ -70,6 +75,20 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorResponse'
 components:
+  parameters:
+    PartyId:
+      name: partyId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int
+    Name:
+      name: name
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Name'
   schemas:
     Name:
       type: string
@@ -130,13 +149,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/SystemParameter'
-  parameters:
-    Name:
-      name: name
-      in: path
-      required: true
-      schema:
-        $ref: '#/components/schemas/Name'
   requestBodies:
     SystemParameterRequest:
       content:

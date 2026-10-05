@@ -51,7 +51,7 @@ func TestSrvWheelEffects_ClearLastWheelEffects(test *testing.T) {
 			sut := srvwheeleffects.Service{Database: databaseMock}
 
 			// Act
-			err := sut.ClearLastWheelEffects(testCase.UserId)
+			err := sut.ClearLastWheelEffects(testCase.UserId, 1)
 
 			// Assert
 			if testCase.ExpectedError != nil {

@@ -7,40 +7,46 @@ import (
 	"FGG-Service/src/common"
 	"FGG-Service/src/effects/service"
 	"FGG-Service/src/effects/types"
+	"FGG-Service/src/parties/service"
 	"net/http"
 	"time"
 
 	"github.com/labstack/echo/v4"
 )
 
-// defaultPartyId is a stopgap until real party context exists (see project plan) — every effect is
-// scoped to this one hardcoded party.
-const defaultPartyId = 1
-
 type Controller struct {
-	Service     srveffects.IService
-	AuthService srvauth.IService
+	Service      srveffects.IService
+	AuthService  srvauth.IService
+	PartyService srvparties.IService
 }
 
 func NewController() *Controller {
 	s := srveffects.NewService()
 	as := srvauth.NewService()
+	ps := srvparties.NewService()
 
 	return &Controller{
 		s,
 		as,
+		ps,
 	}
 }
 
-// GetEffects (GET /effects/catalog)
-func (c *Controller) GetEffects(ctx echo.Context) error {
-	_, err := c.AuthService.GetUserId(ctx)
+// GetEffects (GET /parties/{partyId}/effects/catalog)
+func (c *Controller) GetEffects(ctx echo.Context, partyId geneffects.PartyId) error {
+	userId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	effects, err := c.Service.GetEffects(defaultPartyId)
+	err = c.PartyService.RequireMember(userId, partyId)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	effects, err := c.Service.GetEffects(partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -49,15 +55,15 @@ func (c *Controller) GetEffects(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, convertEffectsToDto(effects))
 }
 
-// GetRemovedEffects (GET /effects/catalog/removed)
-func (c *Controller) GetRemovedEffects(ctx echo.Context) error {
-	err := common.RequireAdmin(ctx, c.AuthService)
+// GetRemovedEffects (GET /parties/{partyId}/effects/catalog/removed)
+func (c *Controller) GetRemovedEffects(ctx echo.Context, partyId geneffects.PartyId) error {
+	err := common.RequireAdmin(ctx, c.AuthService, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	effects, err := c.Service.GetRemovedEffects(defaultPartyId)
+	effects, err := c.Service.GetRemovedEffects(partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -66,9 +72,9 @@ func (c *Controller) GetRemovedEffects(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, convertEffectsToDto(effects))
 }
 
-// CreateEffect (POST /effects/catalog)
-func (c *Controller) CreateEffect(ctx echo.Context) error {
-	err := common.RequireAdmin(ctx, c.AuthService)
+// CreateEffect (POST /parties/{partyId}/effects/catalog)
+func (c *Controller) CreateEffect(ctx echo.Context, partyId geneffects.PartyId) error {
+	err := common.RequireAdmin(ctx, c.AuthService, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -89,7 +95,7 @@ func (c *Controller) CreateEffect(ctx echo.Context) error {
 	}
 
 	effect, err := c.Service.CreateEffect(
-		defaultPartyId,
+		partyId,
 		effectDto.Name,
 		effectDto.Description,
 		effectDto.UseCount,
@@ -103,15 +109,15 @@ func (c *Controller) CreateEffect(ctx echo.Context) error {
 	return ctx.JSON(http.StatusCreated, convertEffectToDto(effect))
 }
 
-// RemoveEffect (DELETE /effects/catalog/{name})
-func (c *Controller) RemoveEffect(ctx echo.Context, name geneffects.Name) error {
-	err := common.RequireAdmin(ctx, c.AuthService)
+// RemoveEffect (DELETE /parties/{partyId}/effects/catalog/{name})
+func (c *Controller) RemoveEffect(ctx echo.Context, partyId geneffects.PartyId, name geneffects.Name) error {
+	err := common.RequireAdmin(ctx, c.AuthService, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.RemoveEffect(defaultPartyId, name)
+	err = c.Service.RemoveEffect(partyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -119,15 +125,15 @@ func (c *Controller) RemoveEffect(ctx echo.Context, name geneffects.Name) error 
 
 	return ctx.NoContent(http.StatusNoContent)
 }
-// GetUserEffects (GET /effects/{login})
-func (c *Controller) GetUserEffects(ctx echo.Context, login geneffects.Login) error {
-	_, userId, err := c.userIdFromLogin(ctx, login)
+// GetUserEffects (GET /parties/{partyId}/effects/{login})
+func (c *Controller) GetUserEffects(ctx echo.Context, partyId geneffects.PartyId, login geneffects.Login) error {
+	_, userId, err := c.userIdFromLogin(ctx, partyId, login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	views, err := c.Service.GetUserEffectViews(userId, defaultPartyId)
+	views, err := c.Service.GetUserEffectViews(userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -158,32 +164,15 @@ func (c *Controller) GetUserEffects(ctx echo.Context, login geneffects.Login) er
 	return ctx.JSON(http.StatusOK, viewsDto)
 }
 
-// UseUserEffect (POST /effects/{login}/{name}/use)
-func (c *Controller) UseUserEffect(ctx echo.Context, login geneffects.Login, name geneffects.Name) error {
-	actorUserId, userId, err := c.userIdFromLogin(ctx, login)
+// UseUserEffect (POST /parties/{partyId}/effects/{login}/{name}/use)
+func (c *Controller) UseUserEffect(ctx echo.Context, partyId geneffects.PartyId, login geneffects.Login, name geneffects.Name) error {
+	actorUserId, userId, err := c.userIdFromLogin(ctx, partyId, login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.UseEffect(actorUserId, userId, defaultPartyId, name)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	return ctx.NoContent(http.StatusNoContent)
-}
-
-// EndUserEffect (DELETE /effects/{login}/{name})
-func (c *Controller) EndUserEffect(ctx echo.Context, login geneffects.Login, name geneffects.Name) error {
-	actorUserId, userId, err := c.userIdFromLogin(ctx, login)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	err = c.Service.EndUserEffect(actorUserId, userId, defaultPartyId, name)
+	err = c.Service.UseEffect(actorUserId, userId, partyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -192,15 +181,32 @@ func (c *Controller) EndUserEffect(ctx echo.Context, login geneffects.Login, nam
 	return ctx.NoContent(http.StatusNoContent)
 }
 
-// GetUserEffectHistory (GET /effects/{login}/history)
-func (c *Controller) GetUserEffectHistory(ctx echo.Context, login geneffects.Login) error {
-	_, userId, err := c.userIdFromLogin(ctx, login)
+// EndUserEffect (DELETE /parties/{partyId}/effects/{login}/{name})
+func (c *Controller) EndUserEffect(ctx echo.Context, partyId geneffects.PartyId, login geneffects.Login, name geneffects.Name) error {
+	actorUserId, userId, err := c.userIdFromLogin(ctx, partyId, login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	history, err := c.Service.GetEffectHistory(userId, defaultPartyId)
+	err = c.Service.EndUserEffect(actorUserId, userId, partyId, name)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	return ctx.NoContent(http.StatusNoContent)
+}
+
+// GetUserEffectHistory (GET /parties/{partyId}/effects/{login}/history)
+func (c *Controller) GetUserEffectHistory(ctx echo.Context, partyId geneffects.PartyId, login geneffects.Login) error {
+	_, userId, err := c.userIdFromLogin(ctx, partyId, login)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	history, err := c.Service.GetEffectHistory(userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -233,10 +239,17 @@ func (c *Controller) GetUserEffectHistory(ctx echo.Context, login geneffects.Log
 	return ctx.JSON(http.StatusOK, historyDto)
 }
 
-// userIdFromLogin resolves a login path parameter, rejecting the request when it carries no session.
-// It returns the user the request comes from along with the user the login names.
-func (c *Controller) userIdFromLogin(ctx echo.Context, login string) (actorUserId int, userId int, err error) {
+// userIdFromLogin resolves a login path parameter, rejecting the request when it carries no session
+// or comes from a user outside the party. It returns the user the request comes from along with the
+// user the login names.
+func (c *Controller) userIdFromLogin(ctx echo.Context, partyId geneffects.PartyId, login string) (actorUserId int, userId int, err error) {
 	actorUserId, err = c.AuthService.GetUserId(ctx)
+
+	if err != nil {
+		return
+	}
+
+	err = c.PartyService.RequireMember(actorUserId, partyId)
 
 	if err != nil {
 		return

@@ -1,6 +1,8 @@
 get:
   operationId: getSystemParameters
   tags: [ SystemParameters ]
+  parameters:
+    - $ref: "../components/parameters/PartyId.yaml"
   responses:
     "200":
       $ref: "../components/responses/SystemParametersResponse.yaml"

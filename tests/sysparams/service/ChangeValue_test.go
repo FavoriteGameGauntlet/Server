@@ -123,7 +123,7 @@ func TestSrvSysParams_ChangeValue(test *testing.T) {
 			sut := srvsysparams.Service{Database: databaseMock}
 
 			// Act
-			created, err := sut.ChangeValue(testCase.ParameterName, testCase.Value)
+			created, err := sut.ChangeValue(1, testCase.ParameterName, testCase.Value)
 
 			// Assert
 			if testCase.ExpectedErrorCode != "" {

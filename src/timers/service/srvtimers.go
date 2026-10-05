@@ -18,12 +18,9 @@ import (
 	"github.com/go-co-op/gocron/v2"
 )
 
-// defaultPartyId is a stopgap until real party-context resolution exists (see project plan).
-const defaultPartyId = 1
-
 type IService interface {
-	GetCurrentTimerTimeSpent(userId int) (time.Duration, error)
-	ForceStopCurrentTimer(userId int) (typetimers.Timer, error)
+	GetCurrentTimerTimeSpent(userId int, partyId int) (time.Duration, error)
+	ForceStopCurrentTimer(userId int, partyId int) (typetimers.Timer, error)
 }
 
 // toTimer computes the derived Timer view (with RemainingTime) from a raw CurrentTimer DB row.
@@ -79,7 +76,7 @@ func (s *Service) StartTimerFinisherScheduler() {
 		panic(err)
 	}
 
-	intervalInS, err := s.SysParamsService.GetInt(typesysparams.ParamTimerFinisherSchedulerIntervalInS)
+	intervalInS, err := s.SysParamsService.GetInt(srvsysparams.SchedulerPartyId,typesysparams.ParamTimerFinisherSchedulerIntervalInS)
 
 	if err != nil {
 		panic(err)
@@ -101,8 +98,8 @@ func (s *Service) StartTimerFinisherScheduler() {
 }
 
 // GetCurrentTimer returns the user's current timer.
-func (s *Service) GetCurrentTimer(userId int) (timer typetimers.Timer, err error) {
-	currentTimer, err := s.Database.GetCurrentTimerCommand(userId, defaultPartyId)
+func (s *Service) GetCurrentTimer(userId int, partyId int) (timer typetimers.Timer, err error) {
+	currentTimer, err := s.Database.GetCurrentTimerCommand(userId, partyId)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = common.NewCurrentTimerNotFoundError()
@@ -118,8 +115,8 @@ func (s *Service) GetCurrentTimer(userId int) (timer typetimers.Timer, err error
 
 // CreateCurrentTimer creates a timer for the user's current game. A user has at most one timer, so
 // creating another while one exists is a conflict.
-func (s *Service) CreateCurrentTimer(userId int) (timer typetimers.Timer, err error) {
-	game, err := s.GamesDatabase.GetCurrentGameCommand(userId, defaultPartyId)
+func (s *Service) CreateCurrentTimer(userId int, partyId int) (timer typetimers.Timer, err error) {
+	game, err := s.GamesDatabase.GetCurrentGameCommand(userId, partyId)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = common.NewCurrentGameNotFoundError()
@@ -130,7 +127,7 @@ func (s *Service) CreateCurrentTimer(userId int) (timer typetimers.Timer, err er
 		return
 	}
 
-	currentTimer, err := s.Database.GetCurrentTimerCommand(userId, defaultPartyId)
+	currentTimer, err := s.Database.GetCurrentTimerCommand(userId, partyId)
 
 	if err == nil {
 		err = common.NewCurrentTimerAlreadyExistsConflictError()
@@ -141,13 +138,13 @@ func (s *Service) CreateCurrentTimer(userId int) (timer typetimers.Timer, err er
 		return
 	}
 
-	rollCount, err := s.WheelEffectsDatabase.GetAvailableRollsCountCommand(userId)
+	rollCount, err := s.WheelEffectsDatabase.GetAvailableRollsCountCommand(userId, partyId)
 
 	if err != nil {
 		return
 	}
 
-	maximumAvailableRollCountForTimer, err := s.SysParamsService.GetInt(typesysparams.ParamMaximumAvailableRollCountForTimer)
+	maximumAvailableRollCountForTimer, err := s.SysParamsService.GetInt(partyId, typesysparams.ParamMaximumAvailableRollCountForTimer)
 
 	if err != nil {
 		return
@@ -158,19 +155,19 @@ func (s *Service) CreateCurrentTimer(userId int) (timer typetimers.Timer, err er
 		return
 	}
 
-	durationInS, err := s.SysParamsService.GetInt(typesysparams.ParamTimerDurationInS)
+	durationInS, err := s.SysParamsService.GetInt(partyId, typesysparams.ParamTimerDurationInS)
 
 	if err != nil {
 		return
 	}
 
-	_, err = s.Database.CreateCurrentTimerCommand(userId, defaultPartyId, game.Id, time.Duration(durationInS)*time.Second)
+	_, err = s.Database.CreateCurrentTimerCommand(userId, partyId, game.Id, time.Duration(durationInS)*time.Second)
 
 	if err != nil {
 		return
 	}
 
-	currentTimer, err = s.Database.GetCurrentTimerCommand(userId, defaultPartyId)
+	currentTimer, err = s.Database.GetCurrentTimerCommand(userId, partyId)
 
 	if err != nil {
 		return
@@ -181,9 +178,10 @@ func (s *Service) CreateCurrentTimer(userId int) (timer typetimers.Timer, err er
 	return
 }
 
-func (s *Service) StartCurrentTimer(userId int) (typetimers.Timer, error) {
+func (s *Service) StartCurrentTimer(userId int, partyId int) (typetimers.Timer, error) {
 	return s.actCurrentTimer(
 		userId,
+		partyId,
 		typetimers.TimerStateRunning,
 		[]typetimers.TimerStateType{
 			typetimers.TimerStateRunning,
@@ -191,9 +189,10 @@ func (s *Service) StartCurrentTimer(userId int) (typetimers.Timer, error) {
 		})
 }
 
-func (s *Service) PauseCurrentTimer(userId int) (typetimers.Timer, error) {
+func (s *Service) PauseCurrentTimer(userId int, partyId int) (typetimers.Timer, error) {
 	return s.actCurrentTimer(
 		userId,
+		partyId,
 		typetimers.TimerStatePaused,
 		[]typetimers.TimerStateType{
 			typetimers.TimerStateCreated,
@@ -203,8 +202,8 @@ func (s *Service) PauseCurrentTimer(userId int) (typetimers.Timer, error) {
 }
 
 // GetCurrentTimerTimeSpent returns how much of the current timer has passed, or zero without a timer.
-func (s *Service) GetCurrentTimerTimeSpent(userId int) (time.Duration, error) {
-	currentTimer, err := s.Database.GetCurrentTimerCommand(userId, defaultPartyId)
+func (s *Service) GetCurrentTimerTimeSpent(userId int, partyId int) (time.Duration, error) {
+	currentTimer, err := s.Database.GetCurrentTimerCommand(userId, partyId)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return 0, nil
@@ -219,8 +218,8 @@ func (s *Service) GetCurrentTimerTimeSpent(userId int) (time.Duration, error) {
 
 // ForceStopCurrentTimer deletes the current timer, if any, and adds the time already spent on it to
 // its game. It grants none of the rewards of a completed timer.
-func (s *Service) ForceStopCurrentTimer(userId int) (timer typetimers.Timer, err error) {
-	deletedTimer, err := s.Database.DeleteCurrentTimerCommand(userId, defaultPartyId)
+func (s *Service) ForceStopCurrentTimer(userId int, partyId int) (timer typetimers.Timer, err error) {
+	deletedTimer, err := s.Database.DeleteCurrentTimerCommand(userId, partyId)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = nil
@@ -253,10 +252,11 @@ func (s *Service) ForceStopCurrentTimer(userId int) (timer typetimers.Timer, err
 
 func (s *Service) actCurrentTimer(
 	userId int,
+	partyId int,
 	timerState typetimers.TimerStateType,
 	incorrectStates []typetimers.TimerStateType) (timer typetimers.Timer, err error) {
 
-	currentTimer, err := s.Database.GetCurrentTimerCommand(userId, defaultPartyId)
+	currentTimer, err := s.Database.GetCurrentTimerCommand(userId, partyId)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = common.NewCurrentTimerNotFoundError()
@@ -285,7 +285,7 @@ func (s *Service) actCurrentTimer(
 		return
 	}
 
-	currentTimer, err = s.Database.GetCurrentTimerCommand(userId, defaultPartyId)
+	currentTimer, err = s.Database.GetCurrentTimerCommand(userId, partyId)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = common.NewCurrentTimerNotFoundError()

@@ -1,6 +1,8 @@
 post:
   operationId: createCurrentGameAction
   tags: [ Games ]
+  parameters:
+    - $ref: "../../../components/parameters/PartyId.yaml"
   requestBody:
     $ref: "../../../components/requests/CurrentGameActionRequest.yaml"
   responses:

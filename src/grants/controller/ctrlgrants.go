@@ -11,10 +11,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// defaultPartyId is a stopgap until real party context exists (see project plan) — every grant is
-// scoped to this one hardcoded party.
-const defaultPartyId = 1
-
 type Controller struct {
 	Service     srvgrants.IService
 	AuthService srvauth.IService
@@ -30,9 +26,9 @@ func NewController() *Controller {
 	}
 }
 
-// GrantToUsers (POST /grants)
-func (c *Controller) GrantToUsers(ctx echo.Context) error {
-	err := common.RequireAdmin(ctx, c.AuthService)
+// GrantToUsers (POST /parties/{partyId}/grants)
+func (c *Controller) GrantToUsers(ctx echo.Context, partyId gengrants.PartyId) error {
+	err := common.RequireAdmin(ctx, c.AuthService, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -61,7 +57,7 @@ func (c *Controller) GrantToUsers(ctx echo.Context) error {
 		}
 	}
 
-	err = c.Service.GrantToUsers(actorUserId, defaultPartyId, targetUserIds, convertDtoToChangeEntryInputs(grantDto.Entries))
+	err = c.Service.GrantToUsers(actorUserId, partyId, targetUserIds, convertDtoToChangeEntryInputs(grantDto.Entries))
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)

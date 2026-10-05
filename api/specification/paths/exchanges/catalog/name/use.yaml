@@ -2,6 +2,7 @@ post:
   operationId: useExchange
   tags: [ Exchanges ]
   parameters:
+    - $ref: "../../../../components/parameters/PartyId.yaml"
     - $ref: "../../../../components/parameters/Name.yaml"
   requestBody:
     $ref: "../../../../components/requests/ExchangeUseRequest.yaml"

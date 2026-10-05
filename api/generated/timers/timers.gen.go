@@ -4,9 +4,12 @@
 package gentimers
 
 import (
+	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/oapi-codegen/runtime"
 )
 
 // Defines values for TimerState.
@@ -63,6 +66,9 @@ type TimerReward struct {
 	Entries ChangeEntryInputs `json:"entries"`
 }
 
+// PartyId defines model for PartyId.
+type PartyId = int
+
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse = Error
 
@@ -81,26 +87,26 @@ type SetTimerRewardJSONRequestBody = TimerReward
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
-	// (GET /timers/current)
-	GetCurrentTimer(ctx echo.Context) error
+	// (GET /parties/{partyId}/timers/current)
+	GetCurrentTimer(ctx echo.Context, partyId PartyId) error
 
-	// (POST /timers/current)
-	CreateCurrentTimer(ctx echo.Context) error
+	// (POST /parties/{partyId}/timers/current)
+	CreateCurrentTimer(ctx echo.Context, partyId PartyId) error
 
-	// (POST /timers/current/pause)
-	PauseCurrentTimer(ctx echo.Context) error
+	// (POST /parties/{partyId}/timers/current/pause)
+	PauseCurrentTimer(ctx echo.Context, partyId PartyId) error
 
-	// (POST /timers/current/start)
-	StartCurrentTimer(ctx echo.Context) error
+	// (POST /parties/{partyId}/timers/current/start)
+	StartCurrentTimer(ctx echo.Context, partyId PartyId) error
 
-	// (DELETE /timers/reward)
-	RemoveTimerReward(ctx echo.Context) error
+	// (DELETE /parties/{partyId}/timers/reward)
+	RemoveTimerReward(ctx echo.Context, partyId PartyId) error
 
-	// (GET /timers/reward)
-	GetTimerReward(ctx echo.Context) error
+	// (GET /parties/{partyId}/timers/reward)
+	GetTimerReward(ctx echo.Context, partyId PartyId) error
 
-	// (PUT /timers/reward)
-	SetTimerReward(ctx echo.Context) error
+	// (PUT /parties/{partyId}/timers/reward)
+	SetTimerReward(ctx echo.Context, partyId PartyId) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -111,63 +117,112 @@ type ServerInterfaceWrapper struct {
 // GetCurrentTimer converts echo context to params.
 func (w *ServerInterfaceWrapper) GetCurrentTimer(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetCurrentTimer(ctx)
+	err = w.Handler.GetCurrentTimer(ctx, partyId)
 	return err
 }
 
 // CreateCurrentTimer converts echo context to params.
 func (w *ServerInterfaceWrapper) CreateCurrentTimer(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.CreateCurrentTimer(ctx)
+	err = w.Handler.CreateCurrentTimer(ctx, partyId)
 	return err
 }
 
 // PauseCurrentTimer converts echo context to params.
 func (w *ServerInterfaceWrapper) PauseCurrentTimer(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.PauseCurrentTimer(ctx)
+	err = w.Handler.PauseCurrentTimer(ctx, partyId)
 	return err
 }
 
 // StartCurrentTimer converts echo context to params.
 func (w *ServerInterfaceWrapper) StartCurrentTimer(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.StartCurrentTimer(ctx)
+	err = w.Handler.StartCurrentTimer(ctx, partyId)
 	return err
 }
 
 // RemoveTimerReward converts echo context to params.
 func (w *ServerInterfaceWrapper) RemoveTimerReward(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.RemoveTimerReward(ctx)
+	err = w.Handler.RemoveTimerReward(ctx, partyId)
 	return err
 }
 
 // GetTimerReward converts echo context to params.
 func (w *ServerInterfaceWrapper) GetTimerReward(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetTimerReward(ctx)
+	err = w.Handler.GetTimerReward(ctx, partyId)
 	return err
 }
 
 // SetTimerReward converts echo context to params.
 func (w *ServerInterfaceWrapper) SetTimerReward(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.SetTimerReward(ctx)
+	err = w.Handler.SetTimerReward(ctx, partyId)
 	return err
 }
 
@@ -199,12 +254,12 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/timers/current", wrapper.GetCurrentTimer)
-	router.POST(baseURL+"/timers/current", wrapper.CreateCurrentTimer)
-	router.POST(baseURL+"/timers/current/pause", wrapper.PauseCurrentTimer)
-	router.POST(baseURL+"/timers/current/start", wrapper.StartCurrentTimer)
-	router.DELETE(baseURL+"/timers/reward", wrapper.RemoveTimerReward)
-	router.GET(baseURL+"/timers/reward", wrapper.GetTimerReward)
-	router.PUT(baseURL+"/timers/reward", wrapper.SetTimerReward)
+	router.GET(baseURL+"/parties/:partyId/timers/current", wrapper.GetCurrentTimer)
+	router.POST(baseURL+"/parties/:partyId/timers/current", wrapper.CreateCurrentTimer)
+	router.POST(baseURL+"/parties/:partyId/timers/current/pause", wrapper.PauseCurrentTimer)
+	router.POST(baseURL+"/parties/:partyId/timers/current/start", wrapper.StartCurrentTimer)
+	router.DELETE(baseURL+"/parties/:partyId/timers/reward", wrapper.RemoveTimerReward)
+	router.GET(baseURL+"/parties/:partyId/timers/reward", wrapper.GetTimerReward)
+	router.PUT(baseURL+"/parties/:partyId/timers/reward", wrapper.SetTimerReward)
 
 }

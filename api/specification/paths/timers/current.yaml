@@ -1,6 +1,8 @@
 get:
   operationId: getCurrentTimer
   tags: [ Timers ]
+  parameters:
+    - $ref: "../../components/parameters/PartyId.yaml"
   responses:
     "200":
       $ref: "../../components/responses/TimerResponse.yaml"
@@ -13,6 +15,8 @@ get:
 post:
   operationId: createCurrentTimer
   tags: [ Timers ]
+  parameters:
+    - $ref: "../../components/parameters/PartyId.yaml"
   responses:
     "201":
       $ref: "../../components/responses/TimerResponse.yaml"

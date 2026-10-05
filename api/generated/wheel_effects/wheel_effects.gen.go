@@ -68,6 +68,9 @@ type WheelRowHistory struct {
 // WheelRows defines model for WheelRows.
 type WheelRows = []WheelRow
 
+// PartyId defines model for PartyId.
+type PartyId = int
+
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse = Error
 
@@ -98,26 +101,26 @@ type ApplyAvailableWheelEffectRollJSONRequestBody = WheelRowApply
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
-	// (GET /wheel-effects/available)
-	GetAvailableWheelEffects(ctx echo.Context) error
+	// (GET /parties/{partyId}/wheel-effects/available)
+	GetAvailableWheelEffects(ctx echo.Context, partyId PartyId) error
 
-	// (POST /wheel-effects/available/roll)
-	RollAvailableWheelEffects(ctx echo.Context) error
+	// (POST /parties/{partyId}/wheel-effects/available/roll)
+	RollAvailableWheelEffects(ctx echo.Context, partyId PartyId) error
 
-	// (POST /wheel-effects/available/roll/apply)
-	ApplyAvailableWheelEffectRoll(ctx echo.Context) error
+	// (POST /parties/{partyId}/wheel-effects/available/roll/apply)
+	ApplyAvailableWheelEffectRoll(ctx echo.Context, partyId PartyId) error
 
-	// (GET /wheel-effects/available/roll/count)
-	GetAvailableWheelEffectRollsCount(ctx echo.Context) error
+	// (GET /parties/{partyId}/wheel-effects/available/roll/count)
+	GetAvailableWheelEffectRollsCount(ctx echo.Context, partyId PartyId) error
 
-	// (GET /wheel-effects/available/roll/last)
-	GetLastRolledWheelEffects(ctx echo.Context) error
+	// (GET /parties/{partyId}/wheel-effects/available/roll/last)
+	GetLastRolledWheelEffects(ctx echo.Context, partyId PartyId) error
 
-	// (POST /wheel-effects/available/roll/last/clear)
-	ClearLastRolledWheelEffects(ctx echo.Context) error
+	// (POST /parties/{partyId}/wheel-effects/available/roll/last/clear)
+	ClearLastRolledWheelEffects(ctx echo.Context, partyId PartyId) error
 
-	// (GET /wheel-effects/{login}/history)
-	GetUserWheelEffectHistory(ctx echo.Context, login Login) error
+	// (GET /parties/{partyId}/wheel-effects/{login}/history)
+	GetUserWheelEffectHistory(ctx echo.Context, partyId PartyId, login Login) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -128,60 +131,110 @@ type ServerInterfaceWrapper struct {
 // GetAvailableWheelEffects converts echo context to params.
 func (w *ServerInterfaceWrapper) GetAvailableWheelEffects(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetAvailableWheelEffects(ctx)
+	err = w.Handler.GetAvailableWheelEffects(ctx, partyId)
 	return err
 }
 
 // RollAvailableWheelEffects converts echo context to params.
 func (w *ServerInterfaceWrapper) RollAvailableWheelEffects(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.RollAvailableWheelEffects(ctx)
+	err = w.Handler.RollAvailableWheelEffects(ctx, partyId)
 	return err
 }
 
 // ApplyAvailableWheelEffectRoll converts echo context to params.
 func (w *ServerInterfaceWrapper) ApplyAvailableWheelEffectRoll(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ApplyAvailableWheelEffectRoll(ctx)
+	err = w.Handler.ApplyAvailableWheelEffectRoll(ctx, partyId)
 	return err
 }
 
 // GetAvailableWheelEffectRollsCount converts echo context to params.
 func (w *ServerInterfaceWrapper) GetAvailableWheelEffectRollsCount(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetAvailableWheelEffectRollsCount(ctx)
+	err = w.Handler.GetAvailableWheelEffectRollsCount(ctx, partyId)
 	return err
 }
 
 // GetLastRolledWheelEffects converts echo context to params.
 func (w *ServerInterfaceWrapper) GetLastRolledWheelEffects(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetLastRolledWheelEffects(ctx)
+	err = w.Handler.GetLastRolledWheelEffects(ctx, partyId)
 	return err
 }
 
 // ClearLastRolledWheelEffects converts echo context to params.
 func (w *ServerInterfaceWrapper) ClearLastRolledWheelEffects(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ClearLastRolledWheelEffects(ctx)
+	err = w.Handler.ClearLastRolledWheelEffects(ctx, partyId)
 	return err
 }
 
 // GetUserWheelEffectHistory converts echo context to params.
 func (w *ServerInterfaceWrapper) GetUserWheelEffectHistory(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "login" -------------
 	var login Login
 
@@ -191,7 +244,7 @@ func (w *ServerInterfaceWrapper) GetUserWheelEffectHistory(ctx echo.Context) err
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetUserWheelEffectHistory(ctx, login)
+	err = w.Handler.GetUserWheelEffectHistory(ctx, partyId, login)
 	return err
 }
 
@@ -223,12 +276,12 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/wheel-effects/available", wrapper.GetAvailableWheelEffects)
-	router.POST(baseURL+"/wheel-effects/available/roll", wrapper.RollAvailableWheelEffects)
-	router.POST(baseURL+"/wheel-effects/available/roll/apply", wrapper.ApplyAvailableWheelEffectRoll)
-	router.GET(baseURL+"/wheel-effects/available/roll/count", wrapper.GetAvailableWheelEffectRollsCount)
-	router.GET(baseURL+"/wheel-effects/available/roll/last", wrapper.GetLastRolledWheelEffects)
-	router.POST(baseURL+"/wheel-effects/available/roll/last/clear", wrapper.ClearLastRolledWheelEffects)
-	router.GET(baseURL+"/wheel-effects/:login/history", wrapper.GetUserWheelEffectHistory)
+	router.GET(baseURL+"/parties/:partyId/wheel-effects/available", wrapper.GetAvailableWheelEffects)
+	router.POST(baseURL+"/parties/:partyId/wheel-effects/available/roll", wrapper.RollAvailableWheelEffects)
+	router.POST(baseURL+"/parties/:partyId/wheel-effects/available/roll/apply", wrapper.ApplyAvailableWheelEffectRoll)
+	router.GET(baseURL+"/parties/:partyId/wheel-effects/available/roll/count", wrapper.GetAvailableWheelEffectRollsCount)
+	router.GET(baseURL+"/parties/:partyId/wheel-effects/available/roll/last", wrapper.GetLastRolledWheelEffects)
+	router.POST(baseURL+"/parties/:partyId/wheel-effects/available/roll/last/clear", wrapper.ClearLastRolledWheelEffects)
+	router.GET(baseURL+"/parties/:partyId/wheel-effects/:login/history", wrapper.GetUserWheelEffectHistory)
 
 }

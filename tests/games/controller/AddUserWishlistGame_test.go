@@ -6,6 +6,7 @@ import (
 	"FGG-Service/src/games/types"
 	"FGG-Service/tests/auth/mock"
 	"FGG-Service/tests/games/mock/srvgames"
+	"FGG-Service/tests/parties/srvmock"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -30,23 +31,23 @@ type AddUserWishlistGameTestCase struct {
 
 var AddUserWishlistGameTestCases = []AddUserWishlistGameTestCase{
 	{
-		// DoesUserSessionExist returns an error. The error will return.
-		Name: "DoesUserSessionExist_Error",
+		// GetUserId returns an error. The error will return.
+		Name: "GetUserId_Error",
 		Body: `{"name":"Half-Life 1"}`,
 		SetupMock: func() (*srvgamesmock.ServiceMock, *srvauthmock.ServiceMock) {
 			gameServiceMock := new(srvgamesmock.ServiceMock)
 			authServiceMock := new(srvauthmock.ServiceMock)
 
 			authServiceMock.
-				On("DoesUserSessionExist", mock.Anything).
-				Return(false, dbError)
+				On("GetUserId", mock.Anything).
+				Return(0, dbError)
 
 			return gameServiceMock, authServiceMock
 		},
 		ExpectedStatus: http.StatusInternalServerError,
 	},
 	{
-		// DoesUserSessionExist returns false. 401 will return.
+		// GetUserId returns UnauthorizedError. 401 will return.
 		Name: "NoActiveSession",
 		Body: `{"name":"Half-Life 1"}`,
 		SetupMock: func() (*srvgamesmock.ServiceMock, *srvauthmock.ServiceMock) {
@@ -54,8 +55,8 @@ var AddUserWishlistGameTestCases = []AddUserWishlistGameTestCase{
 			authServiceMock := new(srvauthmock.ServiceMock)
 
 			authServiceMock.
-				On("DoesUserSessionExist", mock.Anything).
-				Return(false, nil)
+				On("GetUserId", mock.Anything).
+				Return(0, common.NewActiveSessionNotFoundUnauthorizedError())
 
 			return gameServiceMock, authServiceMock
 		},
@@ -70,8 +71,8 @@ var AddUserWishlistGameTestCases = []AddUserWishlistGameTestCase{
 			authServiceMock := new(srvauthmock.ServiceMock)
 
 			authServiceMock.
-				On("DoesUserSessionExist", mock.Anything).
-				Return(true, nil)
+				On("GetUserId", mock.Anything).
+				Return(1, nil)
 			authServiceMock.
 				On("GetUserIdByLogin", login).
 				Return(0, common.NewUserLoginNotFoundError(login))
@@ -89,8 +90,8 @@ var AddUserWishlistGameTestCases = []AddUserWishlistGameTestCase{
 			authServiceMock := new(srvauthmock.ServiceMock)
 
 			authServiceMock.
-				On("DoesUserSessionExist", mock.Anything).
-				Return(true, nil)
+				On("GetUserId", mock.Anything).
+				Return(1, nil)
 			authServiceMock.
 				On("GetUserIdByLogin", login).
 				Return(0, dbError)
@@ -108,8 +109,8 @@ var AddUserWishlistGameTestCases = []AddUserWishlistGameTestCase{
 			authServiceMock := new(srvauthmock.ServiceMock)
 
 			authServiceMock.
-				On("DoesUserSessionExist", mock.Anything).
-				Return(true, nil)
+				On("GetUserId", mock.Anything).
+				Return(1, nil)
 			authServiceMock.
 				On("GetUserIdByLogin", login).
 				Return(1, nil)
@@ -127,8 +128,8 @@ var AddUserWishlistGameTestCases = []AddUserWishlistGameTestCase{
 			authServiceMock := new(srvauthmock.ServiceMock)
 
 			authServiceMock.
-				On("DoesUserSessionExist", mock.Anything).
-				Return(true, nil)
+				On("GetUserId", mock.Anything).
+				Return(1, nil)
 			authServiceMock.
 				On("GetUserIdByLogin", login).
 				Return(1, nil)
@@ -146,13 +147,13 @@ var AddUserWishlistGameTestCases = []AddUserWishlistGameTestCase{
 			authServiceMock := new(srvauthmock.ServiceMock)
 
 			authServiceMock.
-				On("DoesUserSessionExist", mock.Anything).
-				Return(true, nil)
+				On("GetUserId", mock.Anything).
+				Return(1, nil)
 			authServiceMock.
 				On("GetUserIdByLogin", login).
 				Return(1, nil)
 			gameServiceMock.
-				On("AddWishlistGame", 1, typegames.WishlistGame{Name: "Half-Life 1"}).
+				On("AddWishlistGame", 1, 1, typegames.WishlistGame{Name: "Half-Life 1"}).
 				Return(common.NewWishlistGameAlreadyExistsConflictError("Half-Life 1"))
 
 			return gameServiceMock, authServiceMock
@@ -168,13 +169,13 @@ var AddUserWishlistGameTestCases = []AddUserWishlistGameTestCase{
 			authServiceMock := new(srvauthmock.ServiceMock)
 
 			authServiceMock.
-				On("DoesUserSessionExist", mock.Anything).
-				Return(true, nil)
+				On("GetUserId", mock.Anything).
+				Return(1, nil)
 			authServiceMock.
 				On("GetUserIdByLogin", login).
 				Return(1, nil)
 			gameServiceMock.
-				On("AddWishlistGame", 1, typegames.WishlistGame{Name: "Half-Life 1"}).
+				On("AddWishlistGame", 1, 1, typegames.WishlistGame{Name: "Half-Life 1"}).
 				Return(dbError)
 
 			return gameServiceMock, authServiceMock
@@ -190,13 +191,13 @@ var AddUserWishlistGameTestCases = []AddUserWishlistGameTestCase{
 			authServiceMock := new(srvauthmock.ServiceMock)
 
 			authServiceMock.
-				On("DoesUserSessionExist", mock.Anything).
-				Return(true, nil)
+				On("GetUserId", mock.Anything).
+				Return(1, nil)
 			authServiceMock.
 				On("GetUserIdByLogin", login).
 				Return(1, nil)
 			gameServiceMock.
-				On("AddWishlistGame", 1, typegames.WishlistGame{Name: "Half-Life 1"}).
+				On("AddWishlistGame", 1, 1, typegames.WishlistGame{Name: "Half-Life 1"}).
 				Return(nil)
 
 			return gameServiceMock, authServiceMock
@@ -218,13 +219,16 @@ func TestCtrlGames_AddUserWishlistGame(test *testing.T) {
 			ctx.SetParamValues(login)
 
 			gameServiceMock, authServiceMock := testCase.SetupMock()
+			partyServiceMock := new(srvpartiesmock.ServiceMock)
+			partyServiceMock.On("RequireMember", mock.Anything, 1).Return(nil).Maybe()
 			sut := ctrlgames.Controller{
-				Service:     gameServiceMock,
-				AuthService: authServiceMock,
+				Service:      gameServiceMock,
+				AuthService:  authServiceMock,
+				PartyService: partyServiceMock,
 			}
 
 			// Act
-			sut.AddUserWishlistGame(ctx, login)
+			sut.AddUserWishlistGame(ctx, 1, login)
 
 			// Assert
 			require.Equal(test, testCase.ExpectedStatus, rec.Code)
@@ -233,4 +237,37 @@ func TestCtrlGames_AddUserWishlistGame(test *testing.T) {
 			authServiceMock.AssertExpectations(test)
 		})
 	}
+}
+
+// A user outside the party is turned away before anything is read or changed.
+func TestCtrlGames_AddUserWishlistGame_NotPartyMember(test *testing.T) {
+	// Arrange
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"name":"Half-Life 1"}`))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	ctx := e.NewContext(req, rec)
+	ctx.SetParamNames("login")
+	ctx.SetParamValues(login)
+
+	gameServiceMock := new(srvgamesmock.ServiceMock)
+	authServiceMock := new(srvauthmock.ServiceMock)
+	authServiceMock.On("GetUserId", mock.Anything).Return(1, nil)
+	partyServiceMock := new(srvpartiesmock.ServiceMock)
+	partyServiceMock.On("RequireMember", 1, 1).Return(common.NewPartyNotFoundError(1))
+	sut := ctrlgames.Controller{
+		Service:      gameServiceMock,
+		AuthService:  authServiceMock,
+		PartyService: partyServiceMock,
+	}
+
+	// Act
+	sut.AddUserWishlistGame(ctx, 1, login)
+
+	// Assert
+	require.Equal(test, http.StatusNotFound, rec.Code)
+
+	gameServiceMock.AssertExpectations(test)
+	authServiceMock.AssertExpectations(test)
+	partyServiceMock.AssertExpectations(test)
 }

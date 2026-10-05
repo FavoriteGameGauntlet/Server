@@ -7,39 +7,45 @@ import (
 	"FGG-Service/src/common"
 	"FGG-Service/src/exchanges/service"
 	"FGG-Service/src/exchanges/types"
+	"FGG-Service/src/parties/service"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
 
-// defaultPartyId is a stopgap until real party context exists (see project plan) — every exchange is
-// scoped to this one hardcoded party.
-const defaultPartyId = 1
-
 type Controller struct {
-	Service     srvexchanges.IService
-	AuthService srvauth.IService
+	Service      srvexchanges.IService
+	AuthService  srvauth.IService
+	PartyService srvparties.IService
 }
 
 func NewController() *Controller {
 	s := srvexchanges.NewService()
 	as := srvauth.NewService()
+	ps := srvparties.NewService()
 
 	return &Controller{
 		s,
 		as,
+		ps,
 	}
 }
 
-// GetExchanges (GET /exchanges/catalog)
-func (c *Controller) GetExchanges(ctx echo.Context) error {
-	_, err := c.AuthService.GetUserId(ctx)
+// GetExchanges (GET /parties/{partyId}/exchanges/catalog)
+func (c *Controller) GetExchanges(ctx echo.Context, partyId genexchanges.PartyId) error {
+	userId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	exchanges, err := c.Service.GetExchanges(defaultPartyId)
+	err = c.PartyService.RequireMember(userId, partyId)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	exchanges, err := c.Service.GetExchanges(partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -48,15 +54,15 @@ func (c *Controller) GetExchanges(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, convertExchangesToDto(exchanges))
 }
 
-// GetRemovedExchanges (GET /exchanges/catalog/removed)
-func (c *Controller) GetRemovedExchanges(ctx echo.Context) error {
-	err := common.RequireAdmin(ctx, c.AuthService)
+// GetRemovedExchanges (GET /parties/{partyId}/exchanges/catalog/removed)
+func (c *Controller) GetRemovedExchanges(ctx echo.Context, partyId genexchanges.PartyId) error {
+	err := common.RequireAdmin(ctx, c.AuthService, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	exchanges, err := c.Service.GetRemovedExchanges(defaultPartyId)
+	exchanges, err := c.Service.GetRemovedExchanges(partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -65,9 +71,9 @@ func (c *Controller) GetRemovedExchanges(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, convertExchangesToDto(exchanges))
 }
 
-// CreateExchange (POST /exchanges/catalog)
-func (c *Controller) CreateExchange(ctx echo.Context) error {
-	err := common.RequireAdmin(ctx, c.AuthService)
+// CreateExchange (POST /parties/{partyId}/exchanges/catalog)
+func (c *Controller) CreateExchange(ctx echo.Context, partyId genexchanges.PartyId) error {
+	err := common.RequireAdmin(ctx, c.AuthService, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -82,7 +88,7 @@ func (c *Controller) CreateExchange(ctx echo.Context) error {
 	}
 
 	exchange, err := c.Service.CreateExchange(
-		defaultPartyId,
+		partyId,
 		exchangeDto.Name,
 		exchangeDto.Description,
 		convertDtoToChangeEntryInputs(exchangeDto.SourceEntries),
@@ -95,15 +101,15 @@ func (c *Controller) CreateExchange(ctx echo.Context) error {
 	return ctx.JSON(http.StatusCreated, convertExchangeToDto(exchange))
 }
 
-// RemoveExchange (DELETE /exchanges/catalog/{name})
-func (c *Controller) RemoveExchange(ctx echo.Context, name genexchanges.Name) error {
-	err := common.RequireAdmin(ctx, c.AuthService)
+// RemoveExchange (DELETE /parties/{partyId}/exchanges/catalog/{name})
+func (c *Controller) RemoveExchange(ctx echo.Context, partyId genexchanges.PartyId, name genexchanges.Name) error {
+	err := common.RequireAdmin(ctx, c.AuthService, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.RemoveExchange(defaultPartyId, name)
+	err = c.Service.RemoveExchange(partyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -112,9 +118,15 @@ func (c *Controller) RemoveExchange(ctx echo.Context, name genexchanges.Name) er
 	return ctx.NoContent(http.StatusNoContent)
 }
 
-// UseExchange (POST /exchanges/catalog/{name}/use)
-func (c *Controller) UseExchange(ctx echo.Context, name genexchanges.Name) error {
+// UseExchange (POST /parties/{partyId}/exchanges/catalog/{name}/use)
+func (c *Controller) UseExchange(ctx echo.Context, partyId genexchanges.PartyId, name genexchanges.Name) error {
 	userId, err := c.AuthService.GetUserId(ctx)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	err = c.PartyService.RequireMember(userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -141,7 +153,7 @@ func (c *Controller) UseExchange(ctx echo.Context, name genexchanges.Name) error
 		}
 	}
 
-	err = c.Service.UseExchange(userId, defaultPartyId, name, targetUserIds)
+	err = c.Service.UseExchange(userId, partyId, name, targetUserIds)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -150,9 +162,15 @@ func (c *Controller) UseExchange(ctx echo.Context, name genexchanges.Name) error
 	return ctx.NoContent(http.StatusNoContent)
 }
 
-// GetUserExchangeHistory (GET /exchanges/{login}/history)
-func (c *Controller) GetUserExchangeHistory(ctx echo.Context, login genexchanges.Login) error {
-	_, err := c.AuthService.GetUserId(ctx)
+// GetUserExchangeHistory (GET /parties/{partyId}/exchanges/{login}/history)
+func (c *Controller) GetUserExchangeHistory(ctx echo.Context, partyId genexchanges.PartyId, login genexchanges.Login) error {
+	actorUserId, err := c.AuthService.GetUserId(ctx)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	err = c.PartyService.RequireMember(actorUserId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -164,7 +182,7 @@ func (c *Controller) GetUserExchangeHistory(ctx echo.Context, login genexchanges
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	history, err := c.Service.GetExchangeHistory(userId, defaultPartyId)
+	history, err := c.Service.GetExchangeHistory(userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)

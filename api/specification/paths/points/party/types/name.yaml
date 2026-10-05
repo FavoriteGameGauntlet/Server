@@ -2,6 +2,7 @@ get:
   operationId: getPartyPointValue
   tags: [ Points ]
   parameters:
+    - $ref: "../../../../components/parameters/PartyId.yaml"
     - $ref: "../../../../components/parameters/Name.yaml"
   responses:
     "200":
@@ -18,6 +19,7 @@ patch:
   operationId: changePartyPointValue
   tags: [ Points ]
   parameters:
+    - $ref: "../../../../components/parameters/PartyId.yaml"
     - $ref: "../../../../components/parameters/Name.yaml"
   requestBody:
     $ref: "../../../../components/requests/PointChangeRequest.yaml"

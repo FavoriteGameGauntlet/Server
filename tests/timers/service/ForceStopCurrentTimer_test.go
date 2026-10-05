@@ -127,7 +127,7 @@ func TestSrvTimers_ForceStopCurrentTimer(test *testing.T) {
 			}
 
 			// Act
-			_, err := sut.ForceStopCurrentTimer(testCase.UserId)
+			_, err := sut.ForceStopCurrentTimer(testCase.UserId, 1)
 
 			// Assert
 			if testCase.ExpectedErrorIs != nil {

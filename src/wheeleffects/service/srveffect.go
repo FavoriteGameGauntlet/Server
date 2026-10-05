@@ -16,23 +16,20 @@ import (
 	"math/rand"
 )
 
-// defaultPartyId and defaultCollectionId are stopgaps until real party context and wheel-collection
-// selection exist (see project plan) — every roll is scoped to this one hardcoded party/collection.
-const (
-	defaultPartyId      = 1
-	defaultCollectionId = 1
-)
+// defaultCollectionId is a stopgap until wheel-collection selection exists (see project plan) — every
+// roll is scoped to this one hardcoded collection.
+const defaultCollectionId = 1
 
 type IService interface {
-	GetAvailableRollsCount(userId int) (count int, err error)
-	GetAvailableWheelRows(userId int) (rows []typewheeleffects.WheelRow, err error)
-	MakeEffectRoll(userId int, isReroll bool) (rolled []typewheeleffects.LastWheelRow, err error)
-	ClearLastWheelEffects(userId int) error
-	GetLastRolledWheelEffects(userId int) (rows []typewheeleffects.LastWheelRow, err error)
-	ApplyWheelEffectRoll(userId int, wheelRowName string, targetUserIds []int) error
-	GetLastWheelRowByName(userId int, wheelRowName string) (row typewheeleffects.LastWheelRow, err error)
-	GetEffectHistory(userId int) (history []typewheeleffects.WheelRowHistory, err error)
-	GetEffectHistoryByEffectName(userId int, effectName string) (history *typewheeleffects.WheelRowHistory, err error)
+	GetAvailableRollsCount(userId int, partyId int) (count int, err error)
+	GetAvailableWheelRows(userId int, partyId int) (rows []typewheeleffects.WheelRow, err error)
+	MakeEffectRoll(userId int, partyId int, isReroll bool) (rolled []typewheeleffects.LastWheelRow, err error)
+	ClearLastWheelEffects(userId int, partyId int) error
+	GetLastRolledWheelEffects(userId int, partyId int) (rows []typewheeleffects.LastWheelRow, err error)
+	ApplyWheelEffectRoll(userId int, partyId int, wheelRowName string, targetUserIds []int) error
+	GetLastWheelRowByName(userId int, partyId int, wheelRowName string) (row typewheeleffects.LastWheelRow, err error)
+	GetEffectHistory(userId int, partyId int) (history []typewheeleffects.WheelRowHistory, err error)
+	GetEffectHistoryByEffectName(userId int, partyId int, effectName string) (history *typewheeleffects.WheelRowHistory, err error)
 }
 
 type Service struct {
@@ -53,25 +50,25 @@ func NewService() *Service {
 	}
 }
 
-func (s *Service) GetAvailableRollsCount(userId int) (count int, err error) {
-	return s.Database.GetAvailableRollsCountCommand(userId)
+func (s *Service) GetAvailableRollsCount(userId int, partyId int) (count int, err error) {
+	return s.Database.GetAvailableRollsCountCommand(userId, partyId)
 }
 
-func (s *Service) GetAvailableWheelRows(userId int) (rows []typewheeleffects.WheelRow, err error) {
-	return s.Database.GetAvailableWheelRowsCommand(userId, defaultPartyId, defaultCollectionId)
+func (s *Service) GetAvailableWheelRows(userId int, partyId int) (rows []typewheeleffects.WheelRow, err error) {
+	return s.Database.GetAvailableWheelRowsCommand(userId, partyId, defaultCollectionId)
 }
 
-func (s *Service) MakeEffectRoll(userId int, isReroll bool) (rolled []typewheeleffects.LastWheelRow, err error) {
+func (s *Service) MakeEffectRoll(userId int, partyId int, isReroll bool) (rolled []typewheeleffects.LastWheelRow, err error) {
 	if !isReroll {
 		var rollCount int
-		rollCount, err = s.GetAvailableRollsCount(userId)
+		rollCount, err = s.GetAvailableRollsCount(userId, partyId)
 
 		if err != nil {
 			return
 		}
 
 		var minimumAvailableRollCountForRoll int
-		minimumAvailableRollCountForRoll, err = s.SysParamsService.GetInt(typesysparams.ParamMinimumAvailableRollCountForRoll)
+		minimumAvailableRollCountForRoll, err = s.SysParamsService.GetInt(partyId, typesysparams.ParamMinimumAvailableRollCountForRoll)
 
 		if err != nil {
 			return
@@ -83,13 +80,13 @@ func (s *Service) MakeEffectRoll(userId int, isReroll bool) (rolled []typewheele
 		}
 	}
 
-	candidates, err := s.Database.GetAvailableWheelRowsCommand(userId, defaultPartyId, defaultCollectionId)
+	candidates, err := s.Database.GetAvailableWheelRowsCommand(userId, partyId, defaultCollectionId)
 
 	if err != nil {
 		return
 	}
 
-	sampleSize, err := s.SysParamsService.GetInt(typesysparams.ParamMinimumAvailableWheelEffectsForRoll)
+	sampleSize, err := s.SysParamsService.GetInt(partyId, typesysparams.ParamMinimumAvailableWheelEffectsForRoll)
 
 	if err != nil {
 		return
@@ -106,20 +103,20 @@ func (s *Service) MakeEffectRoll(userId int, isReroll bool) (rolled []typewheele
 
 	if !isReroll {
 		var availableRollChangeByRoll int
-		availableRollChangeByRoll, err = s.SysParamsService.GetInt(typesysparams.ParamAvailableRollChangeByRoll)
+		availableRollChangeByRoll, err = s.SysParamsService.GetInt(partyId, typesysparams.ParamAvailableRollChangeByRoll)
 
 		if err != nil {
 			return
 		}
 
-		err = s.PointsService.ChangePointValueByTypeNameNoHistory(userId, defaultPartyId, typepoints.PointTypeAvailableRolls, availableRollChangeByRoll)
+		err = s.PointsService.ChangePointValueByTypeNameNoHistory(userId, partyId, typepoints.PointTypeAvailableRolls, availableRollChangeByRoll)
 
 		if err != nil {
 			return
 		}
 	}
 
-	err = s.Database.ClearLastWheelEffectsCommand(userId, defaultPartyId)
+	err = s.Database.ClearLastWheelEffectsCommand(userId, partyId)
 
 	if err != nil {
 		return
@@ -133,23 +130,23 @@ func (s *Service) MakeEffectRoll(userId int, isReroll bool) (rolled []typewheele
 		}
 	}
 
-	_, err = s.Database.AddLastRolledWheelEffectsCommand(userId, defaultPartyId, inputs)
+	_, err = s.Database.AddLastRolledWheelEffectsCommand(userId, partyId, inputs)
 
 	if err != nil {
 		return
 	}
 
-	rolled, err = s.Database.GetLastRolledWheelEffectsCommand(userId, defaultPartyId)
+	rolled, err = s.Database.GetLastRolledWheelEffectsCommand(userId, partyId)
 
 	return
 }
 
-func (s *Service) ClearLastWheelEffects(userId int) error {
-	return s.Database.ClearLastWheelEffectsCommand(userId, defaultPartyId)
+func (s *Service) ClearLastWheelEffects(userId int, partyId int) error {
+	return s.Database.ClearLastWheelEffectsCommand(userId, partyId)
 }
 
-func (s *Service) GetLastRolledWheelEffects(userId int) (rows []typewheeleffects.LastWheelRow, err error) {
-	rows, err = s.Database.GetLastRolledWheelEffectsCommand(userId, defaultPartyId)
+func (s *Service) GetLastRolledWheelEffects(userId int, partyId int) (rows []typewheeleffects.LastWheelRow, err error) {
+	rows, err = s.Database.GetLastRolledWheelEffectsCommand(userId, partyId)
 
 	if err == nil && len(rows) == 0 {
 		err = common.NewLastWheelEffectsNotFoundError()
@@ -164,26 +161,26 @@ func (s *Service) GetLastRolledWheelEffects(userId int) (rows []typewheeleffects
 // roller: the party-level Change template (WheelRow.ChangeId) has no user of its own, so its entries
 // are copied into a fresh users.Change with each entry stamped to one of targetUserIds before the
 // entries are actually applied.
-func (s *Service) ApplyWheelEffectRoll(userId int, wheelRowName string, targetUserIds []int) (err error) {
-	lastRow, err := s.GetLastWheelRowByName(userId, wheelRowName)
+func (s *Service) ApplyWheelEffectRoll(userId int, partyId int, wheelRowName string, targetUserIds []int) (err error) {
+	lastRow, err := s.GetLastWheelRowByName(userId, partyId, wheelRowName)
 
 	if err != nil {
 		return
 	}
 
-	wheelRow, err := s.Database.GetWheelRowCommand(defaultPartyId, lastRow.Id)
+	wheelRow, err := s.Database.GetWheelRowCommand(partyId, lastRow.Id)
 
 	if err != nil {
 		return
 	}
 
-	history, err := s.Database.AddWheelEffectHistoryCommand(userId, defaultPartyId, wheelRow.Id, userId, nil)
+	history, err := s.Database.AddWheelEffectHistoryCommand(userId, partyId, wheelRow.Id, userId, nil)
 
 	if err != nil {
 		return
 	}
 
-	templateEntries, err := s.ChangesDatabase.GetChangeEntriesJsonbCommand(defaultPartyId, wheelRow.ChangeId)
+	templateEntries, err := s.ChangesDatabase.GetChangeEntriesJsonbCommand(partyId, wheelRow.ChangeId)
 
 	if err != nil {
 		return
@@ -199,21 +196,21 @@ func (s *Service) ApplyWheelEffectRoll(userId int, wheelRowName string, targetUs
 		}
 	}
 
-	userChange, err := s.ChangesDatabase.CreateUserChangeFromJsonbCommand(defaultPartyId, targetedEntries)
+	userChange, err := s.ChangesDatabase.CreateUserChangeFromJsonbCommand(partyId, targetedEntries)
 
 	if err != nil {
 		return
 	}
 
-	return s.ChangesService.ApplyChangeEntries(defaultPartyId, userChange.Entries, userId, history.Id)
+	return s.ChangesService.ApplyChangeEntries(partyId, userChange.Entries, userId, history.Id)
 }
 
-func (s *Service) GetEffectHistory(userId int) (history []typewheeleffects.WheelRowHistory, err error) {
-	return s.Database.GetEffectHistoryCommand(userId, defaultPartyId)
+func (s *Service) GetEffectHistory(userId int, partyId int) (history []typewheeleffects.WheelRowHistory, err error) {
+	return s.Database.GetEffectHistoryCommand(userId, partyId)
 }
 
-func (s *Service) GetEffectHistoryByEffectName(userId int, effectName string) (history *typewheeleffects.WheelRowHistory, err error) {
-	notNilHistory, err := s.Database.GetEffectHistoryByEffectNameCommand(userId, defaultPartyId, effectName)
+func (s *Service) GetEffectHistoryByEffectName(userId int, partyId int, effectName string) (history *typewheeleffects.WheelRowHistory, err error) {
+	notNilHistory, err := s.Database.GetEffectHistoryByEffectNameCommand(userId, partyId, effectName)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = nil
@@ -231,8 +228,8 @@ func (s *Service) GetEffectHistoryByEffectName(userId int, effectName string) (h
 
 // GetLastWheelRowByName finds the named row among the user's currently rolled-but-unapplied rows,
 // and errors if it was already applied (a WheelRowHistory row exists for it).
-func (s *Service) GetLastWheelRowByName(userId int, wheelRowName string) (row typewheeleffects.LastWheelRow, err error) {
-	lastRows, err := s.Database.GetLastRolledWheelEffectsCommand(userId, defaultPartyId)
+func (s *Service) GetLastWheelRowByName(userId int, partyId int, wheelRowName string) (row typewheeleffects.LastWheelRow, err error) {
+	lastRows, err := s.Database.GetLastRolledWheelEffectsCommand(userId, partyId)
 
 	if err != nil {
 		return
@@ -252,7 +249,7 @@ func (s *Service) GetLastWheelRowByName(userId int, wheelRowName string) (row ty
 		return
 	}
 
-	_, err = s.Database.GetEffectHistoryByEffectNameCommand(userId, defaultPartyId, wheelRowName)
+	_, err = s.Database.GetEffectHistoryByEffectNameCommand(userId, partyId, wheelRowName)
 
 	if err == nil {
 		err = common.NewWheelEffectRollAlreadyAppliedConflictError()

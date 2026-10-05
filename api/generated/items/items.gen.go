@@ -81,6 +81,9 @@ type UserItem struct {
 // UserItems defines model for UserItems.
 type UserItems = []UserItem
 
+// PartyId defines model for PartyId.
+type PartyId = int
+
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse = Error
 
@@ -105,29 +108,29 @@ type CreateItemJSONRequestBody = ItemCreate
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
-	// (GET /items/catalog)
-	GetItems(ctx echo.Context) error
+	// (GET /parties/{partyId}/items/catalog)
+	GetItems(ctx echo.Context, partyId PartyId) error
 
-	// (POST /items/catalog)
-	CreateItem(ctx echo.Context) error
+	// (POST /parties/{partyId}/items/catalog)
+	CreateItem(ctx echo.Context, partyId PartyId) error
 
-	// (GET /items/catalog/removed)
-	GetRemovedItems(ctx echo.Context) error
+	// (GET /parties/{partyId}/items/catalog/removed)
+	GetRemovedItems(ctx echo.Context, partyId PartyId) error
 
-	// (DELETE /items/catalog/{name})
-	RemoveItem(ctx echo.Context, name Name) error
+	// (DELETE /parties/{partyId}/items/catalog/{name})
+	RemoveItem(ctx echo.Context, partyId PartyId, name Name) error
 
-	// (GET /items/{login})
-	GetUserItems(ctx echo.Context, login Login) error
+	// (GET /parties/{partyId}/items/{login})
+	GetUserItems(ctx echo.Context, partyId PartyId, login Login) error
 
-	// (GET /items/{login}/history)
-	GetUserItemHistory(ctx echo.Context, login Login) error
+	// (GET /parties/{partyId}/items/{login}/history)
+	GetUserItemHistory(ctx echo.Context, partyId PartyId, login Login) error
 
-	// (DELETE /items/{login}/{name})
-	DiscardUserItem(ctx echo.Context, login Login, name Name) error
+	// (DELETE /parties/{partyId}/items/{login}/{name})
+	DiscardUserItem(ctx echo.Context, partyId PartyId, login Login, name Name) error
 
-	// (POST /items/{login}/{name}/use)
-	UseUserItem(ctx echo.Context, login Login, name Name) error
+	// (POST /parties/{partyId}/items/{login}/{name}/use)
+	UseUserItem(ctx echo.Context, partyId PartyId, login Login, name Name) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -138,33 +141,62 @@ type ServerInterfaceWrapper struct {
 // GetItems converts echo context to params.
 func (w *ServerInterfaceWrapper) GetItems(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetItems(ctx)
+	err = w.Handler.GetItems(ctx, partyId)
 	return err
 }
 
 // CreateItem converts echo context to params.
 func (w *ServerInterfaceWrapper) CreateItem(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.CreateItem(ctx)
+	err = w.Handler.CreateItem(ctx, partyId)
 	return err
 }
 
 // GetRemovedItems converts echo context to params.
 func (w *ServerInterfaceWrapper) GetRemovedItems(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetRemovedItems(ctx)
+	err = w.Handler.GetRemovedItems(ctx, partyId)
 	return err
 }
 
 // RemoveItem converts echo context to params.
 func (w *ServerInterfaceWrapper) RemoveItem(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "name" -------------
 	var name Name
 
@@ -174,13 +206,21 @@ func (w *ServerInterfaceWrapper) RemoveItem(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.RemoveItem(ctx, name)
+	err = w.Handler.RemoveItem(ctx, partyId, name)
 	return err
 }
 
 // GetUserItems converts echo context to params.
 func (w *ServerInterfaceWrapper) GetUserItems(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "login" -------------
 	var login Login
 
@@ -190,13 +230,21 @@ func (w *ServerInterfaceWrapper) GetUserItems(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetUserItems(ctx, login)
+	err = w.Handler.GetUserItems(ctx, partyId, login)
 	return err
 }
 
 // GetUserItemHistory converts echo context to params.
 func (w *ServerInterfaceWrapper) GetUserItemHistory(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "login" -------------
 	var login Login
 
@@ -206,13 +254,21 @@ func (w *ServerInterfaceWrapper) GetUserItemHistory(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetUserItemHistory(ctx, login)
+	err = w.Handler.GetUserItemHistory(ctx, partyId, login)
 	return err
 }
 
 // DiscardUserItem converts echo context to params.
 func (w *ServerInterfaceWrapper) DiscardUserItem(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "login" -------------
 	var login Login
 
@@ -230,13 +286,21 @@ func (w *ServerInterfaceWrapper) DiscardUserItem(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.DiscardUserItem(ctx, login, name)
+	err = w.Handler.DiscardUserItem(ctx, partyId, login, name)
 	return err
 }
 
 // UseUserItem converts echo context to params.
 func (w *ServerInterfaceWrapper) UseUserItem(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "login" -------------
 	var login Login
 
@@ -254,7 +318,7 @@ func (w *ServerInterfaceWrapper) UseUserItem(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.UseUserItem(ctx, login, name)
+	err = w.Handler.UseUserItem(ctx, partyId, login, name)
 	return err
 }
 
@@ -286,13 +350,13 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/items/catalog", wrapper.GetItems)
-	router.POST(baseURL+"/items/catalog", wrapper.CreateItem)
-	router.GET(baseURL+"/items/catalog/removed", wrapper.GetRemovedItems)
-	router.DELETE(baseURL+"/items/catalog/:name", wrapper.RemoveItem)
-	router.GET(baseURL+"/items/:login", wrapper.GetUserItems)
-	router.GET(baseURL+"/items/:login/history", wrapper.GetUserItemHistory)
-	router.DELETE(baseURL+"/items/:login/:name", wrapper.DiscardUserItem)
-	router.POST(baseURL+"/items/:login/:name/use", wrapper.UseUserItem)
+	router.GET(baseURL+"/parties/:partyId/items/catalog", wrapper.GetItems)
+	router.POST(baseURL+"/parties/:partyId/items/catalog", wrapper.CreateItem)
+	router.GET(baseURL+"/parties/:partyId/items/catalog/removed", wrapper.GetRemovedItems)
+	router.DELETE(baseURL+"/parties/:partyId/items/catalog/:name", wrapper.RemoveItem)
+	router.GET(baseURL+"/parties/:partyId/items/:login", wrapper.GetUserItems)
+	router.GET(baseURL+"/parties/:partyId/items/:login/history", wrapper.GetUserItemHistory)
+	router.DELETE(baseURL+"/parties/:partyId/items/:login/:name", wrapper.DiscardUserItem)
+	router.POST(baseURL+"/parties/:partyId/items/:login/:name/use", wrapper.UseUserItem)
 
 }

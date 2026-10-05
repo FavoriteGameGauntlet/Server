@@ -10,15 +10,9 @@ import (
 	"errors"
 )
 
-// availableRollsDefaultPartyId is a stopgap until real party-context resolution exists (see project
-// plan). GetAvailableRollsCountCommand keeps its historical userId-only signature so callers without
-// party context yet (e.g. srvtimers) don't need it either.
-const availableRollsDefaultPartyId = 1
-
 type IDatabase interface {
-	// GetAvailableRollsCountCommand reads the user's AvailableRolls PointType value, under
-	// availableRollsDefaultPartyId. See its doc comment for why this stays userId-only.
-	GetAvailableRollsCountCommand(userId int) (count int, err error)
+	// GetAvailableRollsCountCommand reads the user's AvailableRolls PointType value in the party.
+	GetAvailableRollsCountCommand(userId int, partyId int) (count int, err error)
 	GetAvailableWheelRowsCommand(userId int, partyId int, collectionId int) (rows []typewheeleffects.WheelRow, err error)
 	GetEffectHistoryCommand(userId int, partyId int) (history []typewheeleffects.WheelRowHistory, err error)
 	GetEffectHistoryByEffectNameCommand(userId int, partyId int, wheelRowName string) (history typewheeleffects.WheelRowHistory, err error)
@@ -37,10 +31,10 @@ type IDatabase interface {
 type Database struct {
 }
 
-func (db *Database) GetAvailableRollsCountCommand(userId int) (count int, err error) {
+func (db *Database) GetAvailableRollsCountCommand(userId int, partyId int) (count int, err error) {
 	pointsDb := new(dbpoints.Database)
 
-	pointTypes, err := pointsDb.GetPointTypesCommand(availableRollsDefaultPartyId)
+	pointTypes, err := pointsDb.GetPointTypesCommand(partyId)
 
 	if err != nil {
 		return
@@ -52,7 +46,7 @@ func (db *Database) GetAvailableRollsCountCommand(userId int) (count int, err er
 		}
 
 		var point typepoints.UserPoint
-		point, err = pointsDb.GetUserPointCommand(userId, availableRollsDefaultPartyId, pointType.Id)
+		point, err = pointsDb.GetUserPointCommand(userId, partyId, pointType.Id)
 
 		if errors.Is(err, sql.ErrNoRows) {
 			err = nil

@@ -4,6 +4,7 @@ import (
 	"FGG-Service/api/generated/system_parameters"
 	"FGG-Service/src/auth/service"
 	"FGG-Service/src/common"
+	"FGG-Service/src/parties/service"
 	"FGG-Service/src/sysparams/service"
 	"FGG-Service/src/sysparams/types"
 	"net/http"
@@ -12,29 +13,38 @@ import (
 )
 
 type Controller struct {
-	Service     srvsysparams.Service
-	AuthService srvauth.Service
+	Service      srvsysparams.Service
+	AuthService  srvauth.Service
+	PartyService srvparties.IService
 }
 
 func NewController() *Controller {
 	s := srvsysparams.NewService()
 	as := srvauth.NewService()
+	ps := srvparties.NewService()
 
 	return &Controller{
 		*s,
 		*as,
+		ps,
 	}
 }
 
-// GetSystemParameters (GET /system-parameters)
-func (c *Controller) GetSystemParameters(ctx echo.Context) error {
-	_, err := c.AuthService.GetUserId(ctx)
+// GetSystemParameters (GET /parties/{partyId}/system-parameters)
+func (c *Controller) GetSystemParameters(ctx echo.Context, partyId gensysparams.PartyId) error {
+	userId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	parameters, err := c.Service.GetAll()
+	err = c.PartyService.RequireMember(userId, partyId)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	parameters, err := c.Service.GetAll(partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -45,15 +55,21 @@ func (c *Controller) GetSystemParameters(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, parametersDto)
 }
 
-// GetSystemParameter (GET /system-parameters/{name})
-func (c *Controller) GetSystemParameter(ctx echo.Context, name gensysparams.Name) error {
-	_, err := c.AuthService.GetUserId(ctx)
+// GetSystemParameter (GET /parties/{partyId}/system-parameters/{name})
+func (c *Controller) GetSystemParameter(ctx echo.Context, partyId gensysparams.PartyId, name gensysparams.Name) error {
+	userId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	parameter, err := c.Service.GetParameter(name)
+	err = c.PartyService.RequireMember(userId, partyId)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	parameter, err := c.Service.GetParameter(partyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -64,9 +80,9 @@ func (c *Controller) GetSystemParameter(ctx echo.Context, name gensysparams.Name
 	return ctx.JSON(http.StatusOK, parameterDto)
 }
 
-// ChangeSystemParameter (POST /system-parameters/{name})
-func (c *Controller) ChangeSystemParameter(ctx echo.Context, name gensysparams.Name) error {
-	err := common.RequireAdmin(ctx, &c.AuthService)
+// ChangeSystemParameter (POST /parties/{partyId}/system-parameters/{name})
+func (c *Controller) ChangeSystemParameter(ctx echo.Context, partyId gensysparams.PartyId, name gensysparams.Name) error {
+	err := common.RequireAdmin(ctx, &c.AuthService, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -80,7 +96,7 @@ func (c *Controller) ChangeSystemParameter(ctx echo.Context, name gensysparams.N
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	created, err := c.Service.ChangeValue(name, parameterDto.Value)
+	created, err := c.Service.ChangeValue(partyId, name, parameterDto.Value)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -93,15 +109,15 @@ func (c *Controller) ChangeSystemParameter(ctx echo.Context, name gensysparams.N
 	return ctx.NoContent(http.StatusNoContent)
 }
 
-// ResetSystemParameter (DELETE /system-parameters/{name})
-func (c *Controller) ResetSystemParameter(ctx echo.Context, name gensysparams.Name) error {
-	err := common.RequireAdmin(ctx, &c.AuthService)
+// ResetSystemParameter (DELETE /parties/{partyId}/system-parameters/{name})
+func (c *Controller) ResetSystemParameter(ctx echo.Context, partyId gensysparams.PartyId, name gensysparams.Name) error {
+	err := common.RequireAdmin(ctx, &c.AuthService, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.ResetParameter(name)
+	err = c.Service.ResetParameter(partyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)

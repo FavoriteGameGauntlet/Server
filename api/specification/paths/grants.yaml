@@ -1,6 +1,8 @@
 post:
   operationId: grantToUsers
   tags: [ Grants ]
+  parameters:
+    - $ref: "../components/parameters/PartyId.yaml"
   requestBody:
     $ref: "../components/requests/ManualGrantRequest.yaml"
   responses:

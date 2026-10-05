@@ -5,6 +5,7 @@ import (
 	"FGG-Service/src/auth/service"
 	"FGG-Service/src/changes/types"
 	"FGG-Service/src/common"
+	"FGG-Service/src/parties/service"
 	"FGG-Service/src/timers/service"
 	"FGG-Service/src/timers/types"
 	"net/http"
@@ -12,33 +13,38 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// defaultPartyId is a stopgap until real party context exists (see project plan) — the timer reward
-// is scoped to this one hardcoded party.
-const defaultPartyId = 1
-
 type Controller struct {
-	Service     srvtimers.Service
-	AuthService srvauth.Service
+	Service      srvtimers.Service
+	AuthService  srvauth.Service
+	PartyService srvparties.IService
 }
 
 func NewController(s *srvtimers.Service) *Controller {
 	as := srvauth.NewService()
+	ps := srvparties.NewService()
 
 	return &Controller{
 		*s,
 		*as,
+		ps,
 	}
 }
 
-// GetCurrentTimer (GET /timers/current)
-func (c *Controller) GetCurrentTimer(ctx echo.Context) error {
+// GetCurrentTimer (GET /parties/{partyId}/timers/current)
+func (c *Controller) GetCurrentTimer(ctx echo.Context, partyId gentimers.PartyId) error {
 	userId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	timer, err := c.Service.GetCurrentTimer(userId)
+	err = c.PartyService.RequireMember(userId, partyId)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	timer, err := c.Service.GetCurrentTimer(userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -49,15 +55,21 @@ func (c *Controller) GetCurrentTimer(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, timerDto)
 }
 
-// CreateCurrentTimer (POST /timers/current)
-func (c *Controller) CreateCurrentTimer(ctx echo.Context) error {
+// CreateCurrentTimer (POST /parties/{partyId}/timers/current)
+func (c *Controller) CreateCurrentTimer(ctx echo.Context, partyId gentimers.PartyId) error {
 	userId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	timer, err := c.Service.CreateCurrentTimer(userId)
+	err = c.PartyService.RequireMember(userId, partyId)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	timer, err := c.Service.CreateCurrentTimer(userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -75,15 +87,21 @@ func convertTimerToDto(timer typetimers.Timer) gentimers.Timer {
 	}
 }
 
-// PauseCurrentTimer (POST /timers/current/pause)
-func (c *Controller) PauseCurrentTimer(ctx echo.Context) error {
+// PauseCurrentTimer (POST /parties/{partyId}/timers/current/pause)
+func (c *Controller) PauseCurrentTimer(ctx echo.Context, partyId gentimers.PartyId) error {
 	userId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	timer, err := c.Service.PauseCurrentTimer(userId)
+	err = c.PartyService.RequireMember(userId, partyId)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	timer, err := c.Service.PauseCurrentTimer(userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -94,15 +112,21 @@ func (c *Controller) PauseCurrentTimer(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, timerActionDto)
 }
 
-// StartCurrentTimer (POST /timers/current/start)
-func (c *Controller) StartCurrentTimer(ctx echo.Context) error {
+// StartCurrentTimer (POST /parties/{partyId}/timers/current/start)
+func (c *Controller) StartCurrentTimer(ctx echo.Context, partyId gentimers.PartyId) error {
 	userId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	timer, err := c.Service.StartCurrentTimer(userId)
+	err = c.PartyService.RequireMember(userId, partyId)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	timer, err := c.Service.StartCurrentTimer(userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -113,15 +137,21 @@ func (c *Controller) StartCurrentTimer(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, timerActionDto)
 }
 
-// GetTimerReward (GET /timers/reward)
-func (c *Controller) GetTimerReward(ctx echo.Context) error {
-	_, err := c.AuthService.GetUserId(ctx)
+// GetTimerReward (GET /parties/{partyId}/timers/reward)
+func (c *Controller) GetTimerReward(ctx echo.Context, partyId gentimers.PartyId) error {
+	userId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	reward, err := c.Service.GetTimerReward(defaultPartyId)
+	err = c.PartyService.RequireMember(userId, partyId)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	reward, err := c.Service.GetTimerReward(partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -130,9 +160,9 @@ func (c *Controller) GetTimerReward(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, convertTimerRewardToDto(reward))
 }
 
-// SetTimerReward (PUT /timers/reward)
-func (c *Controller) SetTimerReward(ctx echo.Context) error {
-	err := common.RequireAdmin(ctx, &c.AuthService)
+// SetTimerReward (PUT /parties/{partyId}/timers/reward)
+func (c *Controller) SetTimerReward(ctx echo.Context, partyId gentimers.PartyId) error {
+	err := common.RequireAdmin(ctx, &c.AuthService, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -146,7 +176,7 @@ func (c *Controller) SetTimerReward(ctx echo.Context) error {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	reward, err := c.Service.SetTimerReward(defaultPartyId, convertDtoToChangeEntryInputs(rewardDto.Entries))
+	reward, err := c.Service.SetTimerReward(partyId, convertDtoToChangeEntryInputs(rewardDto.Entries))
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -155,15 +185,15 @@ func (c *Controller) SetTimerReward(ctx echo.Context) error {
 	return ctx.JSON(http.StatusCreated, convertTimerRewardToDto(reward))
 }
 
-// RemoveTimerReward (DELETE /timers/reward)
-func (c *Controller) RemoveTimerReward(ctx echo.Context) error {
-	err := common.RequireAdmin(ctx, &c.AuthService)
+// RemoveTimerReward (DELETE /parties/{partyId}/timers/reward)
+func (c *Controller) RemoveTimerReward(ctx echo.Context, partyId gentimers.PartyId) error {
+	err := common.RequireAdmin(ctx, &c.AuthService, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.RemoveTimerReward(defaultPartyId)
+	err = c.Service.RemoveTimerReward(partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)

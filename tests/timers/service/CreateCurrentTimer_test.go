@@ -147,7 +147,7 @@ var CreateCurrentTimerTestCases = []CreateCurrentTimerTestCase{
 
 			gamesDb.On("GetCurrentGameCommand", 1, 1).Return(currentGame, nil)
 			timerDb.On("GetCurrentTimerCommand", 1, 1).Return(typetimers.CurrentTimer{}, sql.ErrNoRows)
-			wheelDb.On("GetAvailableRollsCountCommand", 1).Return(0, dbError)
+			wheelDb.On("GetAvailableRollsCountCommand", 1, 1).Return(0, dbError)
 
 			return timerDb, gamesDb, wheelDb, spSvc
 		},
@@ -166,8 +166,8 @@ var CreateCurrentTimerTestCases = []CreateCurrentTimerTestCase{
 
 			gamesDb.On("GetCurrentGameCommand", 1, 1).Return(currentGame, nil)
 			timerDb.On("GetCurrentTimerCommand", 1, 1).Return(typetimers.CurrentTimer{}, sql.ErrNoRows)
-			wheelDb.On("GetAvailableRollsCountCommand", 1).Return(0, nil)
-			spSvc.On("GetInt", typesysparams.ParamMaximumAvailableRollCountForTimer).Return(0, dbError)
+			wheelDb.On("GetAvailableRollsCountCommand", 1, 1).Return(0, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamMaximumAvailableRollCountForTimer).Return(0, dbError)
 
 			return timerDb, gamesDb, wheelDb, spSvc
 		},
@@ -187,8 +187,8 @@ var CreateCurrentTimerTestCases = []CreateCurrentTimerTestCase{
 
 			gamesDb.On("GetCurrentGameCommand", 1, 1).Return(currentGame, nil)
 			timerDb.On("GetCurrentTimerCommand", 1, 1).Return(typetimers.CurrentTimer{}, sql.ErrNoRows)
-			wheelDb.On("GetAvailableRollsCountCommand", 1).Return(5, nil)
-			spSvc.On("GetInt", typesysparams.ParamMaximumAvailableRollCountForTimer).Return(5, nil)
+			wheelDb.On("GetAvailableRollsCountCommand", 1, 1).Return(5, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamMaximumAvailableRollCountForTimer).Return(5, nil)
 
 			return timerDb, gamesDb, wheelDb, spSvc
 		},
@@ -208,9 +208,9 @@ var CreateCurrentTimerTestCases = []CreateCurrentTimerTestCase{
 
 			gamesDb.On("GetCurrentGameCommand", 1, 1).Return(currentGame, nil)
 			timerDb.On("GetCurrentTimerCommand", 1, 1).Return(typetimers.CurrentTimer{}, sql.ErrNoRows)
-			wheelDb.On("GetAvailableRollsCountCommand", 1).Return(0, nil)
-			spSvc.On("GetInt", typesysparams.ParamMaximumAvailableRollCountForTimer).Return(10, nil)
-			spSvc.On("GetInt", typesysparams.ParamTimerDurationInS).Return(0, dbError)
+			wheelDb.On("GetAvailableRollsCountCommand", 1, 1).Return(0, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamMaximumAvailableRollCountForTimer).Return(10, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamTimerDurationInS).Return(0, dbError)
 
 			return timerDb, gamesDb, wheelDb, spSvc
 		},
@@ -230,9 +230,9 @@ var CreateCurrentTimerTestCases = []CreateCurrentTimerTestCase{
 
 			gamesDb.On("GetCurrentGameCommand", 1, 1).Return(currentGame, nil)
 			timerDb.On("GetCurrentTimerCommand", 1, 1).Return(typetimers.CurrentTimer{}, sql.ErrNoRows)
-			wheelDb.On("GetAvailableRollsCountCommand", 1).Return(0, nil)
-			spSvc.On("GetInt", typesysparams.ParamMaximumAvailableRollCountForTimer).Return(10, nil)
-			spSvc.On("GetInt", typesysparams.ParamTimerDurationInS).Return(30, nil)
+			wheelDb.On("GetAvailableRollsCountCommand", 1, 1).Return(0, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamMaximumAvailableRollCountForTimer).Return(10, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamTimerDurationInS).Return(30, nil)
 			timerDb.On("CreateCurrentTimerCommand", 1, 1, currentGame.Id, 30*time.Second).Return(typetimers.CreatedTimer{}, dbError)
 
 			return timerDb, gamesDb, wheelDb, spSvc
@@ -251,9 +251,9 @@ var CreateCurrentTimerTestCases = []CreateCurrentTimerTestCase{
 
 			gamesDb.On("GetCurrentGameCommand", 1, 1).Return(currentGame, nil)
 			timerDb.On("GetCurrentTimerCommand", 1, 1).Once().Return(typetimers.CurrentTimer{}, sql.ErrNoRows)
-			wheelDb.On("GetAvailableRollsCountCommand", 1).Return(0, nil)
-			spSvc.On("GetInt", typesysparams.ParamMaximumAvailableRollCountForTimer).Return(10, nil)
-			spSvc.On("GetInt", typesysparams.ParamTimerDurationInS).Return(30, nil)
+			wheelDb.On("GetAvailableRollsCountCommand", 1, 1).Return(0, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamMaximumAvailableRollCountForTimer).Return(10, nil)
+			spSvc.On("GetInt", 1, typesysparams.ParamTimerDurationInS).Return(30, nil)
 			timerDb.On("CreateCurrentTimerCommand", 1, 1, currentGame.Id, 30*time.Second).Return(typetimers.CreatedTimer{}, nil)
 			timerDb.On("GetCurrentTimerCommand", 1, 1).Once().Return(newCurrentTimer, nil)
 
@@ -276,7 +276,7 @@ func TestSrvTimers_CreateCurrentTimer(test *testing.T) {
 			}
 
 			// Act
-			timer, err := sut.CreateCurrentTimer(testCase.UserId)
+			timer, err := sut.CreateCurrentTimer(testCase.UserId, 1)
 
 			// Assert
 			if testCase.ExpectedErrorAs != nil {
@@ -313,7 +313,7 @@ func TestSrvTimers_CreateCurrentTimer_ExistingTimer_AlreadyExistsCode(test *test
 	sut := srvtimers.Service{Database: timerDb, GamesDatabase: gamesDb}
 
 	// Act
-	_, err := sut.CreateCurrentTimer(1)
+	_, err := sut.CreateCurrentTimer(1, 1)
 
 	// Assert
 	var conflict *common.ConflictError

@@ -3,11 +3,13 @@ info:
   title: Favorite Game Gauntlet
   version: 0.1.0
 paths:
-  /items/catalog:
+  /parties/{partyId}/items/catalog:
     get:
       operationId: getItems
       tags:
         - Items
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       responses:
         '200':
           $ref: '#/components/responses/ItemsResponse'
@@ -19,6 +21,8 @@ paths:
       operationId: createItem
       tags:
         - Items
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       requestBody:
         $ref: '#/components/requestBodies/ItemCreateRequest'
       responses:
@@ -36,11 +40,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /items/catalog/removed:
+  /parties/{partyId}/items/catalog/removed:
     get:
       operationId: getRemovedItems
       tags:
         - Items
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       responses:
         '200':
           $ref: '#/components/responses/ItemsResponse'
@@ -48,12 +54,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /items/catalog/{name}:
+  /parties/{partyId}/items/catalog/{name}:
     delete:
       operationId: removeItem
       tags:
         - Items
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Name'
       responses:
         '204':
@@ -64,12 +71,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /items/{login}:
+  /parties/{partyId}/items/{login}:
     get:
       operationId: getUserItems
       tags:
         - Items
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Login'
       responses:
         '200':
@@ -80,12 +88,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /items/{login}/history:
+  /parties/{partyId}/items/{login}/history:
     get:
       operationId: getUserItemHistory
       tags:
         - Items
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Login'
       responses:
         '200':
@@ -96,12 +105,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /items/{login}/{name}:
+  /parties/{partyId}/items/{login}/{name}:
     delete:
       operationId: discardUserItem
       tags:
         - Items
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Login'
         - $ref: '#/components/parameters/Name'
       responses:
@@ -115,12 +125,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /items/{login}/{name}/use:
+  /parties/{partyId}/items/{login}/{name}/use:
     post:
       operationId: useUserItem
       tags:
         - Items
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Login'
         - $ref: '#/components/parameters/Name'
       responses:
@@ -135,6 +146,26 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorResponse'
 components:
+  parameters:
+    PartyId:
+      name: partyId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int
+    Name:
+      name: name
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Name'
+    Login:
+      name: login
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Login'
   schemas:
     Name:
       type: string
@@ -308,16 +339,3 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ItemCreate'
-  parameters:
-    Name:
-      name: name
-      in: path
-      required: true
-      schema:
-        $ref: '#/components/schemas/Name'
-    Login:
-      name: login
-      in: path
-      required: true
-      schema:
-        $ref: '#/components/schemas/Login'

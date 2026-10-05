@@ -4,7 +4,11 @@
 package gengrants
 
 import (
+	"fmt"
+	"net/http"
+
 	"github.com/labstack/echo/v4"
+	"github.com/oapi-codegen/runtime"
 )
 
 // ChangeEntryInput Names one thing a change grants. Exactly one of pointTypeName, itemName, perkName or effectName has to be set. The amount carries the sign it is applied with, so a cost is negative.
@@ -40,6 +44,9 @@ type Name = string
 // NullableName defines model for NullableName.
 type NullableName = Name
 
+// PartyId defines model for PartyId.
+type PartyId = int
+
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse = Error
 
@@ -52,8 +59,8 @@ type GrantToUsersJSONRequestBody = ManualGrant
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
-	// (POST /grants)
-	GrantToUsers(ctx echo.Context) error
+	// (POST /parties/{partyId}/grants)
+	GrantToUsers(ctx echo.Context, partyId PartyId) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -64,9 +71,16 @@ type ServerInterfaceWrapper struct {
 // GrantToUsers converts echo context to params.
 func (w *ServerInterfaceWrapper) GrantToUsers(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GrantToUsers(ctx)
+	err = w.Handler.GrantToUsers(ctx, partyId)
 	return err
 }
 
@@ -98,6 +112,6 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.POST(baseURL+"/grants", wrapper.GrantToUsers)
+	router.POST(baseURL+"/parties/:partyId/grants", wrapper.GrantToUsers)
 
 }

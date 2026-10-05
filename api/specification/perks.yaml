@@ -3,11 +3,13 @@ info:
   title: Favorite Game Gauntlet
   version: 0.1.0
 paths:
-  /perks/catalog:
+  /parties/{partyId}/perks/catalog:
     get:
       operationId: getPerks
       tags:
         - Perks
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       responses:
         '200':
           $ref: '#/components/responses/PerksResponse'
@@ -19,6 +21,8 @@ paths:
       operationId: createPerk
       tags:
         - Perks
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       requestBody:
         $ref: '#/components/requestBodies/PerkCreateRequest'
       responses:
@@ -32,11 +36,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /perks/catalog/removed:
+  /parties/{partyId}/perks/catalog/removed:
     get:
       operationId: getRemovedPerks
       tags:
         - Perks
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       responses:
         '200':
           $ref: '#/components/responses/PerksResponse'
@@ -44,12 +50,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /perks/catalog/{name}:
+  /parties/{partyId}/perks/catalog/{name}:
     delete:
       operationId: removePerk
       tags:
         - Perks
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Name'
       responses:
         '204':
@@ -60,12 +67,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /perks/{login}:
+  /parties/{partyId}/perks/{login}:
     get:
       operationId: getUserPerks
       tags:
         - Perks
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Login'
       responses:
         '200':
@@ -76,12 +84,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /perks/{login}/history:
+  /parties/{partyId}/perks/{login}/history:
     get:
       operationId: getUserPerkHistory
       tags:
         - Perks
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Login'
       responses:
         '200':
@@ -92,12 +101,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /perks/{login}/{name}:
+  /parties/{partyId}/perks/{login}/{name}:
     delete:
       operationId: revokeUserPerk
       tags:
         - Perks
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Login'
         - $ref: '#/components/parameters/Name'
       responses:
@@ -112,6 +122,26 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorResponse'
 components:
+  parameters:
+    PartyId:
+      name: partyId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int
+    Name:
+      name: name
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Name'
+    Login:
+      name: login
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Login'
   schemas:
     Name:
       type: string
@@ -238,16 +268,3 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/PerkCreate'
-  parameters:
-    Name:
-      name: name
-      in: path
-      required: true
-      schema:
-        $ref: '#/components/schemas/Name'
-    Login:
-      name: login
-      in: path
-      required: true
-      schema:
-        $ref: '#/components/schemas/Login'

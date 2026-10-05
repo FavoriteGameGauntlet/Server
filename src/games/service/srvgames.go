@@ -12,21 +12,17 @@ import (
 	"math/rand"
 )
 
-// defaultPartyId is a stopgap until real party context exists (see project plan) — every game is
-// scoped to this one hardcoded party.
-const defaultPartyId = 1
-
 type IService interface {
-	GetCurrentGame(userId int) (typegames.CurrentGame, error)
-	CancelCurrentGame(userId int) (typegames.CurrentGame, error)
-	FinishCurrentGame(userId int) (typegames.CurrentGame, error)
-	StartCurrentGame(userId int) (typegames.CurrentGame, error)
-	GetGameHistory(userId int) ([]typegames.GameHistoryEntry, error)
-	RateGame(userId int, name string, rating int, reviewComment *string) (bool, error)
-	GetGameReview(userId int, name string) (typegames.GameReview, error)
-	GetWishlistGames(userId int) (typegames.WishlistGames, error)
-	AddWishlistGame(userId int, wishlistGame typegames.WishlistGame) error
-	GetAllCurrentGames() ([]typegames.CurrentGameWithLogin, error)
+	GetCurrentGame(userId int, partyId int) (typegames.CurrentGame, error)
+	CancelCurrentGame(userId int, partyId int) (typegames.CurrentGame, error)
+	FinishCurrentGame(userId int, partyId int) (typegames.CurrentGame, error)
+	StartCurrentGame(userId int, partyId int) (typegames.CurrentGame, error)
+	GetGameHistory(userId int, partyId int) ([]typegames.GameHistoryEntry, error)
+	RateGame(userId int, partyId int, name string, rating int, reviewComment *string) (bool, error)
+	GetGameReview(userId int, partyId int, name string) (typegames.GameReview, error)
+	GetWishlistGames(userId int, partyId int) (typegames.WishlistGames, error)
+	AddWishlistGame(userId int, partyId int, wishlistGame typegames.WishlistGame) error
+	GetAllCurrentGames(partyId int) ([]typegames.CurrentGameWithLogin, error)
 }
 
 type Service struct {
@@ -51,18 +47,18 @@ func NewService(ts srvtimers.IService) *Service {
 
 // AddWishlistGame puts a game on the user's wishlist, registering the game in the party first if
 // nobody has named it before.
-func (s *Service) AddWishlistGame(userId int, wishlistGame typegames.WishlistGame) error {
-	game, err := s.Database.GetGameByNameCommand(defaultPartyId, wishlistGame.Name)
+func (s *Service) AddWishlistGame(userId int, partyId int, wishlistGame typegames.WishlistGame) error {
+	game, err := s.Database.GetGameByNameCommand(partyId, wishlistGame.Name)
 
 	if errors.Is(err, sql.ErrNoRows) {
-		game, err = s.Database.CreateGameCommand(defaultPartyId, wishlistGame.Name)
+		game, err = s.Database.CreateGameCommand(partyId, wishlistGame.Name)
 	}
 
 	if err != nil {
 		return err
 	}
 
-	_, err = s.Database.GetWishlistGameCommand(userId, defaultPartyId, game.Id)
+	_, err = s.Database.GetWishlistGameCommand(userId, partyId, game.Id)
 
 	// A row means the game is already on the wishlist; only its absence lets the insert through.
 	if err == nil {
@@ -73,34 +69,34 @@ func (s *Service) AddWishlistGame(userId int, wishlistGame typegames.WishlistGam
 		return err
 	}
 
-	_, err = s.Database.CreateWishlistGameCommand(userId, defaultPartyId, game.Id)
+	_, err = s.Database.CreateWishlistGameCommand(userId, partyId, game.Id)
 
 	return err
 }
 
-func (s *Service) GetWishlistGames(userId int) (typegames.WishlistGames, error) {
-	return s.GettingService.GetWishlistGames(userId)
+func (s *Service) GetWishlistGames(userId int, partyId int) (typegames.WishlistGames, error) {
+	return s.GettingService.GetWishlistGames(userId, partyId)
 }
 
-func (s *Service) GetCurrentGame(userId int) (typegames.CurrentGame, error) {
-	return s.GettingService.GetCurrentGame(userId)
+func (s *Service) GetCurrentGame(userId int, partyId int) (typegames.CurrentGame, error) {
+	return s.GettingService.GetCurrentGame(userId, partyId)
 }
 
 // CancelCurrentGame cancels the current game and returns it with the time spent on it in total.
-func (s *Service) CancelCurrentGame(userId int) (typegames.CurrentGame, error) {
-	game, err := s.GettingService.GetCurrentGame(userId)
+func (s *Service) CancelCurrentGame(userId int, partyId int) (typegames.CurrentGame, error) {
+	game, err := s.GettingService.GetCurrentGame(userId, partyId)
 
 	if err != nil {
 		return typegames.CurrentGame{}, err
 	}
 
-	_, err = s.TimerService.ForceStopCurrentTimer(userId)
+	_, err = s.TimerService.ForceStopCurrentTimer(userId, partyId)
 
 	if err != nil {
 		return typegames.CurrentGame{}, err
 	}
 
-	cancelledGame, err := s.Database.CancelCurrentGameCommand(userId, defaultPartyId, game.Id, userId, nil)
+	cancelledGame, err := s.Database.CancelCurrentGameCommand(userId, partyId, game.Id, userId, nil)
 
 	if err != nil {
 		return typegames.CurrentGame{}, err
@@ -115,15 +111,15 @@ func (s *Service) CancelCurrentGame(userId int) (typegames.CurrentGame, error) {
 }
 
 // FinishCurrentGame finishes the current game and returns it with the time spent on it in total.
-func (s *Service) FinishCurrentGame(userId int) (typegames.CurrentGame, error) {
-	game, err := s.GettingService.GetCurrentGame(userId)
+func (s *Service) FinishCurrentGame(userId int, partyId int) (typegames.CurrentGame, error) {
+	game, err := s.GettingService.GetCurrentGame(userId, partyId)
 
 	if err != nil {
 		return typegames.CurrentGame{}, err
 	}
 
 	// The current timer's time is added to the game when it is stopped below, so it counts too.
-	timerTimeSpent, err := s.TimerService.GetCurrentTimerTimeSpent(userId)
+	timerTimeSpent, err := s.TimerService.GetCurrentTimerTimeSpent(userId, partyId)
 
 	if err != nil {
 		return typegames.CurrentGame{}, err
@@ -133,13 +129,13 @@ func (s *Service) FinishCurrentGame(userId int) (typegames.CurrentGame, error) {
 		return typegames.CurrentGame{}, common.NewGameTimeSpentIsZeroError()
 	}
 
-	_, err = s.TimerService.ForceStopCurrentTimer(userId)
+	_, err = s.TimerService.ForceStopCurrentTimer(userId, partyId)
 
 	if err != nil {
 		return typegames.CurrentGame{}, err
 	}
 
-	finishedGame, err := s.Database.FinishCurrentGameCommand(userId, defaultPartyId, game.Id, userId, nil)
+	finishedGame, err := s.Database.FinishCurrentGameCommand(userId, partyId, game.Id, userId, nil)
 
 	if err != nil {
 		return typegames.CurrentGame{}, err
@@ -155,20 +151,20 @@ func (s *Service) FinishCurrentGame(userId int) (typegames.CurrentGame, error) {
 
 // GetGameHistory returns the recorded game events of a user. A history entry is not a current game:
 // it carries what happened to the game rather than how it stands now.
-func (s *Service) GetGameHistory(userId int) (history []typegames.GameHistoryEntry, err error) {
-	return s.Database.GetGameHistoryCommand(userId, defaultPartyId)
+func (s *Service) GetGameHistory(userId int, partyId int) (history []typegames.GameHistoryEntry, err error) {
+	return s.Database.GetGameHistoryCommand(userId, partyId)
 }
 
 // RateGame records a rating and an optional review for a game the user has already played. Rating
 // the same game again overwrites the previous rating; created tells whether this was the first.
-func (s *Service) RateGame(userId int, name string, rating int, reviewComment *string) (created bool, err error) {
-	gameId, err := s.getPlayedGameId(userId, name)
+func (s *Service) RateGame(userId int, partyId int, name string, rating int, reviewComment *string) (created bool, err error) {
+	gameId, err := s.getPlayedGameId(userId, partyId, name)
 
 	if err != nil {
 		return
 	}
 
-	gameRating, err := s.Database.RateGameCommand(userId, defaultPartyId, gameId, rating, reviewComment)
+	gameRating, err := s.Database.RateGameCommand(userId, partyId, gameId, rating, reviewComment)
 
 	// The game is in the history but hasn't ended yet, so there is nothing to rate and the
 	// database writes nothing.
@@ -185,14 +181,14 @@ func (s *Service) RateGame(userId int, name string, rating int, reviewComment *s
 }
 
 // GetGameReview returns the rating and review the user left for a game they have played.
-func (s *Service) GetGameReview(userId int, name string) (review typegames.GameReview, err error) {
-	gameId, err := s.getPlayedGameId(userId, name)
+func (s *Service) GetGameReview(userId int, partyId int, name string) (review typegames.GameReview, err error) {
+	gameId, err := s.getPlayedGameId(userId, partyId, name)
 
 	if err != nil {
 		return
 	}
 
-	review, err = s.Database.GetGameReviewCommand(userId, defaultPartyId, gameId)
+	review, err = s.Database.GetGameReviewCommand(userId, partyId, gameId)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = common.NewGameReviewNotFoundError(name)
@@ -204,8 +200,8 @@ func (s *Service) GetGameReview(userId int, name string) (review typegames.GameR
 // getPlayedGameId resolves a game name to its id through the games the user has finished, which are
 // the only ones a rating can be attached to. A history entry without an end state is a game still in
 // progress.
-func (s *Service) getPlayedGameId(userId int, name string) (gameId int, err error) {
-	history, err := s.Database.GetGameHistoryCommand(userId, defaultPartyId)
+func (s *Service) getPlayedGameId(userId int, partyId int, name string) (gameId int, err error) {
+	history, err := s.Database.GetGameHistoryCommand(userId, partyId)
 
 	if err != nil {
 		return
@@ -220,8 +216,8 @@ func (s *Service) getPlayedGameId(userId int, name string) (gameId int, err erro
 	return 0, common.NewPlayedGameNotFoundError(name)
 }
 
-func (s *Service) StartCurrentGame(userId int) (game typegames.CurrentGame, err error) {
-	game, err = s.GettingService.GetCurrentGame(userId)
+func (s *Service) StartCurrentGame(userId int, partyId int) (game typegames.CurrentGame, err error) {
+	game, err = s.GettingService.GetCurrentGame(userId, partyId)
 
 	var notFoundError *common.NotFoundError
 	if err != nil && !errors.As(err, &notFoundError) {
@@ -233,13 +229,13 @@ func (s *Service) StartCurrentGame(userId int) (game typegames.CurrentGame, err 
 		return
 	}
 
-	wishlistGames, err := s.GettingService.GetWishlistGames(userId)
+	wishlistGames, err := s.GettingService.GetWishlistGames(userId, partyId)
 
 	if err != nil {
 		return
 	}
 
-	minimumNumberOfWishlistGames, err := s.SysParamsService.GetInt(typesysparams.ParamMinimumNumberOfWishlistGames)
+	minimumNumberOfWishlistGames, err := s.SysParamsService.GetInt(partyId, typesysparams.ParamMinimumNumberOfWishlistGames)
 
 	if err != nil {
 		return
@@ -253,13 +249,13 @@ func (s *Service) StartCurrentGame(userId int) (game typegames.CurrentGame, err 
 	randomNumber := rand.Intn(len(wishlistGames))
 	randomWishlistGame := wishlistGames[randomNumber]
 
-	createdGame, err := s.Database.CreateCurrentGameCommand(userId, defaultPartyId, randomWishlistGame.GameId, userId, nil)
+	createdGame, err := s.Database.CreateCurrentGameCommand(userId, partyId, randomWishlistGame.GameId, userId, nil)
 
 	if err != nil {
 		return
 	}
 
-	err = s.Database.DeleteWishlistGameCommand(userId, defaultPartyId, randomWishlistGame.GameId)
+	err = s.Database.DeleteWishlistGameCommand(userId, partyId, randomWishlistGame.GameId)
 
 	if err != nil {
 		return
@@ -272,8 +268,8 @@ func (s *Service) StartCurrentGame(userId int) (game typegames.CurrentGame, err 
 	return
 }
 
-func (s *Service) GetAllCurrentGames() (games []typegames.CurrentGameWithLogin, err error) {
-	userGames, err := s.Database.GetAllCurrentGamesCommand(defaultPartyId)
+func (s *Service) GetAllCurrentGames(partyId int) (games []typegames.CurrentGameWithLogin, err error) {
+	userGames, err := s.Database.GetAllCurrentGamesCommand(partyId)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = nil

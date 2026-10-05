@@ -3,20 +3,20 @@ info:
   title: Favorite Game Gauntlet
   version: 0.1.0
 paths:
-  /perks/catalog:
+  /parties/{partyId}/perks/catalog:
     $ref: "../paths/perks/catalog.yaml"
 
-  /perks/catalog/removed:
+  /parties/{partyId}/perks/catalog/removed:
     $ref: "../paths/perks/catalog/removed.yaml"
 
-  /perks/catalog/{name}:
+  /parties/{partyId}/perks/catalog/{name}:
     $ref: "../paths/perks/catalog/name.yaml"
 
-  /perks/{login}:
+  /parties/{partyId}/perks/{login}:
     $ref: "../paths/perks/login.yaml"
 
-  /perks/{login}/history:
+  /parties/{partyId}/perks/{login}/history:
     $ref: "../paths/perks/login/history.yaml"
 
-  /perks/{login}/{name}:
+  /parties/{partyId}/perks/{login}/{name}:
     $ref: "../paths/perks/login/name.yaml"

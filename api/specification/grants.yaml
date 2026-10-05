@@ -3,11 +3,13 @@ info:
   title: Favorite Game Gauntlet
   version: 0.1.0
 paths:
-  /grants:
+  /parties/{partyId}/grants:
     post:
       operationId: grantToUsers
       tags:
         - Grants
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       requestBody:
         $ref: '#/components/requestBodies/ManualGrantRequest'
       responses:
@@ -24,6 +26,14 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorResponse'
 components:
+  parameters:
+    PartyId:
+      name: partyId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int
   schemas:
     Login:
       type: string

@@ -1,6 +1,8 @@
 post:
   operationId: rollAvailableWheelEffects
   tags: [ WheelEffects ]
+  parameters:
+    - $ref: "../../../components/parameters/PartyId.yaml"
   requestBody:
     $ref: "../../../components/requests/WheelEffectRollRequest.yaml"
   responses:

@@ -95,6 +95,9 @@ type WishlistGame struct {
 // WishlistGames defines model for WishlistGames.
 type WishlistGames = []WishlistGame
 
+// PartyId defines model for PartyId.
+type PartyId = int
+
 // CurrentGameByLoginsResponse defines model for CurrentGameByLoginsResponse.
 type CurrentGameByLoginsResponse = CurrentGameByLogins
 
@@ -134,29 +137,29 @@ type AddUserWishlistGameJSONRequestBody = WishlistGame
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
-	// (GET /games/current)
-	GetAllCurrentGame(ctx echo.Context) error
+	// (GET /parties/{partyId}/games/current)
+	GetAllCurrentGame(ctx echo.Context, partyId PartyId) error
 
-	// (POST /games/current/actions)
-	CreateCurrentGameAction(ctx echo.Context) error
+	// (POST /parties/{partyId}/games/current/actions)
+	CreateCurrentGameAction(ctx echo.Context, partyId PartyId) error
 
-	// (GET /games/reviews/{name})
-	GetGameReview(ctx echo.Context, name Name) error
+	// (GET /parties/{partyId}/games/reviews/{name})
+	GetGameReview(ctx echo.Context, partyId PartyId, name Name) error
 
-	// (PUT /games/reviews/{name})
-	PutGameReview(ctx echo.Context, name Name) error
+	// (PUT /parties/{partyId}/games/reviews/{name})
+	PutGameReview(ctx echo.Context, partyId PartyId, name Name) error
 
-	// (GET /games/users/{login}/current)
-	GetUserCurrentGame(ctx echo.Context, login Login) error
+	// (GET /parties/{partyId}/games/users/{login}/current)
+	GetUserCurrentGame(ctx echo.Context, partyId PartyId, login Login) error
 
-	// (GET /games/users/{login}/history)
-	GetUserGameHistory(ctx echo.Context, login Login) error
+	// (GET /parties/{partyId}/games/users/{login}/history)
+	GetUserGameHistory(ctx echo.Context, partyId PartyId, login Login) error
 
-	// (GET /games/users/{login}/wishlist)
-	GetUserWishlistGames(ctx echo.Context, login Login) error
+	// (GET /parties/{partyId}/games/users/{login}/wishlist)
+	GetUserWishlistGames(ctx echo.Context, partyId PartyId, login Login) error
 
-	// (POST /games/users/{login}/wishlist)
-	AddUserWishlistGame(ctx echo.Context, login Login) error
+	// (POST /parties/{partyId}/games/users/{login}/wishlist)
+	AddUserWishlistGame(ctx echo.Context, partyId PartyId, login Login) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -167,24 +170,46 @@ type ServerInterfaceWrapper struct {
 // GetAllCurrentGame converts echo context to params.
 func (w *ServerInterfaceWrapper) GetAllCurrentGame(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetAllCurrentGame(ctx)
+	err = w.Handler.GetAllCurrentGame(ctx, partyId)
 	return err
 }
 
 // CreateCurrentGameAction converts echo context to params.
 func (w *ServerInterfaceWrapper) CreateCurrentGameAction(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.CreateCurrentGameAction(ctx)
+	err = w.Handler.CreateCurrentGameAction(ctx, partyId)
 	return err
 }
 
 // GetGameReview converts echo context to params.
 func (w *ServerInterfaceWrapper) GetGameReview(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "name" -------------
 	var name Name
 
@@ -194,13 +219,21 @@ func (w *ServerInterfaceWrapper) GetGameReview(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetGameReview(ctx, name)
+	err = w.Handler.GetGameReview(ctx, partyId, name)
 	return err
 }
 
 // PutGameReview converts echo context to params.
 func (w *ServerInterfaceWrapper) PutGameReview(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "name" -------------
 	var name Name
 
@@ -210,13 +243,21 @@ func (w *ServerInterfaceWrapper) PutGameReview(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.PutGameReview(ctx, name)
+	err = w.Handler.PutGameReview(ctx, partyId, name)
 	return err
 }
 
 // GetUserCurrentGame converts echo context to params.
 func (w *ServerInterfaceWrapper) GetUserCurrentGame(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "login" -------------
 	var login Login
 
@@ -226,13 +267,21 @@ func (w *ServerInterfaceWrapper) GetUserCurrentGame(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetUserCurrentGame(ctx, login)
+	err = w.Handler.GetUserCurrentGame(ctx, partyId, login)
 	return err
 }
 
 // GetUserGameHistory converts echo context to params.
 func (w *ServerInterfaceWrapper) GetUserGameHistory(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "login" -------------
 	var login Login
 
@@ -242,13 +291,21 @@ func (w *ServerInterfaceWrapper) GetUserGameHistory(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetUserGameHistory(ctx, login)
+	err = w.Handler.GetUserGameHistory(ctx, partyId, login)
 	return err
 }
 
 // GetUserWishlistGames converts echo context to params.
 func (w *ServerInterfaceWrapper) GetUserWishlistGames(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "login" -------------
 	var login Login
 
@@ -258,13 +315,21 @@ func (w *ServerInterfaceWrapper) GetUserWishlistGames(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetUserWishlistGames(ctx, login)
+	err = w.Handler.GetUserWishlistGames(ctx, partyId, login)
 	return err
 }
 
 // AddUserWishlistGame converts echo context to params.
 func (w *ServerInterfaceWrapper) AddUserWishlistGame(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "login" -------------
 	var login Login
 
@@ -274,7 +339,7 @@ func (w *ServerInterfaceWrapper) AddUserWishlistGame(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.AddUserWishlistGame(ctx, login)
+	err = w.Handler.AddUserWishlistGame(ctx, partyId, login)
 	return err
 }
 
@@ -306,13 +371,13 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/games/current", wrapper.GetAllCurrentGame)
-	router.POST(baseURL+"/games/current/actions", wrapper.CreateCurrentGameAction)
-	router.GET(baseURL+"/games/reviews/:name", wrapper.GetGameReview)
-	router.PUT(baseURL+"/games/reviews/:name", wrapper.PutGameReview)
-	router.GET(baseURL+"/games/users/:login/current", wrapper.GetUserCurrentGame)
-	router.GET(baseURL+"/games/users/:login/history", wrapper.GetUserGameHistory)
-	router.GET(baseURL+"/games/users/:login/wishlist", wrapper.GetUserWishlistGames)
-	router.POST(baseURL+"/games/users/:login/wishlist", wrapper.AddUserWishlistGame)
+	router.GET(baseURL+"/parties/:partyId/games/current", wrapper.GetAllCurrentGame)
+	router.POST(baseURL+"/parties/:partyId/games/current/actions", wrapper.CreateCurrentGameAction)
+	router.GET(baseURL+"/parties/:partyId/games/reviews/:name", wrapper.GetGameReview)
+	router.PUT(baseURL+"/parties/:partyId/games/reviews/:name", wrapper.PutGameReview)
+	router.GET(baseURL+"/parties/:partyId/games/users/:login/current", wrapper.GetUserCurrentGame)
+	router.GET(baseURL+"/parties/:partyId/games/users/:login/history", wrapper.GetUserGameHistory)
+	router.GET(baseURL+"/parties/:partyId/games/users/:login/wishlist", wrapper.GetUserWishlistGames)
+	router.POST(baseURL+"/parties/:partyId/games/users/:login/wishlist", wrapper.AddUserWishlistGame)
 
 }

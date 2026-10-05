@@ -17,12 +17,8 @@ type IService interface {
 	GetUserId(ctx echo.Context) (int, error)
 	GetUserIdByLogin(login string) (int, error)
 	GetLoginByUserId(userId int) (string, error)
-	IsAdmin(userId int) (bool, error)
+	IsAdmin(userId int, partyId int) (bool, error)
 }
-
-// defaultPartyId is a stopgap until real party context exists (see project plan) — admin rights are
-// resolved against this one hardcoded party.
-const defaultPartyId = 1
 
 type Service struct {
 	Database        dbauth.IDatabase
@@ -155,8 +151,8 @@ func (s *Service) DeleteUserSession(userSessionId string) error {
 // IsAdmin reports whether the user is an admin of the party. Admin rights are party membership data
 // (parties.Members.IsAdmin) — a party creator becomes its first admin. A user who is not a member of
 // the party is simply not an admin.
-func (s *Service) IsAdmin(userId int) (isAdmin bool, err error) {
-	member, err := s.PartiesDatabase.GetMemberCommand(userId, defaultPartyId)
+func (s *Service) IsAdmin(userId int, partyId int) (isAdmin bool, err error) {
+	member, err := s.PartiesDatabase.GetMemberCommand(userId, partyId)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = nil
@@ -167,7 +163,7 @@ func (s *Service) IsAdmin(userId int) (isAdmin bool, err error) {
 		return
 	}
 
-	isAdmin = member.IsAdmin
+	isAdmin = member.IsAdmin && member.LeftDate == nil
 
 	return
 }

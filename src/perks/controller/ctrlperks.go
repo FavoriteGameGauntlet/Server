@@ -4,6 +4,7 @@ import (
 	"FGG-Service/api/generated/perks"
 	"FGG-Service/src/auth/service"
 	"FGG-Service/src/common"
+	"FGG-Service/src/parties/service"
 	"FGG-Service/src/perks/service"
 	"FGG-Service/src/perks/types"
 	"net/http"
@@ -11,34 +12,39 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// defaultPartyId is a stopgap until real party context exists (see project plan) — every perk is
-// scoped to this one hardcoded party.
-const defaultPartyId = 1
-
 type Controller struct {
-	Service     srvperks.IService
-	AuthService srvauth.IService
+	Service      srvperks.IService
+	AuthService  srvauth.IService
+	PartyService srvparties.IService
 }
 
 func NewController() *Controller {
 	s := srvperks.NewService()
 	as := srvauth.NewService()
+	ps := srvparties.NewService()
 
 	return &Controller{
 		s,
 		as,
+		ps,
 	}
 }
 
-// GetPerks (GET /perks/catalog)
-func (c *Controller) GetPerks(ctx echo.Context) error {
-	_, err := c.AuthService.GetUserId(ctx)
+// GetPerks (GET /parties/{partyId}/perks/catalog)
+func (c *Controller) GetPerks(ctx echo.Context, partyId genperks.PartyId) error {
+	userId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	perks, err := c.Service.GetPerks(defaultPartyId)
+	err = c.PartyService.RequireMember(userId, partyId)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	perks, err := c.Service.GetPerks(partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -47,15 +53,15 @@ func (c *Controller) GetPerks(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, convertPerksToDto(perks))
 }
 
-// GetRemovedPerks (GET /perks/catalog/removed)
-func (c *Controller) GetRemovedPerks(ctx echo.Context) error {
-	err := common.RequireAdmin(ctx, c.AuthService)
+// GetRemovedPerks (GET /parties/{partyId}/perks/catalog/removed)
+func (c *Controller) GetRemovedPerks(ctx echo.Context, partyId genperks.PartyId) error {
+	err := common.RequireAdmin(ctx, c.AuthService, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	perks, err := c.Service.GetRemovedPerks(defaultPartyId)
+	perks, err := c.Service.GetRemovedPerks(partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -64,9 +70,9 @@ func (c *Controller) GetRemovedPerks(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, convertPerksToDto(perks))
 }
 
-// CreatePerk (POST /perks/catalog)
-func (c *Controller) CreatePerk(ctx echo.Context) error {
-	err := common.RequireAdmin(ctx, c.AuthService)
+// CreatePerk (POST /parties/{partyId}/perks/catalog)
+func (c *Controller) CreatePerk(ctx echo.Context, partyId genperks.PartyId) error {
+	err := common.RequireAdmin(ctx, c.AuthService, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -80,7 +86,7 @@ func (c *Controller) CreatePerk(ctx echo.Context) error {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	perk, err := c.Service.CreatePerk(defaultPartyId, perkDto.Name, perkDto.Description, perkDto.EffectName)
+	perk, err := c.Service.CreatePerk(partyId, perkDto.Name, perkDto.Description, perkDto.EffectName)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -89,15 +95,15 @@ func (c *Controller) CreatePerk(ctx echo.Context) error {
 	return ctx.JSON(http.StatusCreated, convertPerkToDto(perk))
 }
 
-// RemovePerk (DELETE /perks/catalog/{name})
-func (c *Controller) RemovePerk(ctx echo.Context, name genperks.Name) error {
-	err := common.RequireAdmin(ctx, c.AuthService)
+// RemovePerk (DELETE /parties/{partyId}/perks/catalog/{name})
+func (c *Controller) RemovePerk(ctx echo.Context, partyId genperks.PartyId, name genperks.Name) error {
+	err := common.RequireAdmin(ctx, c.AuthService, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.RemovePerk(defaultPartyId, name)
+	err = c.Service.RemovePerk(partyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -106,15 +112,15 @@ func (c *Controller) RemovePerk(ctx echo.Context, name genperks.Name) error {
 	return ctx.NoContent(http.StatusNoContent)
 }
 
-// GetUserPerks (GET /perks/{login})
-func (c *Controller) GetUserPerks(ctx echo.Context, login genperks.Login) error {
-	userId, err := c.userIdFromLogin(ctx, login)
+// GetUserPerks (GET /parties/{partyId}/perks/{login})
+func (c *Controller) GetUserPerks(ctx echo.Context, partyId genperks.PartyId, login genperks.Login) error {
+	userId, err := c.userIdFromLogin(ctx, partyId, login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	views, err := c.Service.GetUserPerks(userId, defaultPartyId)
+	views, err := c.Service.GetUserPerks(userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -132,9 +138,9 @@ func (c *Controller) GetUserPerks(ctx echo.Context, login genperks.Login) error 
 	return ctx.JSON(http.StatusOK, viewsDto)
 }
 
-// RevokeUserPerk (DELETE /perks/{login}/{name})
-func (c *Controller) RevokeUserPerk(ctx echo.Context, login genperks.Login, name genperks.Name) error {
-	err := common.RequireAdmin(ctx, c.AuthService)
+// RevokeUserPerk (DELETE /parties/{partyId}/perks/{login}/{name})
+func (c *Controller) RevokeUserPerk(ctx echo.Context, partyId genperks.PartyId, login genperks.Login, name genperks.Name) error {
+	err := common.RequireAdmin(ctx, c.AuthService, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -152,7 +158,7 @@ func (c *Controller) RevokeUserPerk(ctx echo.Context, login genperks.Login, name
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.RevokeUserPerk(actorUserId, userId, defaultPartyId, name)
+	err = c.Service.RevokeUserPerk(actorUserId, userId, partyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -161,15 +167,15 @@ func (c *Controller) RevokeUserPerk(ctx echo.Context, login genperks.Login, name
 	return ctx.NoContent(http.StatusNoContent)
 }
 
-// GetUserPerkHistory (GET /perks/{login}/history)
-func (c *Controller) GetUserPerkHistory(ctx echo.Context, login genperks.Login) error {
-	userId, err := c.userIdFromLogin(ctx, login)
+// GetUserPerkHistory (GET /parties/{partyId}/perks/{login}/history)
+func (c *Controller) GetUserPerkHistory(ctx echo.Context, partyId genperks.PartyId, login genperks.Login) error {
+	userId, err := c.userIdFromLogin(ctx, partyId, login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	history, err := c.Service.GetPerkHistory(userId, defaultPartyId)
+	history, err := c.Service.GetPerkHistory(userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -199,9 +205,16 @@ func (c *Controller) GetUserPerkHistory(ctx echo.Context, login genperks.Login) 
 	return ctx.JSON(http.StatusOK, historyDto)
 }
 
-// userIdFromLogin resolves a login path parameter, rejecting the request when it carries no session.
-func (c *Controller) userIdFromLogin(ctx echo.Context, login string) (userId int, err error) {
-	_, err = c.AuthService.GetUserId(ctx)
+// userIdFromLogin resolves a login path parameter, rejecting the request when it carries no session
+// or comes from a user outside the party.
+func (c *Controller) userIdFromLogin(ctx echo.Context, partyId genperks.PartyId, login string) (userId int, err error) {
+	actorUserId, err := c.AuthService.GetUserId(ctx)
+
+	if err != nil {
+		return
+	}
+
+	err = c.PartyService.RequireMember(actorUserId, partyId)
 
 	if err != nil {
 		return

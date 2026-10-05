@@ -7,39 +7,45 @@ import (
 	"FGG-Service/src/common"
 	"FGG-Service/src/items/service"
 	"FGG-Service/src/items/types"
+	"FGG-Service/src/parties/service"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
 
-// defaultPartyId is a stopgap until real party context exists (see project plan) — every item is
-// scoped to this one hardcoded party.
-const defaultPartyId = 1
-
 type Controller struct {
-	Service     srvitems.IService
-	AuthService srvauth.IService
+	Service      srvitems.IService
+	AuthService  srvauth.IService
+	PartyService srvparties.IService
 }
 
 func NewController() *Controller {
 	s := srvitems.NewService()
 	as := srvauth.NewService()
+	ps := srvparties.NewService()
 
 	return &Controller{
 		s,
 		as,
+		ps,
 	}
 }
 
-// GetItems (GET /items/catalog)
-func (c *Controller) GetItems(ctx echo.Context) error {
-	_, err := c.AuthService.GetUserId(ctx)
+// GetItems (GET /parties/{partyId}/items/catalog)
+func (c *Controller) GetItems(ctx echo.Context, partyId genitems.PartyId) error {
+	userId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	items, err := c.Service.GetItems(defaultPartyId)
+	err = c.PartyService.RequireMember(userId, partyId)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	items, err := c.Service.GetItems(partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -48,15 +54,15 @@ func (c *Controller) GetItems(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, convertItemsToDto(items))
 }
 
-// GetRemovedItems (GET /items/catalog/removed)
-func (c *Controller) GetRemovedItems(ctx echo.Context) error {
-	err := common.RequireAdmin(ctx, c.AuthService)
+// GetRemovedItems (GET /parties/{partyId}/items/catalog/removed)
+func (c *Controller) GetRemovedItems(ctx echo.Context, partyId genitems.PartyId) error {
+	err := common.RequireAdmin(ctx, c.AuthService, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	items, err := c.Service.GetRemovedItems(defaultPartyId)
+	items, err := c.Service.GetRemovedItems(partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -65,9 +71,9 @@ func (c *Controller) GetRemovedItems(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, convertItemsToDto(items))
 }
 
-// CreateItem (POST /items/catalog)
-func (c *Controller) CreateItem(ctx echo.Context) error {
-	err := common.RequireAdmin(ctx, c.AuthService)
+// CreateItem (POST /parties/{partyId}/items/catalog)
+func (c *Controller) CreateItem(ctx echo.Context, partyId genitems.PartyId) error {
+	err := common.RequireAdmin(ctx, c.AuthService, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -82,7 +88,7 @@ func (c *Controller) CreateItem(ctx echo.Context) error {
 	}
 
 	item, err := c.Service.CreateItem(
-		defaultPartyId,
+		partyId,
 		itemDto.Name,
 		itemDto.Description,
 		itemDto.UseCount,
@@ -95,15 +101,15 @@ func (c *Controller) CreateItem(ctx echo.Context) error {
 	return ctx.JSON(http.StatusCreated, convertItemToDto(item))
 }
 
-// RemoveItem (DELETE /items/catalog/{name})
-func (c *Controller) RemoveItem(ctx echo.Context, name genitems.Name) error {
-	err := common.RequireAdmin(ctx, c.AuthService)
+// RemoveItem (DELETE /parties/{partyId}/items/catalog/{name})
+func (c *Controller) RemoveItem(ctx echo.Context, partyId genitems.PartyId, name genitems.Name) error {
+	err := common.RequireAdmin(ctx, c.AuthService, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.RemoveItem(defaultPartyId, name)
+	err = c.Service.RemoveItem(partyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -111,15 +117,15 @@ func (c *Controller) RemoveItem(ctx echo.Context, name genitems.Name) error {
 
 	return ctx.NoContent(http.StatusNoContent)
 }
-// GetUserItems (GET /items/{login})
-func (c *Controller) GetUserItems(ctx echo.Context, login genitems.Login) error {
-	_, userId, err := c.userIdFromLogin(ctx, login)
+// GetUserItems (GET /parties/{partyId}/items/{login})
+func (c *Controller) GetUserItems(ctx echo.Context, partyId genitems.PartyId, login genitems.Login) error {
+	_, userId, err := c.userIdFromLogin(ctx, partyId, login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	userItems, err := c.Service.GetUserItems(userId, defaultPartyId)
+	userItems, err := c.Service.GetUserItems(userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -138,32 +144,15 @@ func (c *Controller) GetUserItems(ctx echo.Context, login genitems.Login) error 
 	return ctx.JSON(http.StatusOK, userItemsDto)
 }
 
-// UseUserItem (POST /items/{login}/{name}/use)
-func (c *Controller) UseUserItem(ctx echo.Context, login genitems.Login, name genitems.Name) error {
-	actorUserId, userId, err := c.userIdFromLogin(ctx, login)
+// UseUserItem (POST /parties/{partyId}/items/{login}/{name}/use)
+func (c *Controller) UseUserItem(ctx echo.Context, partyId genitems.PartyId, login genitems.Login, name genitems.Name) error {
+	actorUserId, userId, err := c.userIdFromLogin(ctx, partyId, login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.UseItem(actorUserId, userId, defaultPartyId, name)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	return ctx.NoContent(http.StatusNoContent)
-}
-
-// DiscardUserItem (DELETE /items/{login}/{name})
-func (c *Controller) DiscardUserItem(ctx echo.Context, login genitems.Login, name genitems.Name) error {
-	actorUserId, userId, err := c.userIdFromLogin(ctx, login)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	err = c.Service.DiscardUserItem(actorUserId, userId, defaultPartyId, name)
+	err = c.Service.UseItem(actorUserId, userId, partyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -172,15 +161,32 @@ func (c *Controller) DiscardUserItem(ctx echo.Context, login genitems.Login, nam
 	return ctx.NoContent(http.StatusNoContent)
 }
 
-// GetUserItemHistory (GET /items/{login}/history)
-func (c *Controller) GetUserItemHistory(ctx echo.Context, login genitems.Login) error {
-	_, userId, err := c.userIdFromLogin(ctx, login)
+// DiscardUserItem (DELETE /parties/{partyId}/items/{login}/{name})
+func (c *Controller) DiscardUserItem(ctx echo.Context, partyId genitems.PartyId, login genitems.Login, name genitems.Name) error {
+	actorUserId, userId, err := c.userIdFromLogin(ctx, partyId, login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	history, err := c.Service.GetItemHistory(userId, defaultPartyId)
+	err = c.Service.DiscardUserItem(actorUserId, userId, partyId, name)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	return ctx.NoContent(http.StatusNoContent)
+}
+
+// GetUserItemHistory (GET /parties/{partyId}/items/{login}/history)
+func (c *Controller) GetUserItemHistory(ctx echo.Context, partyId genitems.PartyId, login genitems.Login) error {
+	_, userId, err := c.userIdFromLogin(ctx, partyId, login)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	history, err := c.Service.GetItemHistory(userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -212,10 +218,17 @@ func (c *Controller) GetUserItemHistory(ctx echo.Context, login genitems.Login) 
 	return ctx.JSON(http.StatusOK, historyDto)
 }
 
-// userIdFromLogin resolves a login path parameter, rejecting the request when it carries no session.
-// It returns the user the request comes from along with the user the login names.
-func (c *Controller) userIdFromLogin(ctx echo.Context, login string) (actorUserId int, userId int, err error) {
+// userIdFromLogin resolves a login path parameter, rejecting the request when it carries no session
+// or comes from a user outside the party. It returns the user the request comes from along with the
+// user the login names.
+func (c *Controller) userIdFromLogin(ctx echo.Context, partyId genitems.PartyId, login string) (actorUserId int, userId int, err error) {
 	actorUserId, err = c.AuthService.GetUserId(ctx)
+
+	if err != nil {
+		return
+	}
+
+	err = c.PartyService.RequireMember(actorUserId, partyId)
 
 	if err != nil {
 		return

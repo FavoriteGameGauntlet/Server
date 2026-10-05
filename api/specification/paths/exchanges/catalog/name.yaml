@@ -2,6 +2,7 @@ delete:
   operationId: removeExchange
   tags: [ Exchanges ]
   parameters:
+    - $ref: "../../../components/parameters/PartyId.yaml"
     - $ref: "../../../components/parameters/Name.yaml"
   responses:
     "204":

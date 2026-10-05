@@ -3,29 +3,29 @@ info:
   title: Favorite Game Gauntlet
   version: 0.15.0
 paths:
-  /points/types:
+  /parties/{partyId}/points/types:
     $ref: "../paths/points/types.yaml"
 
-  /points/types/{name}:
+  /parties/{partyId}/points/types/{name}:
     $ref: "../paths/points/types/name.yaml"
 
-  /points/users:
+  /parties/{partyId}/points/users:
     $ref: "../paths/points/users.yaml"
 
-  /points/users/{login}:
+  /parties/{partyId}/points/users/{login}:
     $ref: "../paths/points/users/login.yaml"
 
-  /points/users/{login}/types/{name}:
+  /parties/{partyId}/points/users/{login}/types/{name}:
     $ref: "../paths/points/users/login/types/name.yaml"
 
-  /points/users/{login}/types/{name}/history:
+  /parties/{partyId}/points/users/{login}/types/{name}/history:
     $ref: "../paths/points/users/login/types/name/history.yaml"
 
-  /points/party:
+  /parties/{partyId}/points/party:
     $ref: "../paths/points/party.yaml"
 
-  /points/party/types/{name}:
+  /parties/{partyId}/points/party/types/{name}:
     $ref: "../paths/points/party/types/name.yaml"
 
-  /points/party/types/{name}/history:
+  /parties/{partyId}/points/party/types/{name}/history:
     $ref: "../paths/points/party/types/name/history.yaml"

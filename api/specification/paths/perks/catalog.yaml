@@ -1,6 +1,8 @@
 get:
   operationId: getPerks
   tags: [ Perks ]
+  parameters:
+    - $ref: "../../components/parameters/PartyId.yaml"
   responses:
     "200":
       $ref: "../../components/responses/PerksResponse.yaml"
@@ -11,6 +13,8 @@ get:
 post:
   operationId: createPerk
   tags: [ Perks ]
+  parameters:
+    - $ref: "../../components/parameters/PartyId.yaml"
   requestBody:
     $ref: "../../components/requests/PerkCreateRequest.yaml"
   responses:

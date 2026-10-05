@@ -1,6 +1,8 @@
 get:
   operationId: getItems
   tags: [ Items ]
+  parameters:
+    - $ref: "../../components/parameters/PartyId.yaml"
   responses:
     "200":
       $ref: "../../components/responses/ItemsResponse.yaml"
@@ -11,6 +13,8 @@ get:
 post:
   operationId: createItem
   tags: [ Items ]
+  parameters:
+    - $ref: "../../components/parameters/PartyId.yaml"
   requestBody:
     $ref: "../../components/requests/ItemCreateRequest.yaml"
   responses:

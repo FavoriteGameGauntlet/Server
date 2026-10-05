@@ -35,7 +35,7 @@ var CancelCurrentGameTestCases = []CancelCurrentGameTestCase{
 
 			gettingServiceMock.
 				On("GetCurrentGame",
-					1).
+					1, 1).
 				Return(typegames.CurrentGame{}, common.NewCurrentGameNotFoundError())
 
 			return databaseMock, timerServiceMock, gettingServiceMock
@@ -53,7 +53,7 @@ var CancelCurrentGameTestCases = []CancelCurrentGameTestCase{
 
 			gettingServiceMock.
 				On("GetCurrentGame",
-					1).
+					1, 1).
 				Return(typegames.CurrentGame{}, dbError)
 
 			return databaseMock, timerServiceMock, gettingServiceMock
@@ -71,14 +71,14 @@ var CancelCurrentGameTestCases = []CancelCurrentGameTestCase{
 
 			gettingServiceMock.
 				On("GetCurrentGame",
-					1).
+					1, 1).
 				Return(typegames.CurrentGame{
 					Id:   1,
 					Name: "Half-Life 1"},
 					nil)
 			timerServiceMock.
 				On("ForceStopCurrentTimer",
-					1).
+					1, 1).
 				Return(typetimers.Timer{}, dbError)
 
 			return databaseMock, timerServiceMock, gettingServiceMock
@@ -96,11 +96,11 @@ var CancelCurrentGameTestCases = []CancelCurrentGameTestCase{
 
 			gettingServiceMock.
 				On("GetCurrentGame",
-					1).
+					1, 1).
 				Return(typegames.CurrentGame{Id: 1, Name: "Half-Life 1"}, nil)
 			timerServiceMock.
 				On("ForceStopCurrentTimer",
-					1).
+					1, 1).
 				Return(typetimers.Timer{}, nil)
 			databaseMock.
 				On("CancelCurrentGameCommand",
@@ -122,11 +122,11 @@ var CancelCurrentGameTestCases = []CancelCurrentGameTestCase{
 
 			gettingServiceMock.
 				On("GetCurrentGame",
-					1).
+					1, 1).
 				Return(typegames.CurrentGame{Id: 1, Name: "Half-Life 1", TimeSpent: time.Hour}, nil)
 			timerServiceMock.
 				On("ForceStopCurrentTimer",
-					1).
+					1, 1).
 				Return(typetimers.Timer{}, nil)
 			databaseMock.
 				On("CancelCurrentGameCommand",
@@ -151,7 +151,7 @@ func TestSrvGames_CancelCurrentGame(test *testing.T) {
 			}
 
 			// Act
-			game, err := sut.CancelCurrentGame(testCase.UserId)
+			game, err := sut.CancelCurrentGame(testCase.UserId, 1)
 
 			// Assert
 			if testCase.ExpectedErrorAs != nil {

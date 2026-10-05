@@ -1,6 +1,8 @@
 get:
   operationId: getPointTypes
   tags: [ Points ]
+  parameters:
+    - $ref: "../../components/parameters/PartyId.yaml"
   responses:
     "200":
       $ref: "../../components/responses/PointTypesResponse.yaml"
@@ -11,6 +13,8 @@ get:
 post:
   operationId: createPointType
   tags: [ Points ]
+  parameters:
+    - $ref: "../../components/parameters/PartyId.yaml"
   requestBody:
     $ref: "../../components/requests/PointTypeCreateRequest.yaml"
   responses:

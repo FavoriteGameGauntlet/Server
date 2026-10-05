@@ -1,10 +1,10 @@
 package ctrlwheeleffects
 
 import (
-	"FGG-Service/api/generated/games"
 	"FGG-Service/api/generated/wheel_effects"
 	"FGG-Service/src/auth/service"
 	"FGG-Service/src/common"
+	"FGG-Service/src/parties/service"
 	"FGG-Service/src/wheeleffects/service"
 	"FGG-Service/src/wheeleffects/types"
 	"net/http"
@@ -13,22 +13,25 @@ import (
 )
 
 type Controller struct {
-	Service     srvwheeleffects.Service
-	AuthService srvauth.Service
+	Service      srvwheeleffects.Service
+	AuthService  srvauth.Service
+	PartyService srvparties.IService
 }
 
 func NewController() *Controller {
 	s := srvwheeleffects.NewService()
 	as := srvauth.NewService()
+	ps := srvparties.NewService()
 
 	return &Controller{
 		*s,
 		*as,
+		ps,
 	}
 }
 
-// RollAvailableWheelEffects (POST /wheel-effects/available/roll)
-func (c *Controller) RollAvailableWheelEffects(ctx echo.Context) error {
+// RollAvailableWheelEffects (POST /parties/{partyId}/wheel-effects/available/roll)
+func (c *Controller) RollAvailableWheelEffects(ctx echo.Context, partyId genwheeleffects.PartyId) error {
 	var rollDto genwheeleffects.WheelEffectRoll
 	err := ctx.Bind(&rollDto)
 
@@ -43,9 +46,15 @@ func (c *Controller) RollAvailableWheelEffects(ctx echo.Context) error {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
+	err = c.PartyService.RequireMember(userId, partyId)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
 	isReroll := rollDto.IsReroll != nil && *rollDto.IsReroll
 
-	rolled, err := c.Service.MakeEffectRoll(userId, isReroll)
+	rolled, err := c.Service.MakeEffectRoll(userId, partyId, isReroll)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -82,8 +91,8 @@ func convertLastWheelRowsToDto(rows []typewheeleffects.LastWheelRow) genwheeleff
 	return rowsDto
 }
 
-// ApplyAvailableWheelEffectRoll (POST /wheel-effects/available/roll/apply)
-func (c *Controller) ApplyAvailableWheelEffectRoll(ctx echo.Context) error {
+// ApplyAvailableWheelEffectRoll (POST /parties/{partyId}/wheel-effects/available/roll/apply)
+func (c *Controller) ApplyAvailableWheelEffectRoll(ctx echo.Context, partyId genwheeleffects.PartyId) error {
 	var rollApplyDto genwheeleffects.WheelRowApply
 	err := ctx.Bind(&rollApplyDto)
 
@@ -98,6 +107,12 @@ func (c *Controller) ApplyAvailableWheelEffectRoll(ctx echo.Context) error {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
+	err = c.PartyService.RequireMember(userId, partyId)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
 	targetUserIds := make([]int, len(rollApplyDto.TargetLogins))
 	for i, login := range rollApplyDto.TargetLogins {
 		targetUserIds[i], err = c.AuthService.GetUserIdByLogin(login)
@@ -107,7 +122,7 @@ func (c *Controller) ApplyAvailableWheelEffectRoll(ctx echo.Context) error {
 		}
 	}
 
-	err = c.Service.ApplyWheelEffectRoll(userId, rollApplyDto.WheelRowName, targetUserIds)
+	err = c.Service.ApplyWheelEffectRoll(userId, partyId, rollApplyDto.WheelRowName, targetUserIds)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -116,15 +131,21 @@ func (c *Controller) ApplyAvailableWheelEffectRoll(ctx echo.Context) error {
 	return ctx.NoContent(http.StatusNoContent)
 }
 
-// GetLastRolledWheelEffects (GET /wheel-effects/available/roll/last)
-func (c *Controller) GetLastRolledWheelEffects(ctx echo.Context) error {
+// GetLastRolledWheelEffects (GET /parties/{partyId}/wheel-effects/available/roll/last)
+func (c *Controller) GetLastRolledWheelEffects(ctx echo.Context, partyId genwheeleffects.PartyId) error {
 	userId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	rows, err := c.Service.GetLastRolledWheelEffects(userId)
+	err = c.PartyService.RequireMember(userId, partyId)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	rows, err := c.Service.GetLastRolledWheelEffects(userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -133,15 +154,21 @@ func (c *Controller) GetLastRolledWheelEffects(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, convertLastWheelRowsToDto(rows))
 }
 
-// ClearLastRolledWheelEffects (POST /wheel-effects/available/roll/last/clear)
-func (c *Controller) ClearLastRolledWheelEffects(ctx echo.Context) error {
+// ClearLastRolledWheelEffects (POST /parties/{partyId}/wheel-effects/available/roll/last/clear)
+func (c *Controller) ClearLastRolledWheelEffects(ctx echo.Context, partyId genwheeleffects.PartyId) error {
 	userId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.ClearLastWheelEffects(userId)
+	err = c.PartyService.RequireMember(userId, partyId)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	err = c.Service.ClearLastWheelEffects(userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -150,15 +177,21 @@ func (c *Controller) ClearLastRolledWheelEffects(ctx echo.Context) error {
 	return ctx.NoContent(http.StatusNoContent)
 }
 
-// GetAvailableWheelEffectRollsCount (GET /wheel-effects/available/roll/count)
-func (c *Controller) GetAvailableWheelEffectRollsCount(ctx echo.Context) error {
+// GetAvailableWheelEffectRollsCount (GET /parties/{partyId}/wheel-effects/available/roll/count)
+func (c *Controller) GetAvailableWheelEffectRollsCount(ctx echo.Context, partyId genwheeleffects.PartyId) error {
 	userId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	count, err := c.Service.GetAvailableRollsCount(userId)
+	err = c.PartyService.RequireMember(userId, partyId)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	count, err := c.Service.GetAvailableRollsCount(userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -167,15 +200,21 @@ func (c *Controller) GetAvailableWheelEffectRollsCount(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, count)
 }
 
-// GetAvailableWheelEffects (GET /wheel-effects/available)
-func (c *Controller) GetAvailableWheelEffects(ctx echo.Context) error {
+// GetAvailableWheelEffects (GET /parties/{partyId}/wheel-effects/available)
+func (c *Controller) GetAvailableWheelEffects(ctx echo.Context, partyId genwheeleffects.PartyId) error {
 	userId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	rows, err := c.Service.GetAvailableWheelRows(userId)
+	err = c.PartyService.RequireMember(userId, partyId)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	rows, err := c.Service.GetAvailableWheelRows(userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -184,16 +223,17 @@ func (c *Controller) GetAvailableWheelEffects(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, convertWheelRowsToDto(rows))
 }
 
-// GetUserWheelEffectHistory (GET /wheel-effects/{login}/history)
-func (c *Controller) GetUserWheelEffectHistory(ctx echo.Context, login gengames.Login) error {
-	doesExist, err := c.AuthService.DoesUserSessionExist(ctx)
+// GetUserWheelEffectHistory (GET /parties/{partyId}/wheel-effects/{login}/history)
+func (c *Controller) GetUserWheelEffectHistory(ctx echo.Context, partyId genwheeleffects.PartyId, login genwheeleffects.Login) error {
+	actorUserId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	if !doesExist {
-		err = common.NewActiveSessionNotFoundUnauthorizedError()
+	err = c.PartyService.RequireMember(actorUserId, partyId)
+
+	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
@@ -203,7 +243,7 @@ func (c *Controller) GetUserWheelEffectHistory(ctx echo.Context, login gengames.
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	history, err := c.Service.GetEffectHistory(userId)
+	history, err := c.Service.GetEffectHistory(userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)

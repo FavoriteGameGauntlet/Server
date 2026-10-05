@@ -3,11 +3,13 @@ info:
   title: Favorite Game Gauntlet
   version: 0.1.0
 paths:
-  /effects/catalog:
+  /parties/{partyId}/effects/catalog:
     get:
       operationId: getEffects
       tags:
         - Effects
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       responses:
         '200':
           $ref: '#/components/responses/EffectsResponse'
@@ -19,6 +21,8 @@ paths:
       operationId: createEffect
       tags:
         - Effects
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       requestBody:
         $ref: '#/components/requestBodies/EffectCreateRequest'
       responses:
@@ -34,11 +38,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /effects/catalog/removed:
+  /parties/{partyId}/effects/catalog/removed:
     get:
       operationId: getRemovedEffects
       tags:
         - Effects
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       responses:
         '200':
           $ref: '#/components/responses/EffectsResponse'
@@ -46,12 +52,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /effects/catalog/{name}:
+  /parties/{partyId}/effects/catalog/{name}:
     delete:
       operationId: removeEffect
       tags:
         - Effects
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Name'
       responses:
         '204':
@@ -62,12 +69,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /effects/{login}:
+  /parties/{partyId}/effects/{login}:
     get:
       operationId: getUserEffects
       tags:
         - Effects
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Login'
       responses:
         '200':
@@ -78,12 +86,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /effects/{login}/history:
+  /parties/{partyId}/effects/{login}/history:
     get:
       operationId: getUserEffectHistory
       tags:
         - Effects
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Login'
       responses:
         '200':
@@ -94,12 +103,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /effects/{login}/{name}:
+  /parties/{partyId}/effects/{login}/{name}:
     delete:
       operationId: endUserEffect
       tags:
         - Effects
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Login'
         - $ref: '#/components/parameters/Name'
       responses:
@@ -113,12 +123,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /effects/{login}/{name}/use:
+  /parties/{partyId}/effects/{login}/{name}/use:
     post:
       operationId: useUserEffect
       tags:
         - Effects
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Login'
         - $ref: '#/components/parameters/Name'
       responses:
@@ -133,6 +144,26 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorResponse'
 components:
+  parameters:
+    PartyId:
+      name: partyId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int
+    Name:
+      name: name
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Name'
+    Login:
+      name: login
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Login'
   schemas:
     Name:
       type: string
@@ -344,16 +375,3 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/EffectCreate'
-  parameters:
-    Name:
-      name: name
-      in: path
-      required: true
-      schema:
-        $ref: '#/components/schemas/Name'
-    Login:
-      name: login
-      in: path
-      required: true
-      schema:
-        $ref: '#/components/schemas/Login'

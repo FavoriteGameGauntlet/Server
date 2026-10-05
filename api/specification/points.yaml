@@ -3,11 +3,13 @@ info:
   title: Favorite Game Gauntlet
   version: 0.15.0
 paths:
-  /points/types:
+  /parties/{partyId}/points/types:
     get:
       operationId: getPointTypes
       tags:
         - Points
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       responses:
         '200':
           $ref: '#/components/responses/PointTypesResponse'
@@ -19,6 +21,8 @@ paths:
       operationId: createPointType
       tags:
         - Points
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       requestBody:
         $ref: '#/components/requestBodies/PointTypeCreateRequest'
       responses:
@@ -34,12 +38,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /points/types/{name}:
+  /parties/{partyId}/points/types/{name}:
     patch:
       operationId: changePointType
       tags:
         - Points
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Name'
       requestBody:
         $ref: '#/components/requestBodies/PointTypeChangeRequest'
@@ -63,6 +68,7 @@ paths:
       tags:
         - Points
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Name'
       responses:
         '204':
@@ -73,11 +79,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /points/users:
+  /parties/{partyId}/points/users:
     get:
       operationId: getAllUserPoints
       tags:
         - Points
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       responses:
         '200':
           $ref: '#/components/responses/UserPointsByLoginsResponse'
@@ -85,12 +93,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /points/users/{login}:
+  /parties/{partyId}/points/users/{login}:
     get:
       operationId: getUserPoints
       tags:
         - Points
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Login'
       responses:
         '200':
@@ -101,12 +110,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /points/users/{login}/types/{name}:
+  /parties/{partyId}/points/users/{login}/types/{name}:
     get:
       operationId: getUserPointValue
       tags:
         - Points
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Login'
         - $ref: '#/components/parameters/Name'
       responses:
@@ -125,6 +135,7 @@ paths:
       tags:
         - Points
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Login'
         - $ref: '#/components/parameters/Name'
       requestBody:
@@ -144,12 +155,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /points/users/{login}/types/{name}/history:
+  /parties/{partyId}/points/users/{login}/types/{name}/history:
     get:
       operationId: getUserPointHistory
       tags:
         - Points
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Login'
         - $ref: '#/components/parameters/Name'
       responses:
@@ -163,11 +175,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /points/party:
+  /parties/{partyId}/points/party:
     get:
       operationId: getAllPartyPoints
       tags:
         - Points
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       responses:
         '200':
           $ref: '#/components/responses/PartyPointsResponse'
@@ -175,12 +189,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /points/party/types/{name}:
+  /parties/{partyId}/points/party/types/{name}:
     get:
       operationId: getPartyPointValue
       tags:
         - Points
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Name'
       responses:
         '200':
@@ -198,6 +213,7 @@ paths:
       tags:
         - Points
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Name'
       requestBody:
         $ref: '#/components/requestBodies/PointChangeRequest'
@@ -216,12 +232,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /points/party/types/{name}/history:
+  /parties/{partyId}/points/party/types/{name}/history:
     get:
       operationId: getPartyPointHistory
       tags:
         - Points
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Name'
       responses:
         '200':
@@ -235,6 +252,26 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorResponse'
 components:
+  parameters:
+    PartyId:
+      name: partyId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int
+    Name:
+      name: name
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Name'
+    Login:
+      name: login
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Login'
   schemas:
     Name:
       type: string
@@ -527,16 +564,3 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/PointChange'
-  parameters:
-    Name:
-      name: name
-      in: path
-      required: true
-      schema:
-        $ref: '#/components/schemas/Name'
-    Login:
-      name: login
-      in: path
-      required: true
-      schema:
-        $ref: '#/components/schemas/Login'

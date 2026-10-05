@@ -71,6 +71,9 @@ type Name = string
 // NullableName defines model for NullableName.
 type NullableName = Name
 
+// PartyId defines model for PartyId.
+type PartyId = int
+
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse = Error
 
@@ -98,23 +101,23 @@ type UseExchangeJSONRequestBody = ExchangeUse
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
-	// (GET /exchanges/catalog)
-	GetExchanges(ctx echo.Context) error
+	// (GET /parties/{partyId}/exchanges/catalog)
+	GetExchanges(ctx echo.Context, partyId PartyId) error
 
-	// (POST /exchanges/catalog)
-	CreateExchange(ctx echo.Context) error
+	// (POST /parties/{partyId}/exchanges/catalog)
+	CreateExchange(ctx echo.Context, partyId PartyId) error
 
-	// (GET /exchanges/catalog/removed)
-	GetRemovedExchanges(ctx echo.Context) error
+	// (GET /parties/{partyId}/exchanges/catalog/removed)
+	GetRemovedExchanges(ctx echo.Context, partyId PartyId) error
 
-	// (DELETE /exchanges/catalog/{name})
-	RemoveExchange(ctx echo.Context, name Name) error
+	// (DELETE /parties/{partyId}/exchanges/catalog/{name})
+	RemoveExchange(ctx echo.Context, partyId PartyId, name Name) error
 
-	// (POST /exchanges/catalog/{name}/use)
-	UseExchange(ctx echo.Context, name Name) error
+	// (POST /parties/{partyId}/exchanges/catalog/{name}/use)
+	UseExchange(ctx echo.Context, partyId PartyId, name Name) error
 
-	// (GET /exchanges/{login}/history)
-	GetUserExchangeHistory(ctx echo.Context, login Login) error
+	// (GET /parties/{partyId}/exchanges/{login}/history)
+	GetUserExchangeHistory(ctx echo.Context, partyId PartyId, login Login) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -125,33 +128,62 @@ type ServerInterfaceWrapper struct {
 // GetExchanges converts echo context to params.
 func (w *ServerInterfaceWrapper) GetExchanges(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetExchanges(ctx)
+	err = w.Handler.GetExchanges(ctx, partyId)
 	return err
 }
 
 // CreateExchange converts echo context to params.
 func (w *ServerInterfaceWrapper) CreateExchange(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.CreateExchange(ctx)
+	err = w.Handler.CreateExchange(ctx, partyId)
 	return err
 }
 
 // GetRemovedExchanges converts echo context to params.
 func (w *ServerInterfaceWrapper) GetRemovedExchanges(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetRemovedExchanges(ctx)
+	err = w.Handler.GetRemovedExchanges(ctx, partyId)
 	return err
 }
 
 // RemoveExchange converts echo context to params.
 func (w *ServerInterfaceWrapper) RemoveExchange(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "name" -------------
 	var name Name
 
@@ -161,13 +193,21 @@ func (w *ServerInterfaceWrapper) RemoveExchange(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.RemoveExchange(ctx, name)
+	err = w.Handler.RemoveExchange(ctx, partyId, name)
 	return err
 }
 
 // UseExchange converts echo context to params.
 func (w *ServerInterfaceWrapper) UseExchange(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "name" -------------
 	var name Name
 
@@ -177,13 +217,21 @@ func (w *ServerInterfaceWrapper) UseExchange(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.UseExchange(ctx, name)
+	err = w.Handler.UseExchange(ctx, partyId, name)
 	return err
 }
 
 // GetUserExchangeHistory converts echo context to params.
 func (w *ServerInterfaceWrapper) GetUserExchangeHistory(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "login" -------------
 	var login Login
 
@@ -193,7 +241,7 @@ func (w *ServerInterfaceWrapper) GetUserExchangeHistory(ctx echo.Context) error 
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetUserExchangeHistory(ctx, login)
+	err = w.Handler.GetUserExchangeHistory(ctx, partyId, login)
 	return err
 }
 
@@ -225,11 +273,11 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/exchanges/catalog", wrapper.GetExchanges)
-	router.POST(baseURL+"/exchanges/catalog", wrapper.CreateExchange)
-	router.GET(baseURL+"/exchanges/catalog/removed", wrapper.GetRemovedExchanges)
-	router.DELETE(baseURL+"/exchanges/catalog/:name", wrapper.RemoveExchange)
-	router.POST(baseURL+"/exchanges/catalog/:name/use", wrapper.UseExchange)
-	router.GET(baseURL+"/exchanges/:login/history", wrapper.GetUserExchangeHistory)
+	router.GET(baseURL+"/parties/:partyId/exchanges/catalog", wrapper.GetExchanges)
+	router.POST(baseURL+"/parties/:partyId/exchanges/catalog", wrapper.CreateExchange)
+	router.GET(baseURL+"/parties/:partyId/exchanges/catalog/removed", wrapper.GetRemovedExchanges)
+	router.DELETE(baseURL+"/parties/:partyId/exchanges/catalog/:name", wrapper.RemoveExchange)
+	router.POST(baseURL+"/parties/:partyId/exchanges/catalog/:name/use", wrapper.UseExchange)
+	router.GET(baseURL+"/parties/:partyId/exchanges/:login/history", wrapper.GetUserExchangeHistory)
 
 }

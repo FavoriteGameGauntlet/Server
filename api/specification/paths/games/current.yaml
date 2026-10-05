@@ -1,6 +1,8 @@
 get:
   operationId: getAllCurrentGame
   tags: [ Games ]
+  parameters:
+    - $ref: "../../components/parameters/PartyId.yaml"
   responses:
     "200":
       $ref: "../../components/responses/CurrentGameByLoginsResponse.yaml"

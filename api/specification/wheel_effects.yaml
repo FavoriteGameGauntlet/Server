@@ -3,12 +3,13 @@ info:
   title: Favorite Game Gauntlet
   version: 0.14.0
 paths:
-  /wheel-effects/{login}/history:
+  /parties/{partyId}/wheel-effects/{login}/history:
     get:
       operationId: getUserWheelEffectHistory
       tags:
         - WheelEffects
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Login'
       responses:
         '200':
@@ -19,11 +20,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /wheel-effects/available:
+  /parties/{partyId}/wheel-effects/available:
     get:
       operationId: getAvailableWheelEffects
       tags:
         - WheelEffects
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       responses:
         '200':
           $ref: '#/components/responses/WheelRowsResponse'
@@ -31,11 +34,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /wheel-effects/available/roll:
+  /parties/{partyId}/wheel-effects/available/roll:
     post:
       operationId: rollAvailableWheelEffects
       tags:
         - WheelEffects
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       requestBody:
         $ref: '#/components/requestBodies/WheelEffectRollRequest'
       responses:
@@ -49,11 +54,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /wheel-effects/available/roll/count:
+  /parties/{partyId}/wheel-effects/available/roll/count:
     get:
       operationId: getAvailableWheelEffectRollsCount
       tags:
         - WheelEffects
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       responses:
         '200':
           $ref: '#/components/responses/PointsResponse'
@@ -63,11 +70,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /wheel-effects/available/roll/last:
+  /parties/{partyId}/wheel-effects/available/roll/last:
     get:
       operationId: getLastRolledWheelEffects
       tags:
         - WheelEffects
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       responses:
         '200':
           $ref: '#/components/responses/RolledWheelRowsResponse'
@@ -77,11 +86,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /wheel-effects/available/roll/last/clear:
+  /parties/{partyId}/wheel-effects/available/roll/last/clear:
     post:
       operationId: clearLastRolledWheelEffects
       tags:
         - WheelEffects
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       responses:
         '204':
           description: Success.
@@ -89,11 +100,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /wheel-effects/available/roll/apply:
+  /parties/{partyId}/wheel-effects/available/roll/apply:
     post:
       operationId: applyAvailableWheelEffectRoll
       tags:
         - WheelEffects
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       requestBody:
         $ref: '#/components/requestBodies/WheelRowApplyRequest'
       responses:
@@ -108,6 +121,20 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorResponse'
 components:
+  parameters:
+    PartyId:
+      name: partyId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int
+    Login:
+      name: login
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Login'
   schemas:
     Login:
       type: string
@@ -196,13 +223,6 @@ components:
       required:
         - wheelRowName
         - targetLogins
-  parameters:
-    Login:
-      name: login
-      in: path
-      required: true
-      schema:
-        $ref: '#/components/schemas/Login'
   responses:
     WheelRowHistoriesResponse:
       description: Success.

@@ -2,6 +2,7 @@ get:
   operationId: getUserWheelEffectHistory
   tags: [ WheelEffects ]
   parameters:
+    - $ref: "../../../components/parameters/PartyId.yaml"
     - $ref: "../../../components/parameters/Login.yaml"
   responses:
     "200":

@@ -1,6 +1,8 @@
 get:
   operationId: getEffects
   tags: [ Effects ]
+  parameters:
+    - $ref: "../../components/parameters/PartyId.yaml"
   responses:
     "200":
       $ref: "../../components/responses/EffectsResponse.yaml"
@@ -11,6 +13,8 @@ get:
 post:
   operationId: createEffect
   tags: [ Effects ]
+  parameters:
+    - $ref: "../../components/parameters/PartyId.yaml"
   requestBody:
     $ref: "../../components/requests/EffectCreateRequest.yaml"
   responses:

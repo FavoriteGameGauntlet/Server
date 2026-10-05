@@ -239,7 +239,7 @@ func (s *Service) StartEndedEffectsScheduler() {
 		panic(err)
 	}
 
-	intervalInS, err := s.SysParamsService.GetInt(typesysparams.ParamEffectFinisherSchedulerIntervalInS)
+	intervalInS, err := s.SysParamsService.GetInt(srvsysparams.SchedulerPartyId, typesysparams.ParamEffectFinisherSchedulerIntervalInS)
 
 	if err != nil {
 		panic(err)

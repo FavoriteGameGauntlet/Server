@@ -2,6 +2,7 @@ get:
   operationId: getUserPointHistory
   tags: [ Points ]
   parameters:
+    - $ref: "../../../../../../components/parameters/PartyId.yaml"
     - $ref: "../../../../../../components/parameters/Login.yaml"
     - $ref: "../../../../../../components/parameters/Name.yaml"
   responses:

@@ -6,6 +6,7 @@ import (
 	"FGG-Service/src/common"
 	"FGG-Service/src/games/service"
 	"FGG-Service/src/games/types"
+	"FGG-Service/src/parties/service"
 	"FGG-Service/src/timers/service"
 	"FGG-Service/src/validator"
 	"net/http"
@@ -14,30 +15,34 @@ import (
 )
 
 type Controller struct {
-	Service     srvgames.IService
-	AuthService srvauth.IService
+	Service      srvgames.IService
+	AuthService  srvauth.IService
+	PartyService srvparties.IService
 }
 
 func NewController(ts srvtimers.IService) *Controller {
 	s := srvgames.NewService(ts)
 	as := srvauth.NewService()
+	ps := srvparties.NewService()
 
 	return &Controller{
 		s,
 		as,
+		ps,
 	}
 }
 
-// GetUserCurrentGame (GET /games/users/{login}/current)
-func (c *Controller) GetUserCurrentGame(ctx echo.Context, login gengames.Login) error {
-	doesExist, err := c.AuthService.DoesUserSessionExist(ctx)
+// GetUserCurrentGame (GET /parties/{partyId}/games/users/{login}/current)
+func (c *Controller) GetUserCurrentGame(ctx echo.Context, partyId gengames.PartyId, login gengames.Login) error {
+	actorUserId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	if !doesExist {
-		err = common.NewActiveSessionNotFoundUnauthorizedError()
+	err = c.PartyService.RequireMember(actorUserId, partyId)
+
+	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
@@ -47,7 +52,7 @@ func (c *Controller) GetUserCurrentGame(ctx echo.Context, login gengames.Login) 
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	game, err := c.Service.GetCurrentGame(userId)
+	game, err := c.Service.GetCurrentGame(userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -66,9 +71,15 @@ func convertGameToDto(game typegames.CurrentGame) gengames.CurrentGame {
 	}
 }
 
-// CreateCurrentGameAction (POST /games/current/actions)
-func (c *Controller) CreateCurrentGameAction(ctx echo.Context) error {
+// CreateCurrentGameAction (POST /parties/{partyId}/games/current/actions)
+func (c *Controller) CreateCurrentGameAction(ctx echo.Context, partyId gengames.PartyId) error {
 	userId, err := c.AuthService.GetUserId(ctx)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	err = c.PartyService.RequireMember(userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -86,11 +97,11 @@ func (c *Controller) CreateCurrentGameAction(ctx echo.Context) error {
 
 	switch actionDto.Action {
 	case gengames.Start:
-		game, err = c.Service.StartCurrentGame(userId)
+		game, err = c.Service.StartCurrentGame(userId, partyId)
 	case gengames.Finish:
-		game, err = c.Service.FinishCurrentGame(userId)
+		game, err = c.Service.FinishCurrentGame(userId, partyId)
 	case gengames.Cancel:
-		game, err = c.Service.CancelCurrentGame(userId)
+		game, err = c.Service.CancelCurrentGame(userId, partyId)
 	default:
 		err = common.NewCurrentGameActionUnprocessableError(string(actionDto.Action))
 	}
@@ -102,16 +113,17 @@ func (c *Controller) CreateCurrentGameAction(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, convertGameToDto(game))
 }
 
-// GetUserGameHistory (GET /games/users/{login}/history)
-func (c *Controller) GetUserGameHistory(ctx echo.Context, login gengames.Login) error {
-	doesExist, err := c.AuthService.DoesUserSessionExist(ctx)
+// GetUserGameHistory (GET /parties/{partyId}/games/users/{login}/history)
+func (c *Controller) GetUserGameHistory(ctx echo.Context, partyId gengames.PartyId, login gengames.Login) error {
+	actorUserId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	if !doesExist {
-		err = common.NewActiveSessionNotFoundUnauthorizedError()
+	err = c.PartyService.RequireMember(actorUserId, partyId)
+
+	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
@@ -121,7 +133,7 @@ func (c *Controller) GetUserGameHistory(ctx echo.Context, login gengames.Login) 
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	history, err := c.Service.GetGameHistory(userId)
+	history, err := c.Service.GetGameHistory(userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -150,16 +162,17 @@ func convertGameHistoryToDto(history []typegames.GameHistoryEntry) gengames.Game
 	return historyDto
 }
 
-// GetUserWishlistGames (GET /games/users/{login}/wishlist)
-func (c *Controller) GetUserWishlistGames(ctx echo.Context, login gengames.Login) error {
-	doesExist, err := c.AuthService.DoesUserSessionExist(ctx)
+// GetUserWishlistGames (GET /parties/{partyId}/games/users/{login}/wishlist)
+func (c *Controller) GetUserWishlistGames(ctx echo.Context, partyId gengames.PartyId, login gengames.Login) error {
+	actorUserId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	if !doesExist {
-		err = common.NewActiveSessionNotFoundUnauthorizedError()
+	err = c.PartyService.RequireMember(actorUserId, partyId)
+
+	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
@@ -169,7 +182,7 @@ func (c *Controller) GetUserWishlistGames(ctx echo.Context, login gengames.Login
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	games, err := c.Service.GetWishlistGames(userId)
+	games, err := c.Service.GetWishlistGames(userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -192,16 +205,17 @@ func convertWishlistGamesToDto(games typegames.WishlistGames) gengames.WishlistG
 	return gamesDto
 }
 
-// AddUserWishlistGame (POST /games/users/{login}/wishlist)
-func (c *Controller) AddUserWishlistGame(ctx echo.Context, login gengames.Login) error {
-	doesExist, err := c.AuthService.DoesUserSessionExist(ctx)
+// AddUserWishlistGame (POST /parties/{partyId}/games/users/{login}/wishlist)
+func (c *Controller) AddUserWishlistGame(ctx echo.Context, partyId gengames.PartyId, login gengames.Login) error {
+	actorUserId, err := c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	if !doesExist {
-		err = common.NewActiveSessionNotFoundUnauthorizedError()
+	err = c.PartyService.RequireMember(actorUserId, partyId)
+
+	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
@@ -227,7 +241,7 @@ func (c *Controller) AddUserWishlistGame(ctx echo.Context, login gengames.Login)
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.AddWishlistGame(userId, game)
+	err = c.Service.AddWishlistGame(userId, partyId, game)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -242,9 +256,21 @@ func convertWishlistGameFromDto(gameDto gengames.WishlistGame) typegames.Wishlis
 	}
 }
 
-// GetAllCurrentGame (GET /games/current)
-func (c *Controller) GetAllCurrentGame(ctx echo.Context) error {
-	games, err := c.Service.GetAllCurrentGames()
+// GetAllCurrentGame (GET /parties/{partyId}/games/current)
+func (c *Controller) GetAllCurrentGame(ctx echo.Context, partyId gengames.PartyId) error {
+	actorUserId, err := c.AuthService.GetUserId(ctx)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	err = c.PartyService.RequireMember(actorUserId, partyId)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	games, err := c.Service.GetAllCurrentGames(partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -267,9 +293,15 @@ func convertAllCurrentGamesToDto(games []typegames.CurrentGameWithLogin) gengame
 	return dtos
 }
 
-// PutGameReview (PUT /games/reviews/{name})
-func (c *Controller) PutGameReview(ctx echo.Context, name gengames.Name) error {
+// PutGameReview (PUT /parties/{partyId}/games/reviews/{name})
+func (c *Controller) PutGameReview(ctx echo.Context, partyId gengames.PartyId, name gengames.Name) error {
 	userId, err := c.AuthService.GetUserId(ctx)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	err = c.PartyService.RequireMember(userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -295,7 +327,7 @@ func (c *Controller) PutGameReview(ctx echo.Context, name gengames.Name) error {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	created, err := c.Service.RateGame(userId, name, reviewDto.Rating, reviewDto.ReviewComment)
+	created, err := c.Service.RateGame(userId, partyId, name, reviewDto.Rating, reviewDto.ReviewComment)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -308,9 +340,15 @@ func (c *Controller) PutGameReview(ctx echo.Context, name gengames.Name) error {
 	return ctx.NoContent(http.StatusNoContent)
 }
 
-// GetGameReview (GET /games/reviews/{name})
-func (c *Controller) GetGameReview(ctx echo.Context, name gengames.Name) error {
+// GetGameReview (GET /parties/{partyId}/games/reviews/{name})
+func (c *Controller) GetGameReview(ctx echo.Context, partyId gengames.PartyId, name gengames.Name) error {
 	userId, err := c.AuthService.GetUserId(ctx)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	err = c.PartyService.RequireMember(userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -322,7 +360,7 @@ func (c *Controller) GetGameReview(ctx echo.Context, name gengames.Name) error {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	review, err := c.Service.GetGameReview(userId, name)
+	review, err := c.Service.GetGameReview(userId, partyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
