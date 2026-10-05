@@ -56,7 +56,7 @@ type EffectHistoryEntry struct {
 	CreatedDate time.Time `json:"createdDate"`
 	Description string    `json:"description"`
 	Name        Name      `json:"name"`
-	UsesLeft    int       `json:"usesLeft"`
+	UsesLeft    *int      `json:"usesLeft"`
 }
 
 // Effects defines model for Effects.

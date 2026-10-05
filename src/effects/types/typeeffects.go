@@ -64,7 +64,7 @@ type EffectHistory struct {
 	UseCount      int
 	Duration      *time.Duration
 	Action        string
-	UsesLeft      int
+	UsesLeft      *int
 	SourceEventId *int
 	CreatedDate   time.Time
 }
