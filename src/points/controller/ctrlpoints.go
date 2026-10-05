@@ -398,26 +398,23 @@ func convertChangeResultToDto(result typepoints.PointChangeResult) genpoints.Poi
 	}
 }
 
-// convertHistoryToDto names the user behind each recorded change, resolving each id once.
+// convertHistoryToDto names the user behind each recorded change.
 func (c *Controller) convertHistoryToDto(history []typepoints.PointHistoryEntry) (genpoints.PointHistoryEntries, error) {
+	actorUserIds := make([]int, len(history))
+	for i, entry := range history {
+		actorUserIds[i] = entry.ActorUserId
+	}
+
+	loginsByUserId, err := common.GetLoginsByUserIds(c.AuthService, actorUserIds)
+
+	if err != nil {
+		return nil, err
+	}
+
 	historyDto := make(genpoints.PointHistoryEntries, len(history))
-	loginsByUserId := make(map[int]string)
 
 	for i, entry := range history {
-		login, isKnown := loginsByUserId[entry.ActorUserId]
-
-		if !isKnown {
-			resolved, err := c.AuthService.GetLoginByUserId(entry.ActorUserId)
-
-			if err != nil {
-				return nil, err
-			}
-
-			login = resolved
-			loginsByUserId[entry.ActorUserId] = login
-		}
-
-		actorLogin := login
+		actorLogin := loginsByUserId[entry.ActorUserId]
 
 		historyDto[i] = genpoints.PointHistoryEntry{
 			DesiredChangeValue: entry.DesiredChangeValue,

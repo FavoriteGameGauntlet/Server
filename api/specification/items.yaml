@@ -247,6 +247,8 @@ components:
           $ref: '#/components/schemas/Name'
         action:
           type: string
+        actorLogin:
+          $ref: '#/components/schemas/Login'
         usesLeft:
           type: integer
           format: int
@@ -256,6 +258,7 @@ components:
       required:
         - name
         - action
+        - actorLogin
         - usesLeft
         - createdDate
     ItemHistoryEntries:

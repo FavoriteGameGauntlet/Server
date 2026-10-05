@@ -35,6 +35,7 @@ type UserItem struct {
 type ItemHistory struct {
 	Id            int
 	UserId        int
+	ActorUserId   int
 	PartyId       int
 	ItemId        int
 	Action        string
@@ -55,6 +56,7 @@ type UserItemDetail struct {
 type ItemHistoryDetail struct {
 	Name        string
 	Action      string
+	ActorUserId int
 	UsesLeft    int
 	CreatedDate time.Time
 }

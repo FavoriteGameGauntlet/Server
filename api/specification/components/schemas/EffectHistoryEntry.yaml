@@ -6,10 +6,12 @@ properties:
     type: string
   action:
     type: string
+  actorLogin:
+    $ref: "./Login.yaml"
   usesLeft:
     type: integer
     format: int
   createdDate:
     type: string
     format: date-time
-required: [ name, description, action, usesLeft, createdDate ]
+required: [ name, description, action, actorLogin, usesLeft, createdDate ]

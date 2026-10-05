@@ -178,6 +178,7 @@ func (s *Service) GetPerkHistory(userId int, partyId int) (views []typeperks.Per
 		views = append(views, typeperks.PerkHistoryView{
 			Name:        perksById[entry.PerkId].Name,
 			Action:      entry.Action,
+			ActorUserId: entry.ActorUserId,
 			CreatedDate: entry.CreatedDate,
 		})
 	}

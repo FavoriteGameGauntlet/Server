@@ -52,6 +52,7 @@ type EffectHistoryEntries = []EffectHistoryEntry
 // EffectHistoryEntry defines model for EffectHistoryEntry.
 type EffectHistoryEntry struct {
 	Action      string    `json:"action"`
+	ActorLogin  Login     `json:"actorLogin"`
 	CreatedDate time.Time `json:"createdDate"`
 	Description string    `json:"description"`
 	Name        Name      `json:"name"`

@@ -206,12 +206,24 @@ func (c *Controller) GetUserEffectHistory(ctx echo.Context, login geneffects.Log
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
+	actorUserIds := make([]int, len(history))
+	for i, entry := range history {
+		actorUserIds[i] = entry.ActorUserId
+	}
+
+	loginsByUserId, err := common.GetLoginsByUserIds(c.AuthService, actorUserIds)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
 	historyDto := make(geneffects.EffectHistoryEntries, len(history))
 	for i, entry := range history {
 		historyDto[i] = geneffects.EffectHistoryEntry{
 			Name:        entry.Name,
 			Description: entry.Description,
 			Action:      entry.Action,
+			ActorLogin:  loginsByUserId[entry.ActorUserId],
 			UsesLeft:    entry.UsesLeft,
 			CreatedDate: entry.CreatedDate,
 		}

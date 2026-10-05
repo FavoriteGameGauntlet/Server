@@ -308,6 +308,7 @@ func (db *Database) GetEffectHistoryCommand(userId int, partyId int) (history []
 		err = rows.Scan(
 			&entry.Id,
 			&entry.UserId,
+			&entry.ActorUserId,
 			&entry.PartyId,
 			&entry.EffectId,
 			&entry.Name,

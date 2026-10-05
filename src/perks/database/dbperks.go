@@ -163,7 +163,7 @@ func (db *Database) GetPerkHistoryCommand(userId int, partyId int) (history []ty
 
 	for rows.Next() {
 		entry := typeperks.PerkHistory{}
-		err = rows.Scan(&entry.Id, &entry.UserId, &entry.PartyId, &entry.PerkId, &entry.Action, &entry.SourceEventId, &entry.CreatedDate)
+		err = rows.Scan(&entry.Id, &entry.UserId, &entry.ActorUserId, &entry.PartyId, &entry.PerkId, &entry.Action, &entry.SourceEventId, &entry.CreatedDate)
 
 		if err != nil {
 			_ = rows.Close()

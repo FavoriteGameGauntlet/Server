@@ -175,11 +175,23 @@ func (c *Controller) GetUserPerkHistory(ctx echo.Context, login genperks.Login) 
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
+	actorUserIds := make([]int, len(history))
+	for i, entry := range history {
+		actorUserIds[i] = entry.ActorUserId
+	}
+
+	loginsByUserId, err := common.GetLoginsByUserIds(c.AuthService, actorUserIds)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
 	historyDto := make(genperks.PerkHistoryEntries, len(history))
 	for i, entry := range history {
 		historyDto[i] = genperks.PerkHistoryEntry{
 			Name:        entry.Name,
 			Action:      entry.Action,
+			ActorLogin:  loginsByUserId[entry.ActorUserId],
 			CreatedDate: entry.CreatedDate,
 		}
 	}

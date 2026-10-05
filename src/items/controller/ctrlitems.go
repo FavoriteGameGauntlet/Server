@@ -186,11 +186,23 @@ func (c *Controller) GetUserItemHistory(ctx echo.Context, login genitems.Login) 
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
+	actorUserIds := make([]int, len(history))
+	for i, entry := range history {
+		actorUserIds[i] = entry.ActorUserId
+	}
+
+	loginsByUserId, err := common.GetLoginsByUserIds(c.AuthService, actorUserIds)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
 	historyDto := make(genitems.ItemHistoryEntries, len(history))
 	for i, entry := range history {
 		historyDto[i] = genitems.ItemHistoryEntry{
 			Name:        entry.Name,
 			Action:      entry.Action,
+			ActorLogin:  loginsByUserId[entry.ActorUserId],
 			UsesLeft:    entry.UsesLeft,
 			CreatedDate: entry.CreatedDate,
 		}

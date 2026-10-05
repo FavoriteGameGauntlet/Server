@@ -31,6 +31,7 @@ type UserPerk struct {
 type PerkHistory struct {
 	Id            int
 	UserId        int
+	ActorUserId   int
 	PartyId       int
 	PerkId        int
 	Action        string
@@ -49,5 +50,6 @@ type UserPerkView struct {
 type PerkHistoryView struct {
 	Name        string
 	Action      string
+	ActorUserId int
 	CreatedDate time.Time
 }

@@ -121,3 +121,34 @@ func RequireAdmin(ctx echo.Context, authService AdminChecker) error {
 
 	return nil
 }
+
+// LoginResolver is the part of the auth service needed to name users by login. It is declared here
+// instead of imported so that common keeps no dependency on the auth service.
+type LoginResolver interface {
+	GetLoginByUserId(userId int) (login string, err error)
+}
+
+// GetLoginsByUserIds names each of the given users by login. A user that repeats in the ids is
+// looked up once, since a history usually names the same few users many times.
+func GetLoginsByUserIds(resolver LoginResolver, userIds []int) (loginsByUserId map[int]string, err error) {
+	loginsByUserId = make(map[int]string, len(userIds))
+
+	for _, userId := range userIds {
+		_, isKnown := loginsByUserId[userId]
+
+		if isKnown {
+			continue
+		}
+
+		var login string
+		login, err = resolver.GetLoginByUserId(userId)
+
+		if err != nil {
+			return nil, err
+		}
+
+		loginsByUserId[userId] = login
+	}
+
+	return
+}

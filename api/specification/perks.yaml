@@ -186,12 +186,15 @@ components:
           $ref: '#/components/schemas/Name'
         action:
           type: string
+        actorLogin:
+          $ref: '#/components/schemas/Login'
         createdDate:
           type: string
           format: date-time
       required:
         - name
         - action
+        - actorLogin
         - createdDate
     PerkHistoryEntries:
       type: array

@@ -259,6 +259,7 @@ func (s *Service) GetItemHistory(userId int, partyId int) (history []typeitems.I
 		history = append(history, typeitems.ItemHistoryDetail{
 			Name:        itemsById[entry.ItemId].Name,
 			Action:      entry.Action,
+			ActorUserId: entry.ActorUserId,
 			UsesLeft:    entry.UsesLeft,
 			CreatedDate: entry.CreatedDate,
 		})

@@ -51,6 +51,7 @@ type ItemHistoryEntries = []ItemHistoryEntry
 // ItemHistoryEntry defines model for ItemHistoryEntry.
 type ItemHistoryEntry struct {
 	Action      string    `json:"action"`
+	ActorLogin  Login     `json:"actorLogin"`
 	CreatedDate time.Time `json:"createdDate"`
 	Name        Name      `json:"name"`
 	UsesLeft    int       `json:"usesLeft"`

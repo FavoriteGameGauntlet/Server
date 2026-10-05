@@ -43,6 +43,7 @@ type PerkHistoryEntries = []PerkHistoryEntry
 // PerkHistoryEntry defines model for PerkHistoryEntry.
 type PerkHistoryEntry struct {
 	Action      string    `json:"action"`
+	ActorLogin  Login     `json:"actorLogin"`
 	CreatedDate time.Time `json:"createdDate"`
 	Name        Name      `json:"name"`
 }

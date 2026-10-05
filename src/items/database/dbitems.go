@@ -181,7 +181,7 @@ func (db *Database) GetItemHistoryCommand(userId int, partyId int) (history []ty
 
 	for rows.Next() {
 		entry := typeitems.ItemHistory{}
-		err = rows.Scan(&entry.Id, &entry.UserId, &entry.PartyId, &entry.ItemId, &entry.Action, &entry.UsesLeft, &entry.SourceEventId, &entry.CreatedDate)
+		err = rows.Scan(&entry.Id, &entry.UserId, &entry.ActorUserId, &entry.PartyId, &entry.ItemId, &entry.Action, &entry.UsesLeft, &entry.SourceEventId, &entry.CreatedDate)
 
 		if err != nil {
 			_ = rows.Close()

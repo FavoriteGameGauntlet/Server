@@ -56,6 +56,7 @@ type UserEffectDetail struct {
 type EffectHistory struct {
 	Id            int
 	UserId        int
+	ActorUserId   int
 	PartyId       int
 	EffectId      int
 	Name          string
