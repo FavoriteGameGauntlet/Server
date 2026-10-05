@@ -1,4 +1,4 @@
-package srvhistory_test
+package srvgrants_test
 
 import "errors"
 

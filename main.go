@@ -18,7 +18,7 @@ import (
 	ctrleffects "FGG-Service/src/effects/controller"
 	ctrlexchanges "FGG-Service/src/exchanges/controller"
 	ctrlgames "FGG-Service/src/games/controller"
-	ctrlhistory "FGG-Service/src/history/controller"
+	ctrlgrants "FGG-Service/src/grants/controller"
 	ctrlitems "FGG-Service/src/items/controller"
 	ctrlperks "FGG-Service/src/perks/controller"
 	ctrlparties "FGG-Service/src/parties/controller"
@@ -79,7 +79,7 @@ func registerHandlers(e *echo.Echo) {
 	geneffects.RegisterHandlers(e, ctrleffects.NewController())
 	genperks.RegisterHandlers(e, ctrlperks.NewController())
 	genexchanges.RegisterHandlers(e, ctrlexchanges.NewController())
-	gengrants.RegisterHandlers(e, ctrlhistory.NewController())
+	gengrants.RegisterHandlers(e, ctrlgrants.NewController())
 	genparties.RegisterHandlers(e, ctrlparties.NewController())
 	genpoints.RegisterHandlers(e, ctrlpoints.NewController())
 	gensysparams.RegisterHandlers(e, ctrlsysparams.NewController())

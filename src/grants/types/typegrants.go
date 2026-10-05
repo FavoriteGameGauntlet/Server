@@ -1,4 +1,4 @@
-package typehistory
+package typegrants
 
 import "time"
 

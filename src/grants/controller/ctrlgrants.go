@@ -1,11 +1,11 @@
-package ctrlhistory
+package ctrlgrants
 
 import (
 	"FGG-Service/api/generated/grants"
 	"FGG-Service/src/auth/service"
 	"FGG-Service/src/changes/types"
 	"FGG-Service/src/common"
-	"FGG-Service/src/history/service"
+	"FGG-Service/src/grants/service"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -16,12 +16,12 @@ import (
 const defaultPartyId = 1
 
 type Controller struct {
-	Service     srvhistory.IService
+	Service     srvgrants.IService
 	AuthService srvauth.IService
 }
 
 func NewController() *Controller {
-	s := srvhistory.NewService()
+	s := srvgrants.NewService()
 	as := srvauth.NewService()
 
 	return &Controller{

@@ -3,7 +3,7 @@ package srvpoints
 import (
 	"FGG-Service/src/changes/types"
 	"FGG-Service/src/common"
-	"FGG-Service/src/history/database"
+	"FGG-Service/src/grants/database"
 	"FGG-Service/src/parties/database"
 	"FGG-Service/src/points/database"
 	"FGG-Service/src/points/type"
@@ -15,14 +15,14 @@ import (
 type Service struct {
 	Database        dbpoints.IDatabase
 	PartiesDatabase dbparties.IDatabase
-	HistoryDatabase dbhistory.IDatabase
+	GrantsDatabase  dbgrants.IDatabase
 }
 
 func NewService() *Service {
 	return &Service{
 		Database:        new(dbpoints.Database),
 		PartiesDatabase: new(dbparties.Database),
-		HistoryDatabase: new(dbhistory.Database),
+		GrantsDatabase:  new(dbgrants.Database),
 	}
 }
 
@@ -441,7 +441,7 @@ func (s *Service) createManualSourceEvent(actorUserId int, affectedUserId int, p
 		{Amount: changeValue, PointTypeId: &pointTypeId, UserId: &affectedUserId},
 	}
 
-	created, err := s.HistoryDatabase.CreateManualHistoryCommand(partyId, actorUserId, entries, nil)
+	created, err := s.GrantsDatabase.CreateManualHistoryCommand(partyId, actorUserId, entries, nil)
 
 	if err != nil {
 		return

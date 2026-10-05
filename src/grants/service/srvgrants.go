@@ -1,10 +1,10 @@
-package srvhistory
+package srvgrants
 
 import (
 	"FGG-Service/src/changes/database"
 	srvchanges "FGG-Service/src/changes/service"
 	"FGG-Service/src/changes/types"
-	"FGG-Service/src/history/database"
+	"FGG-Service/src/grants/database"
 )
 
 type IService interface {
@@ -12,14 +12,14 @@ type IService interface {
 }
 
 type Service struct {
-	Database        dbhistory.IDatabase
+	Database        dbgrants.IDatabase
 	ChangesDatabase dbchanges.IDatabase
 	ChangesService  srvchanges.IService
 }
 
 func NewService() *Service {
 	return &Service{
-		Database:        new(dbhistory.Database),
+		Database:        new(dbgrants.Database),
 		ChangesDatabase: new(dbchanges.Database),
 		ChangesService:  srvchanges.NewService(),
 	}
