@@ -121,7 +121,7 @@ func (c *Controller) RemoveEffect(ctx echo.Context, name geneffects.Name) error 
 }
 // GetUserEffects (GET /effects/{login})
 func (c *Controller) GetUserEffects(ctx echo.Context, login geneffects.Login) error {
-	userId, err := c.userIdFromLogin(ctx, login)
+	_, userId, err := c.userIdFromLogin(ctx, login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -160,13 +160,13 @@ func (c *Controller) GetUserEffects(ctx echo.Context, login geneffects.Login) er
 
 // UseUserEffect (POST /effects/{login}/{name}/use)
 func (c *Controller) UseUserEffect(ctx echo.Context, login geneffects.Login, name geneffects.Name) error {
-	userId, err := c.userIdFromLogin(ctx, login)
+	actorUserId, userId, err := c.userIdFromLogin(ctx, login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.UseEffect(userId, defaultPartyId, name)
+	err = c.Service.UseEffect(actorUserId, userId, defaultPartyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -177,13 +177,13 @@ func (c *Controller) UseUserEffect(ctx echo.Context, login geneffects.Login, nam
 
 // EndUserEffect (DELETE /effects/{login}/{name})
 func (c *Controller) EndUserEffect(ctx echo.Context, login geneffects.Login, name geneffects.Name) error {
-	userId, err := c.userIdFromLogin(ctx, login)
+	actorUserId, userId, err := c.userIdFromLogin(ctx, login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.EndUserEffect(userId, defaultPartyId, name)
+	err = c.Service.EndUserEffect(actorUserId, userId, defaultPartyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -194,7 +194,7 @@ func (c *Controller) EndUserEffect(ctx echo.Context, login geneffects.Login, nam
 
 // GetUserEffectHistory (GET /effects/{login}/history)
 func (c *Controller) GetUserEffectHistory(ctx echo.Context, login geneffects.Login) error {
-	userId, err := c.userIdFromLogin(ctx, login)
+	_, userId, err := c.userIdFromLogin(ctx, login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -221,14 +221,17 @@ func (c *Controller) GetUserEffectHistory(ctx echo.Context, login geneffects.Log
 }
 
 // userIdFromLogin resolves a login path parameter, rejecting the request when it carries no session.
-func (c *Controller) userIdFromLogin(ctx echo.Context, login string) (userId int, err error) {
-	_, err = c.AuthService.GetUserId(ctx)
+// It returns the user the request comes from along with the user the login names.
+func (c *Controller) userIdFromLogin(ctx echo.Context, login string) (actorUserId int, userId int, err error) {
+	actorUserId, err = c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return
 	}
 
-	return c.AuthService.GetUserIdByLogin(login)
+	userId, err = c.AuthService.GetUserIdByLogin(login)
+
+	return
 }
 
 func convertDurationToDto(duration *time.Duration) *geneffects.Duration {

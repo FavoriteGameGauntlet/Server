@@ -17,8 +17,8 @@ type IService interface {
 	CreateItem(partyId int, name string, description string, useCount int, entries []typechanges.ChangeEntryInput) (typeitems.Item, error)
 	RemoveItem(partyId int, name string) error
 	GetUserItems(userId int, partyId int) ([]typeitems.UserItemDetail, error)
-	UseItem(userId int, partyId int, itemName string) error
-	DiscardUserItem(userId int, partyId int, itemName string) error
+	UseItem(actorUserId int, userId int, partyId int, itemName string) error
+	DiscardUserItem(actorUserId int, userId int, partyId int, itemName string) error
 	GetItemHistory(userId int, partyId int) ([]typeitems.ItemHistoryDetail, error)
 }
 
@@ -146,9 +146,10 @@ func (s *Service) GetUserItems(userId int, partyId int) (details []typeitems.Use
 	return
 }
 
-// UseItem spends one use of an item the user holds and grants what it carries. The history event of
-// spending the use is the event the resulting grants are attributed to.
-func (s *Service) UseItem(userId int, partyId int, itemName string) (err error) {
+// UseItem spends one use of an item the user holds and grants what it carries to that user. The
+// history event of spending the use is the event the resulting grants are attributed to. Another
+// member may use the item, so everything recorded names the actor, not the holder.
+func (s *Service) UseItem(actorUserId int, userId int, partyId int, itemName string) (err error) {
 	item, err := s.itemByName(partyId, itemName)
 
 	if err != nil {
@@ -177,26 +178,26 @@ func (s *Service) UseItem(userId int, partyId int, itemName string) (err error) 
 
 	usesLeft := userItem.UsesLeft - 1
 
-	historyEventId, err := s.Database.ChangeUserItemUsesLeftCommand(userId, partyId, item.Id, usesLeft, userId, nil)
+	historyEventId, err := s.Database.ChangeUserItemUsesLeftCommand(userId, partyId, item.Id, usesLeft, actorUserId, nil)
 
 	if err != nil {
 		return
 	}
 
 	if usesLeft == 0 {
-		err = s.Database.DeleteUserItemCommand(userId, partyId, item.Id, userId, &historyEventId)
+		err = s.Database.DeleteUserItemCommand(userId, partyId, item.Id, actorUserId, &historyEventId)
 
 		if err != nil {
 			return
 		}
 	}
 
-	return s.applyItemChange(userId, partyId, withChange.Change.Entries, historyEventId)
+	return s.applyItemChange(actorUserId, userId, partyId, withChange.Change.Entries, historyEventId)
 }
 
 // applyItemChange stamps the item's change template onto the user and applies it, the same way a
 // rolled wheel row is applied.
-func (s *Service) applyItemChange(userId int, partyId int, templateEntries []typechanges.ChangeEntry, sourceEventId int) (err error) {
+func (s *Service) applyItemChange(actorUserId int, userId int, partyId int, templateEntries []typechanges.ChangeEntry, sourceEventId int) (err error) {
 	if len(templateEntries) == 0 {
 		return
 	}
@@ -215,11 +216,11 @@ func (s *Service) applyItemChange(userId int, partyId int, templateEntries []typ
 		return
 	}
 
-	return s.ChangesService.ApplyChangeEntries(partyId, userChange.Entries, userId, sourceEventId)
+	return s.ChangesService.ApplyChangeEntries(partyId, userChange.Entries, actorUserId, sourceEventId)
 }
 
 // DiscardUserItem drops an item the user holds without using it.
-func (s *Service) DiscardUserItem(userId int, partyId int, itemName string) (err error) {
+func (s *Service) DiscardUserItem(actorUserId int, userId int, partyId int, itemName string) (err error) {
 	item, err := s.itemByName(partyId, itemName)
 
 	if err != nil {
@@ -236,7 +237,7 @@ func (s *Service) DiscardUserItem(userId int, partyId int, itemName string) (err
 		return
 	}
 
-	return s.Database.DeleteUserItemCommand(userId, partyId, item.Id, userId, nil)
+	return s.Database.DeleteUserItemCommand(userId, partyId, item.Id, actorUserId, nil)
 }
 
 // GetItemHistory lists the recorded item events of a user, named from the party catalogue.

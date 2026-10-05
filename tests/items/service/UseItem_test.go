@@ -24,6 +24,8 @@ func ptr[T any](value T) *T {
 
 // Using an item spends one use and grants what the item carries. The history event of spending the
 // use is the source event of the grants, so they can be traced back to the use that caused them.
+// The item belongs to user 7 and is used by user 9: the grants go to the holder, but everything
+// recorded names the user who used it.
 func TestSrvItems_UseItem(test *testing.T) {
 	test.Run("Success_SpendsUseThenGrants", func(test *testing.T) {
 		itemsDb := new(dbitemsmock.DatabaseMock)
@@ -38,14 +40,14 @@ func TestSrvItems_UseItem(test *testing.T) {
 			Return(typeitems.UserItem{Id: 1, UserId: 7, PartyId: 1, ItemId: potion.Id, UsesLeft: 2}, nil)
 		itemsDb.On("GetItemCommand", 1, potion.Id).
 			Return(typeitems.ItemWithChange{Id: potion.Id, Change: typechanges.Change{Entries: []typechanges.ChangeEntry{templateEntry}}}, nil)
-		itemsDb.On("ChangeUserItemUsesLeftCommand", 7, 1, potion.Id, 1, 7, (*int)(nil)).Return(55, nil)
+		itemsDb.On("ChangeUserItemUsesLeftCommand", 7, 1, potion.Id, 1, 9, (*int)(nil)).Return(55, nil)
 		changesDb.On("CreateUserChangeFromJsonbCommand", 1, []typechanges.ChangeEntry{targetedEntry}).
 			Return(typechanges.UserChange{Entries: []typechanges.ChangeEntry{targetedEntry}}, nil)
-		changesSvc.On("ApplyChangeEntries", 1, []typechanges.ChangeEntry{targetedEntry}, 7, 55).Return(nil)
+		changesSvc.On("ApplyChangeEntries", 1, []typechanges.ChangeEntry{targetedEntry}, 9, 55).Return(nil)
 
 		sut := srvitems.Service{Database: itemsDb, ChangesDatabase: changesDb, ChangesService: changesSvc}
 
-		err := sut.UseItem(7, 1, potion.Name)
+		err := sut.UseItem(9, 7, 1, potion.Name)
 
 		require.NoError(test, err)
 		itemsDb.AssertExpectations(test)
@@ -61,12 +63,12 @@ func TestSrvItems_UseItem(test *testing.T) {
 		itemsDb.On("GetUserItemCommand", 7, 1, potion.Id).
 			Return(typeitems.UserItem{Id: 1, UserId: 7, PartyId: 1, ItemId: potion.Id, UsesLeft: 1}, nil)
 		itemsDb.On("GetItemCommand", 1, potion.Id).Return(typeitems.ItemWithChange{Id: potion.Id}, nil)
-		itemsDb.On("ChangeUserItemUsesLeftCommand", 7, 1, potion.Id, 0, 7, (*int)(nil)).Return(55, nil)
-		itemsDb.On("DeleteUserItemCommand", 7, 1, potion.Id, 7, ptr(55)).Return(nil)
+		itemsDb.On("ChangeUserItemUsesLeftCommand", 7, 1, potion.Id, 0, 9, (*int)(nil)).Return(55, nil)
+		itemsDb.On("DeleteUserItemCommand", 7, 1, potion.Id, 9, ptr(55)).Return(nil)
 
 		sut := srvitems.Service{Database: itemsDb}
 
-		err := sut.UseItem(7, 1, potion.Name)
+		err := sut.UseItem(9, 7, 1, potion.Name)
 
 		require.NoError(test, err)
 		itemsDb.AssertExpectations(test)
@@ -79,7 +81,7 @@ func TestSrvItems_UseItem(test *testing.T) {
 
 		sut := srvitems.Service{Database: itemsDb}
 
-		err := sut.UseItem(7, 1, potion.Name)
+		err := sut.UseItem(9, 7, 1, potion.Name)
 
 		require.Error(test, err)
 		itemsDb.AssertNotCalled(test, "ChangeUserItemUsesLeftCommand")
@@ -92,7 +94,7 @@ func TestSrvItems_UseItem(test *testing.T) {
 
 		sut := srvitems.Service{Database: itemsDb}
 
-		err := sut.UseItem(7, 1, potion.Name)
+		err := sut.UseItem(9, 7, 1, potion.Name)
 
 		require.Error(test, err)
 		itemsDb.AssertNotCalled(test, "ChangeUserItemUsesLeftCommand")
@@ -104,7 +106,7 @@ func TestSrvItems_UseItem(test *testing.T) {
 
 		sut := srvitems.Service{Database: itemsDb}
 
-		err := sut.UseItem(7, 1, "unknown")
+		err := sut.UseItem(9, 7, 1, "unknown")
 
 		require.Error(test, err)
 		itemsDb.AssertNotCalled(test, "GetUserItemCommand")
@@ -116,8 +118,28 @@ func TestSrvItems_UseItem(test *testing.T) {
 
 		sut := srvitems.Service{Database: itemsDb}
 
-		err := sut.UseItem(7, 1, potion.Name)
+		err := sut.UseItem(9, 7, 1, potion.Name)
 
 		require.ErrorIs(test, err, dbError)
+	})
+}
+
+// Discarding an item removes it from its holder, and the removal is recorded as the discarding
+// user's action.
+func TestSrvItems_DiscardUserItem(test *testing.T) {
+	test.Run("Success_RecordedAsActor", func(test *testing.T) {
+		itemsDb := new(dbitemsmock.DatabaseMock)
+
+		itemsDb.On("GetActualItemsCommand", 1).Return([]typeitems.Item{potion}, nil)
+		itemsDb.On("GetUserItemCommand", 7, 1, potion.Id).
+			Return(typeitems.UserItem{Id: 1, UserId: 7, PartyId: 1, ItemId: potion.Id, UsesLeft: 2}, nil)
+		itemsDb.On("DeleteUserItemCommand", 7, 1, potion.Id, 9, (*int)(nil)).Return(nil)
+
+		sut := srvitems.Service{Database: itemsDb}
+
+		err := sut.DiscardUserItem(9, 7, 1, potion.Name)
+
+		require.NoError(test, err)
+		itemsDb.AssertExpectations(test)
 	})
 }

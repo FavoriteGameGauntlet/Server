@@ -113,7 +113,7 @@ func (c *Controller) RemoveItem(ctx echo.Context, name genitems.Name) error {
 }
 // GetUserItems (GET /items/{login})
 func (c *Controller) GetUserItems(ctx echo.Context, login genitems.Login) error {
-	userId, err := c.userIdFromLogin(ctx, login)
+	_, userId, err := c.userIdFromLogin(ctx, login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -140,13 +140,13 @@ func (c *Controller) GetUserItems(ctx echo.Context, login genitems.Login) error 
 
 // UseUserItem (POST /items/{login}/{name}/use)
 func (c *Controller) UseUserItem(ctx echo.Context, login genitems.Login, name genitems.Name) error {
-	userId, err := c.userIdFromLogin(ctx, login)
+	actorUserId, userId, err := c.userIdFromLogin(ctx, login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.UseItem(userId, defaultPartyId, name)
+	err = c.Service.UseItem(actorUserId, userId, defaultPartyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -157,13 +157,13 @@ func (c *Controller) UseUserItem(ctx echo.Context, login genitems.Login, name ge
 
 // DiscardUserItem (DELETE /items/{login}/{name})
 func (c *Controller) DiscardUserItem(ctx echo.Context, login genitems.Login, name genitems.Name) error {
-	userId, err := c.userIdFromLogin(ctx, login)
+	actorUserId, userId, err := c.userIdFromLogin(ctx, login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.DiscardUserItem(userId, defaultPartyId, name)
+	err = c.Service.DiscardUserItem(actorUserId, userId, defaultPartyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -174,7 +174,7 @@ func (c *Controller) DiscardUserItem(ctx echo.Context, login genitems.Login, nam
 
 // GetUserItemHistory (GET /items/{login}/history)
 func (c *Controller) GetUserItemHistory(ctx echo.Context, login genitems.Login) error {
-	userId, err := c.userIdFromLogin(ctx, login)
+	_, userId, err := c.userIdFromLogin(ctx, login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -200,14 +200,17 @@ func (c *Controller) GetUserItemHistory(ctx echo.Context, login genitems.Login) 
 }
 
 // userIdFromLogin resolves a login path parameter, rejecting the request when it carries no session.
-func (c *Controller) userIdFromLogin(ctx echo.Context, login string) (userId int, err error) {
-	_, err = c.AuthService.GetUserId(ctx)
+// It returns the user the request comes from along with the user the login names.
+func (c *Controller) userIdFromLogin(ctx echo.Context, login string) (actorUserId int, userId int, err error) {
+	actorUserId, err = c.AuthService.GetUserId(ctx)
 
 	if err != nil {
 		return
 	}
 
-	return c.AuthService.GetUserIdByLogin(login)
+	userId, err = c.AuthService.GetUserIdByLogin(login)
+
+	return
 }
 
 func convertItemToDto(item typeitems.Item) genitems.Item {

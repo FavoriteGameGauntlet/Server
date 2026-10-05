@@ -15,7 +15,7 @@ type IService interface {
 	CreatePerk(partyId int, name string, description string, effectName string) (typeperks.Perk, error)
 	RemovePerk(partyId int, name string) error
 	GetUserPerks(userId int, partyId int) ([]typeperks.UserPerkView, error)
-	RevokeUserPerk(userId int, partyId int, perkName string) error
+	RevokeUserPerk(actorUserId int, userId int, partyId int, perkName string) error
 	GetPerkHistory(userId int, partyId int) ([]typeperks.PerkHistoryView, error)
 }
 
@@ -136,8 +136,9 @@ func (s *Service) GetUserPerks(userId int, partyId int) (views []typeperks.UserP
 	return
 }
 
-// RevokeUserPerk takes a perk away from a user.
-func (s *Service) RevokeUserPerk(userId int, partyId int, perkName string) (err error) {
+// RevokeUserPerk takes a perk away from a user. The revocation is recorded as the actor's, not the
+// holder's.
+func (s *Service) RevokeUserPerk(actorUserId int, userId int, partyId int, perkName string) (err error) {
 	perk, err := s.perkByName(partyId, perkName)
 
 	if err != nil {
@@ -154,7 +155,7 @@ func (s *Service) RevokeUserPerk(userId int, partyId int, perkName string) (err 
 		return
 	}
 
-	return s.Database.DeleteUserPerkCommand(userId, partyId, perk.Id, userId, nil)
+	return s.Database.DeleteUserPerkCommand(userId, partyId, perk.Id, actorUserId, nil)
 }
 
 // GetPerkHistory lists the recorded perk events of a user, named from the party catalogue.

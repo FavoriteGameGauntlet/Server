@@ -24,8 +24,8 @@ type IService interface {
 	RemoveEffect(partyId int, name string) error
 	GetUserEffects(userId int, partyId int) ([]typeeffects.UserEffectDetail, error)
 	GetUserEffectViews(userId int, partyId int) ([]typeeffects.UserEffectView, error)
-	UseEffect(userId int, partyId int, effectName string) error
-	EndUserEffect(userId int, partyId int, effectName string) error
+	UseEffect(actorUserId int, userId int, partyId int, effectName string) error
+	EndUserEffect(actorUserId int, userId int, partyId int, effectName string) error
 	GetEffectHistory(userId int, partyId int) ([]typeeffects.EffectHistory, error)
 	StopEndedUserEffects() error
 }
@@ -130,9 +130,10 @@ func (s *Service) GetUserEffects(userId int, partyId int) (effects []typeeffects
 func (s *Service) GetEffectHistory(userId int, partyId int) (history []typeeffects.EffectHistory, err error) {
 	return s.Database.GetEffectHistoryCommand(userId, partyId)
 }
-// UseEffect spends one use of an active effect and grants what it carries, the same way using an
-// item does. The effect history row it produces is the source event of the resulting grants.
-func (s *Service) UseEffect(userId int, partyId int, effectName string) (err error) {
+// UseEffect spends one use of an active effect and grants what it carries to its holder, the same
+// way using an item does. The effect history row it produces is the source event of the resulting
+// grants. Another member may use the effect, so everything recorded names the actor, not the holder.
+func (s *Service) UseEffect(actorUserId int, userId int, partyId int, effectName string) (err error) {
 	effect, err := s.effectByName(partyId, effectName)
 
 	if err != nil {
@@ -161,25 +162,25 @@ func (s *Service) UseEffect(userId int, partyId int, effectName string) (err err
 
 	usesLeft := userEffect.UsesLeft - 1
 
-	historyEventId, err := s.Database.ChangeUserEffectUsesLeftCommand(userId, partyId, effect.Id, usesLeft, userId, nil)
+	historyEventId, err := s.Database.ChangeUserEffectUsesLeftCommand(userId, partyId, effect.Id, usesLeft, actorUserId, nil)
 
 	if err != nil {
 		return
 	}
 
 	if usesLeft == 0 {
-		err = s.Database.DeleteUserEffectCommand(userId, partyId, effect.Id, userId, &historyEventId)
+		err = s.Database.DeleteUserEffectCommand(userId, partyId, effect.Id, actorUserId, &historyEventId)
 
 		if err != nil {
 			return
 		}
 	}
 
-	return s.applyEffectChange(userId, partyId, withChange.Change.Entries, historyEventId)
+	return s.applyEffectChange(actorUserId, userId, partyId, withChange.Change.Entries, historyEventId)
 }
 
 // applyEffectChange stamps the effect's change template onto the user and applies it.
-func (s *Service) applyEffectChange(userId int, partyId int, templateEntries []typechanges.ChangeEntry, sourceEventId int) (err error) {
+func (s *Service) applyEffectChange(actorUserId int, userId int, partyId int, templateEntries []typechanges.ChangeEntry, sourceEventId int) (err error) {
 	if len(templateEntries) == 0 {
 		return
 	}
@@ -198,11 +199,11 @@ func (s *Service) applyEffectChange(userId int, partyId int, templateEntries []t
 		return
 	}
 
-	return s.ChangesService.ApplyChangeEntries(partyId, userChange.Entries, userId, sourceEventId)
+	return s.ChangesService.ApplyChangeEntries(partyId, userChange.Entries, actorUserId, sourceEventId)
 }
 
 // EndUserEffect ends an active effect before it runs out on its own.
-func (s *Service) EndUserEffect(userId int, partyId int, effectName string) (err error) {
+func (s *Service) EndUserEffect(actorUserId int, userId int, partyId int, effectName string) (err error) {
 	effect, err := s.effectByName(partyId, effectName)
 
 	if err != nil {
@@ -219,7 +220,7 @@ func (s *Service) EndUserEffect(userId int, partyId int, effectName string) (err
 		return
 	}
 
-	return s.Database.DeleteUserEffectCommand(userId, partyId, effect.Id, userId, nil)
+	return s.Database.DeleteUserEffectCommand(userId, partyId, effect.Id, actorUserId, nil)
 }
 
 // StopEndedUserEffects clears the effects whose duration has run out. Nothing else calls the sweep,

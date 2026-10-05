@@ -140,13 +140,19 @@ func (c *Controller) RevokeUserPerk(ctx echo.Context, login genperks.Login, name
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
+	actorUserId, err := c.AuthService.GetUserId(ctx)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
 	userId, err := c.AuthService.GetUserIdByLogin(login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.RevokeUserPerk(userId, defaultPartyId, name)
+	err = c.Service.RevokeUserPerk(actorUserId, userId, defaultPartyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
