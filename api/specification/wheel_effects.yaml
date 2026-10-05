@@ -54,22 +54,6 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /parties/{partyId}/wheel-effects/available/roll/count:
-    get:
-      operationId: getAvailableWheelEffectRollsCount
-      tags:
-        - WheelEffects
-      parameters:
-        - $ref: '#/components/parameters/PartyId'
-      responses:
-        '200':
-          $ref: '#/components/responses/PointsResponse'
-        '401':
-          $ref: '#/components/responses/ErrorResponse'
-        '404':
-          $ref: '#/components/responses/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/ErrorResponse'
   /parties/{partyId}/wheel-effects/available/roll/last:
     get:
       operationId: getLastRolledWheelEffects
@@ -207,9 +191,6 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/RolledWheelRow'
-    Points:
-      type: integer
-      format: int
     WheelRowApply:
       type: object
       properties:
@@ -248,12 +229,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/RolledWheelRows'
-    PointsResponse:
-      description: Success.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Points'
   requestBodies:
     WheelEffectRollRequest:
       content:

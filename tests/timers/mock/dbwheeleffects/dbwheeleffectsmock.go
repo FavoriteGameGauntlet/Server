@@ -10,13 +10,6 @@ type DatabaseMock struct {
 	mock.Mock
 }
 
-func (m *DatabaseMock) GetAvailableRollsCountCommand(userId int, partyId int) (count int, err error) {
-	args := m.Called(userId, partyId)
-	count = args.Get(0).(int)
-	err = args.Error(1)
-	return
-}
-
 func (m *DatabaseMock) GetAvailableWheelRowsCommand(userId int, partyId int, collectionId int) (rows []typewheeleffects.WheelRow, err error) {
 	args := m.Called(userId, partyId, collectionId)
 	rows = args.Get(0).([]typewheeleffects.WheelRow)

@@ -9,7 +9,6 @@ import (
 	"FGG-Service/tests/games/mock"
 	"FGG-Service/tests/sysparams/srvmock"
 	"FGG-Service/tests/timers/mock/dbtimers"
-	"FGG-Service/tests/timers/mock/dbwheeleffects"
 	"database/sql"
 	"testing"
 	"time"
@@ -20,7 +19,7 @@ import (
 type CreateCurrentTimerTestCase struct {
 	Name            string
 	UserId          int
-	SetupMocks      func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock, *srvsysparamsmock.ServiceMock)
+	SetupMocks      func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *srvsysparamsmock.ServiceMock)
 	ExpectedTimer   *typetimers.Timer
 	ExpectedErrorAs interface{}
 	ExpectedErrorIs error
@@ -71,15 +70,14 @@ var CreateCurrentTimerTestCases = []CreateCurrentTimerTestCase{
 		// GetCurrentGameCommand returns sql.ErrNoRows. The CurrentGameNotFoundError will return.
 		Name:   "NotFound_NoRows",
 		UserId: 1,
-		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock, *srvsysparamsmock.ServiceMock) {
+		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *srvsysparamsmock.ServiceMock) {
 			timerDb := new(dbtimermock.DatabaseMock)
 			gamesDb := new(dbgamesmock.DatabaseMock)
-			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
 			spSvc := new(srvsysparamsmock.ServiceMock)
 
 			gamesDb.On("GetCurrentGameCommand", 1, 1).Return(typegames.UserGame{}, sql.ErrNoRows)
 
-			return timerDb, gamesDb, wheelDb, spSvc
+			return timerDb, gamesDb, spSvc
 		},
 		ExpectedErrorAs: new(common.NotFoundError),
 	},
@@ -87,15 +85,14 @@ var CreateCurrentTimerTestCases = []CreateCurrentTimerTestCase{
 		// GetCurrentGameCommand returns a database error. The error will return.
 		Name:   "GamesDatabaseError",
 		UserId: 1,
-		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock, *srvsysparamsmock.ServiceMock) {
+		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *srvsysparamsmock.ServiceMock) {
 			timerDb := new(dbtimermock.DatabaseMock)
 			gamesDb := new(dbgamesmock.DatabaseMock)
-			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
 			spSvc := new(srvsysparamsmock.ServiceMock)
 
 			gamesDb.On("GetCurrentGameCommand", 1, 1).Return(typegames.UserGame{}, dbError)
 
-			return timerDb, gamesDb, wheelDb, spSvc
+			return timerDb, gamesDb, spSvc
 		},
 		ExpectedErrorIs: dbError,
 	},
@@ -104,16 +101,15 @@ var CreateCurrentTimerTestCases = []CreateCurrentTimerTestCase{
 		// CurrentTimerAlreadyExists conflict will return and nothing is created.
 		Name:   "ExistingTimer_Conflict",
 		UserId: 1,
-		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock, *srvsysparamsmock.ServiceMock) {
+		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *srvsysparamsmock.ServiceMock) {
 			timerDb := new(dbtimermock.DatabaseMock)
 			gamesDb := new(dbgamesmock.DatabaseMock)
-			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
 			spSvc := new(srvsysparamsmock.ServiceMock)
 
 			gamesDb.On("GetCurrentGameCommand", 1, 1).Return(currentGame, nil)
 			timerDb.On("GetCurrentTimerCommand", 1, 1).Return(existingCurrentTimer, nil)
 
-			return timerDb, gamesDb, wheelDb, spSvc
+			return timerDb, gamesDb, spSvc
 		},
 		ExpectedErrorAs: new(common.ConflictError),
 	},
@@ -121,121 +117,52 @@ var CreateCurrentTimerTestCases = []CreateCurrentTimerTestCase{
 		// GetCurrentGameCommand succeeds. GetCurrentTimerCommand returns a database error. The error will return.
 		Name:   "TimerDatabaseError",
 		UserId: 1,
-		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock, *srvsysparamsmock.ServiceMock) {
+		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *srvsysparamsmock.ServiceMock) {
 			timerDb := new(dbtimermock.DatabaseMock)
 			gamesDb := new(dbgamesmock.DatabaseMock)
-			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
 			spSvc := new(srvsysparamsmock.ServiceMock)
 
 			gamesDb.On("GetCurrentGameCommand", 1, 1).Return(currentGame, nil)
 			timerDb.On("GetCurrentTimerCommand", 1, 1).Return(typetimers.CurrentTimer{}, dbError)
 
-			return timerDb, gamesDb, wheelDb, spSvc
+			return timerDb, gamesDb, spSvc
 		},
 		ExpectedErrorIs: dbError,
 	},
 	{
 		// GetCurrentGameCommand and GetCurrentTimerCommand (no rows) succeed.
-		// GetAvailableRollsCountCommand returns a database error. The error will return.
-		Name:   "WheelEffectsDatabaseError",
-		UserId: 1,
-		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock, *srvsysparamsmock.ServiceMock) {
-			timerDb := new(dbtimermock.DatabaseMock)
-			gamesDb := new(dbgamesmock.DatabaseMock)
-			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
-			spSvc := new(srvsysparamsmock.ServiceMock)
-
-			gamesDb.On("GetCurrentGameCommand", 1, 1).Return(currentGame, nil)
-			timerDb.On("GetCurrentTimerCommand", 1, 1).Return(typetimers.CurrentTimer{}, sql.ErrNoRows)
-			wheelDb.On("GetAvailableRollsCountCommand", 1, 1).Return(0, dbError)
-
-			return timerDb, gamesDb, wheelDb, spSvc
-		},
-		ExpectedErrorIs: dbError,
-	},
-	{
-		// GetCurrentGameCommand, GetCurrentTimerCommand (no rows), and GetAvailableRollsCountCommand succeed.
-		// GetInt("MaximumRollsCountForTimer") returns a database error. The error will return.
-		Name:   "SysParams_MaximumRolls_DatabaseError",
-		UserId: 1,
-		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock, *srvsysparamsmock.ServiceMock) {
-			timerDb := new(dbtimermock.DatabaseMock)
-			gamesDb := new(dbgamesmock.DatabaseMock)
-			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
-			spSvc := new(srvsysparamsmock.ServiceMock)
-
-			gamesDb.On("GetCurrentGameCommand", 1, 1).Return(currentGame, nil)
-			timerDb.On("GetCurrentTimerCommand", 1, 1).Return(typetimers.CurrentTimer{}, sql.ErrNoRows)
-			wheelDb.On("GetAvailableRollsCountCommand", 1, 1).Return(0, nil)
-			spSvc.On("GetInt", 1, typesysparams.ParamMaximumAvailableRollCountForTimer).Return(0, dbError)
-
-			return timerDb, gamesDb, wheelDb, spSvc
-		},
-		ExpectedErrorIs: dbError,
-	},
-	{
-		// GetCurrentGameCommand, GetCurrentTimerCommand (no rows), GetAvailableRollsCountCommand,
-		// and GetInt("MaximumRollsCountForTimer") succeed. rollCount >= maximumRollsCountForTimer.
-		// The AvailableRollsExistConflictError will return.
-		Name:   "AvailableRollsExistConflict",
-		UserId: 1,
-		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock, *srvsysparamsmock.ServiceMock) {
-			timerDb := new(dbtimermock.DatabaseMock)
-			gamesDb := new(dbgamesmock.DatabaseMock)
-			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
-			spSvc := new(srvsysparamsmock.ServiceMock)
-
-			gamesDb.On("GetCurrentGameCommand", 1, 1).Return(currentGame, nil)
-			timerDb.On("GetCurrentTimerCommand", 1, 1).Return(typetimers.CurrentTimer{}, sql.ErrNoRows)
-			wheelDb.On("GetAvailableRollsCountCommand", 1, 1).Return(5, nil)
-			spSvc.On("GetInt", 1, typesysparams.ParamMaximumAvailableRollCountForTimer).Return(5, nil)
-
-			return timerDb, gamesDb, wheelDb, spSvc
-		},
-		ExpectedErrorAs: new(common.ConflictError),
-	},
-	{
-		// GetCurrentGameCommand, GetCurrentTimerCommand (no rows), GetAvailableRollsCountCommand,
-		// and GetInt("MaximumRollsCountForTimer") succeed.
 		// GetInt("TimerDurationInS") returns a database error. The error will return.
 		Name:   "SysParams_DatabaseError",
 		UserId: 1,
-		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock, *srvsysparamsmock.ServiceMock) {
+		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *srvsysparamsmock.ServiceMock) {
 			timerDb := new(dbtimermock.DatabaseMock)
 			gamesDb := new(dbgamesmock.DatabaseMock)
-			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
 			spSvc := new(srvsysparamsmock.ServiceMock)
 
 			gamesDb.On("GetCurrentGameCommand", 1, 1).Return(currentGame, nil)
 			timerDb.On("GetCurrentTimerCommand", 1, 1).Return(typetimers.CurrentTimer{}, sql.ErrNoRows)
-			wheelDb.On("GetAvailableRollsCountCommand", 1, 1).Return(0, nil)
-			spSvc.On("GetInt", 1, typesysparams.ParamMaximumAvailableRollCountForTimer).Return(10, nil)
 			spSvc.On("GetInt", 1, typesysparams.ParamTimerDurationInS).Return(0, dbError)
 
-			return timerDb, gamesDb, wheelDb, spSvc
+			return timerDb, gamesDb, spSvc
 		},
 		ExpectedErrorIs: dbError,
 	},
 	{
-		// GetCurrentGameCommand, GetCurrentTimerCommand (no rows), GetAvailableRollsCountCommand,
-		// and GetInt("MaximumRollsCountForTimer") and GetInt("TimerDurationInS") succeed.
+		// GetCurrentGameCommand, GetCurrentTimerCommand (no rows), and GetInt("TimerDurationInS") succeed.
 		// CreateCurrentTimerCommand returns a database error. The error will return.
 		Name:   "CreateTimerDatabaseError",
 		UserId: 1,
-		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock, *srvsysparamsmock.ServiceMock) {
+		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *srvsysparamsmock.ServiceMock) {
 			timerDb := new(dbtimermock.DatabaseMock)
 			gamesDb := new(dbgamesmock.DatabaseMock)
-			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
 			spSvc := new(srvsysparamsmock.ServiceMock)
 
 			gamesDb.On("GetCurrentGameCommand", 1, 1).Return(currentGame, nil)
 			timerDb.On("GetCurrentTimerCommand", 1, 1).Return(typetimers.CurrentTimer{}, sql.ErrNoRows)
-			wheelDb.On("GetAvailableRollsCountCommand", 1, 1).Return(0, nil)
-			spSvc.On("GetInt", 1, typesysparams.ParamMaximumAvailableRollCountForTimer).Return(10, nil)
 			spSvc.On("GetInt", 1, typesysparams.ParamTimerDurationInS).Return(30, nil)
 			timerDb.On("CreateCurrentTimerCommand", 1, 1, currentGame.Id, 30*time.Second).Return(typetimers.CreatedTimer{}, dbError)
 
-			return timerDb, gamesDb, wheelDb, spSvc
+			return timerDb, gamesDb, spSvc
 		},
 		ExpectedErrorIs: dbError,
 	},
@@ -243,21 +170,18 @@ var CreateCurrentTimerTestCases = []CreateCurrentTimerTestCase{
 		// All commands succeed. A new timer is created and returned.
 		Name:   "NewTimerCreated",
 		UserId: 1,
-		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock, *srvsysparamsmock.ServiceMock) {
+		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *srvsysparamsmock.ServiceMock) {
 			timerDb := new(dbtimermock.DatabaseMock)
 			gamesDb := new(dbgamesmock.DatabaseMock)
-			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
 			spSvc := new(srvsysparamsmock.ServiceMock)
 
 			gamesDb.On("GetCurrentGameCommand", 1, 1).Return(currentGame, nil)
 			timerDb.On("GetCurrentTimerCommand", 1, 1).Once().Return(typetimers.CurrentTimer{}, sql.ErrNoRows)
-			wheelDb.On("GetAvailableRollsCountCommand", 1, 1).Return(0, nil)
-			spSvc.On("GetInt", 1, typesysparams.ParamMaximumAvailableRollCountForTimer).Return(10, nil)
 			spSvc.On("GetInt", 1, typesysparams.ParamTimerDurationInS).Return(30, nil)
 			timerDb.On("CreateCurrentTimerCommand", 1, 1, currentGame.Id, 30*time.Second).Return(typetimers.CreatedTimer{}, nil)
 			timerDb.On("GetCurrentTimerCommand", 1, 1).Once().Return(newCurrentTimer, nil)
 
-			return timerDb, gamesDb, wheelDb, spSvc
+			return timerDb, gamesDb, spSvc
 		},
 		ExpectedTimer: &newTimer,
 	},
@@ -267,12 +191,11 @@ func TestSrvTimers_CreateCurrentTimer(test *testing.T) {
 	for _, testCase := range CreateCurrentTimerTestCases {
 		test.Run(testCase.Name, func(test *testing.T) {
 			// Arrange
-			timerDb, gamesDb, wheelDb, spSvc := testCase.SetupMocks()
+			timerDb, gamesDb, spSvc := testCase.SetupMocks()
 			sut := srvtimers.Service{
-				Database:             timerDb,
-				GamesDatabase:        gamesDb,
-				WheelEffectsDatabase: wheelDb,
-				SysParamsService:     spSvc,
+				Database:         timerDb,
+				GamesDatabase:    gamesDb,
+				SysParamsService: spSvc,
 			}
 
 			// Act
@@ -295,7 +218,6 @@ func TestSrvTimers_CreateCurrentTimer(test *testing.T) {
 
 			timerDb.AssertExpectations(test)
 			gamesDb.AssertExpectations(test)
-			wheelDb.AssertExpectations(test)
 			spSvc.AssertExpectations(test)
 		})
 	}

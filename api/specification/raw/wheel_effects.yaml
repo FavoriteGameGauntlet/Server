@@ -12,9 +12,6 @@ paths:
   /parties/{partyId}/wheel-effects/available/roll:
     $ref: "../paths/wheel-effects/available/roll.yaml"
 
-  /parties/{partyId}/wheel-effects/available/roll/count:
-    $ref: "../paths/wheel-effects/available/roll/count.yaml"
-
   /parties/{partyId}/wheel-effects/available/roll/last:
     $ref: "../paths/wheel-effects/available/roll/last.yaml"
 

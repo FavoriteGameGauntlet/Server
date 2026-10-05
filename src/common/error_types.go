@@ -141,15 +141,6 @@ func NewCurrentTimerNotFoundError() error {
 	}
 }
 
-func NewAvailableRollsNotFoundError() error {
-	return &NotFoundError{
-		&BaseError{
-			Code:    "AVAILABLE_ROLLS_NOT_FOUND",
-			Message: "The user doesn't have available rolls. Complete the timer to get one.",
-		},
-	}
-}
-
 func NewUserLoginNotFoundError(userLogin string) error {
 	message := fmt.Sprintf(
 		"The user login \"%s\" wasn't found.",
@@ -508,15 +499,6 @@ func NewCurrentTimerAlreadyExistsConflictError() error {
 	}
 }
 
-func NewAvailableRollsExistConflictError() error {
-	return &ConflictError{
-		&BaseError{
-			Code:    "AVAILABLE_ROLLS_EXIST",
-			Message: "You have available rolls. You need to use them.",
-		},
-	}
-}
-
 func NewNotEnoughAvailableWheelEffectsConflictError() error {
 	return &ConflictError{
 		&BaseError{
@@ -657,4 +639,3 @@ func NewPasswordUnprocessableError(messageDetails string) error {
 		},
 	}
 }
-

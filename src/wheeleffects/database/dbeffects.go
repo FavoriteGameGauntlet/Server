@@ -2,17 +2,11 @@ package dbwheeleffects
 
 import (
 	"FGG-Service/src/dbaccess"
-	dbpoints "FGG-Service/src/points/database"
-	typepoints "FGG-Service/src/points/type"
 	"FGG-Service/src/wheeleffects/types"
-	"database/sql"
 	"encoding/json"
-	"errors"
 )
 
 type IDatabase interface {
-	// GetAvailableRollsCountCommand reads the user's AvailableRolls PointType value in the party.
-	GetAvailableRollsCountCommand(userId int, partyId int) (count int, err error)
 	GetAvailableWheelRowsCommand(userId int, partyId int, collectionId int) (rows []typewheeleffects.WheelRow, err error)
 	GetEffectHistoryCommand(userId int, partyId int) (history []typewheeleffects.WheelRowHistory, err error)
 	GetEffectHistoryByEffectNameCommand(userId int, partyId int, wheelRowName string) (history typewheeleffects.WheelRowHistory, err error)
@@ -29,39 +23,6 @@ type IDatabase interface {
 }
 
 type Database struct {
-}
-
-func (db *Database) GetAvailableRollsCountCommand(userId int, partyId int) (count int, err error) {
-	pointsDb := new(dbpoints.Database)
-
-	pointTypes, err := pointsDb.GetPointTypesCommand(partyId)
-
-	if err != nil {
-		return
-	}
-
-	for _, pointType := range pointTypes {
-		if pointType.Name != typepoints.PointTypeAvailableRolls {
-			continue
-		}
-
-		var point typepoints.UserPoint
-		point, err = pointsDb.GetUserPointCommand(userId, partyId, pointType.Id)
-
-		if errors.Is(err, sql.ErrNoRows) {
-			err = nil
-			return
-		}
-
-		if err != nil {
-			return
-		}
-
-		count = point.Value
-		return
-	}
-
-	return
 }
 
 var getAvailableWheelRowsQuery = dbaccess.Query{Name: "GetAvailableWheelRowsQuery", SQL: `SELECT * FROM get_available_wheel_rows($1::integer, $2::integer, $3::integer)`}

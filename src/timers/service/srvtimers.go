@@ -9,7 +9,6 @@ import (
 	"FGG-Service/src/sysparams/types"
 	"FGG-Service/src/timers/database"
 	"FGG-Service/src/timers/types"
-	"FGG-Service/src/wheeleffects/database"
 	"database/sql"
 	"errors"
 	"log/slog"
@@ -44,7 +43,6 @@ type Service struct {
 	Database               dbtimers.IDatabase
 	GamesDatabase          dbgames.IDatabase
 	ChangesService         srvchanges.IService
-	WheelEffectsDatabase   dbwheeleffects.IDatabase
 	SysParamsService       srvsysparams.IService
 	TimerFinisherScheduler gocron.Scheduler
 }
@@ -53,15 +51,13 @@ func NewService() *Service {
 	db := new(dbtimers.Database)
 	gdb := new(dbgames.Database)
 	cs := srvchanges.NewService()
-	wedb := new(dbwheeleffects.Database)
 	sp := srvsysparams.NewService()
 
 	s := &Service{
-		Database:             db,
-		GamesDatabase:        gdb,
-		ChangesService:       cs,
-		WheelEffectsDatabase: wedb,
-		SysParamsService:     sp,
+		Database:         db,
+		GamesDatabase:    gdb,
+		ChangesService:   cs,
+		SysParamsService: sp,
 	}
 
 	s.StartTimerFinisherScheduler()
@@ -129,23 +125,6 @@ func (s *Service) CreateCurrentTimer(userId int, partyId int) (timer typetimers.
 	}
 
 	if !errors.Is(err, sql.ErrNoRows) {
-		return
-	}
-
-	rollCount, err := s.WheelEffectsDatabase.GetAvailableRollsCountCommand(userId, partyId)
-
-	if err != nil {
-		return
-	}
-
-	maximumAvailableRollCountForTimer, err := s.SysParamsService.GetInt(partyId, typesysparams.ParamMaximumAvailableRollCountForTimer)
-
-	if err != nil {
-		return
-	}
-
-	if rollCount >= maximumAvailableRollCountForTimer {
-		err = common.NewAvailableRollsExistConflictError()
 		return
 	}
 

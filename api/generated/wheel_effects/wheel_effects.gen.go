@@ -24,9 +24,6 @@ type Login = string
 // Name defines model for Name.
 type Name = string
 
-// Points defines model for Points.
-type Points = int
-
 // RolledWheelRow defines model for RolledWheelRow.
 type RolledWheelRow struct {
 	Description *string   `json:"description,omitempty"`
@@ -74,9 +71,6 @@ type PartyId = int
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse = Error
 
-// PointsResponse defines model for PointsResponse.
-type PointsResponse = Points
-
 // RolledWheelRowsResponse defines model for RolledWheelRowsResponse.
 type RolledWheelRowsResponse = RolledWheelRows
 
@@ -109,9 +103,6 @@ type ServerInterface interface {
 
 	// (POST /parties/{partyId}/wheel-effects/available/roll/apply)
 	ApplyAvailableWheelEffectRoll(ctx echo.Context, partyId PartyId) error
-
-	// (GET /parties/{partyId}/wheel-effects/available/roll/count)
-	GetAvailableWheelEffectRollsCount(ctx echo.Context, partyId PartyId) error
 
 	// (GET /parties/{partyId}/wheel-effects/available/roll/last)
 	GetLastRolledWheelEffects(ctx echo.Context, partyId PartyId) error
@@ -173,22 +164,6 @@ func (w *ServerInterfaceWrapper) ApplyAvailableWheelEffectRoll(ctx echo.Context)
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.ApplyAvailableWheelEffectRoll(ctx, partyId)
-	return err
-}
-
-// GetAvailableWheelEffectRollsCount converts echo context to params.
-func (w *ServerInterfaceWrapper) GetAvailableWheelEffectRollsCount(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "partyId" -------------
-	var partyId PartyId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetAvailableWheelEffectRollsCount(ctx, partyId)
 	return err
 }
 
@@ -279,7 +254,6 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/parties/:partyId/wheel-effects/available", wrapper.GetAvailableWheelEffects)
 	router.POST(baseURL+"/parties/:partyId/wheel-effects/available/roll", wrapper.RollAvailableWheelEffects)
 	router.POST(baseURL+"/parties/:partyId/wheel-effects/available/roll/apply", wrapper.ApplyAvailableWheelEffectRoll)
-	router.GET(baseURL+"/parties/:partyId/wheel-effects/available/roll/count", wrapper.GetAvailableWheelEffectRollsCount)
 	router.GET(baseURL+"/parties/:partyId/wheel-effects/available/roll/last", wrapper.GetLastRolledWheelEffects)
 	router.POST(baseURL+"/parties/:partyId/wheel-effects/available/roll/last/clear", wrapper.ClearLastRolledWheelEffects)
 	router.GET(baseURL+"/parties/:partyId/wheel-effects/:login/history", wrapper.GetUserWheelEffectHistory)

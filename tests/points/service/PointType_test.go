@@ -12,7 +12,7 @@ import (
 )
 
 var availableRollsType = typepoints.PointTypeInfo{
-	Id: 5, PartyId: 1, Name: typepoints.PointTypeAvailableRolls, IsPublic: true, Minimum: ptrInt(0), Maximum: ptrInt(10),
+	Id: 5, PartyId: 1, Name: "availableRolls", IsPublic: true, Minimum: ptrInt(0), Maximum: ptrInt(10),
 }
 
 // --- GetPointValueByTypeName ---
@@ -31,7 +31,7 @@ var GetPointValueByTypeNameTestCases = []GetPointValueByTypeNameTestCase{
 		Name: "GetPointTypeByName_DatabaseError",
 		SetupMock: func() *dbpointsmock.DatabaseMock {
 			databaseMock := new(dbpointsmock.DatabaseMock)
-			databaseMock.On("GetPointTypeByNameCommand", 1, typepoints.PointTypeAvailableRolls).Return(typepoints.PointTypeInfo{}, dbError)
+			databaseMock.On("GetPointTypeByNameCommand", 1, availableRollsType.Name).Return(typepoints.PointTypeInfo{}, dbError)
 			return databaseMock
 		},
 		ExpectedError: dbError,
@@ -41,7 +41,7 @@ var GetPointValueByTypeNameTestCases = []GetPointValueByTypeNameTestCase{
 		Name: "NameNotFound_Error",
 		SetupMock: func() *dbpointsmock.DatabaseMock {
 			databaseMock := new(dbpointsmock.DatabaseMock)
-			databaseMock.On("GetPointTypeByNameCommand", 1, typepoints.PointTypeAvailableRolls).Return(typepoints.PointTypeInfo{}, sql.ErrNoRows)
+			databaseMock.On("GetPointTypeByNameCommand", 1, availableRollsType.Name).Return(typepoints.PointTypeInfo{}, sql.ErrNoRows)
 			return databaseMock
 		},
 		ExpectAnyError: true,
@@ -51,7 +51,7 @@ var GetPointValueByTypeNameTestCases = []GetPointValueByTypeNameTestCase{
 		Name: "NoUserPointRow_ZeroValue",
 		SetupMock: func() *dbpointsmock.DatabaseMock {
 			databaseMock := new(dbpointsmock.DatabaseMock)
-			databaseMock.On("GetPointTypeByNameCommand", 1, typepoints.PointTypeAvailableRolls).Return(availableRollsType, nil)
+			databaseMock.On("GetPointTypeByNameCommand", 1, availableRollsType.Name).Return(availableRollsType, nil)
 			databaseMock.On("GetUserPointCommand", 2, 1, availableRollsType.Id).Return(typepoints.UserPoint{}, sql.ErrNoRows)
 			return databaseMock
 		},
@@ -62,7 +62,7 @@ var GetPointValueByTypeNameTestCases = []GetPointValueByTypeNameTestCase{
 		Name: "GetUserPoint_DatabaseError",
 		SetupMock: func() *dbpointsmock.DatabaseMock {
 			databaseMock := new(dbpointsmock.DatabaseMock)
-			databaseMock.On("GetPointTypeByNameCommand", 1, typepoints.PointTypeAvailableRolls).Return(availableRollsType, nil)
+			databaseMock.On("GetPointTypeByNameCommand", 1, availableRollsType.Name).Return(availableRollsType, nil)
 			databaseMock.On("GetUserPointCommand", 2, 1, availableRollsType.Id).Return(typepoints.UserPoint{}, dbError)
 			return databaseMock
 		},
@@ -73,7 +73,7 @@ var GetPointValueByTypeNameTestCases = []GetPointValueByTypeNameTestCase{
 		Name: "Success",
 		SetupMock: func() *dbpointsmock.DatabaseMock {
 			databaseMock := new(dbpointsmock.DatabaseMock)
-			databaseMock.On("GetPointTypeByNameCommand", 1, typepoints.PointTypeAvailableRolls).Return(availableRollsType, nil)
+			databaseMock.On("GetPointTypeByNameCommand", 1, availableRollsType.Name).Return(availableRollsType, nil)
 			databaseMock.On("GetUserPointCommand", 2, 1, availableRollsType.Id).
 				Return(typepoints.UserPoint{Id: 1, UserId: 2, PartyId: 1, PointTypeId: availableRollsType.Id, Value: 7}, nil)
 			return databaseMock
@@ -90,7 +90,7 @@ func TestSrvPoints_GetPointValueByTypeName(test *testing.T) {
 			sut := srvpoints.Service{Database: databaseMock}
 
 			// Act
-			value, err := sut.GetPointValueByTypeName(2, 1, typepoints.PointTypeAvailableRolls)
+			value, err := sut.GetPointValueByTypeName(2, 1, availableRollsType.Name)
 
 			// Assert
 			if testCase.ExpectedError != nil {
@@ -317,11 +317,11 @@ func TestSrvPoints_ChangeUserPointValueClamped(test *testing.T) {
 func TestSrvPoints_ChangePointValueByTypeNameNoHistory(test *testing.T) {
 	test.Run("NameNotFound_Error", func(test *testing.T) {
 		databaseMock := new(dbpointsmock.DatabaseMock)
-		databaseMock.On("GetPointTypeByNameCommand", 1, typepoints.PointTypeAvailableRolls).Return(typepoints.PointTypeInfo{}, sql.ErrNoRows)
+		databaseMock.On("GetPointTypeByNameCommand", 1, availableRollsType.Name).Return(typepoints.PointTypeInfo{}, sql.ErrNoRows)
 
 		sut := srvpoints.Service{Database: databaseMock}
 
-		err := sut.ChangePointValueByTypeNameNoHistory(2, 1, typepoints.PointTypeAvailableRolls, -1)
+		err := sut.ChangePointValueByTypeNameNoHistory(2, 1, availableRollsType.Name, -1)
 
 		require.Error(test, err)
 		databaseMock.AssertExpectations(test)
@@ -329,7 +329,7 @@ func TestSrvPoints_ChangePointValueByTypeNameNoHistory(test *testing.T) {
 
 	test.Run("Success_NoHistoryRecorded", func(test *testing.T) {
 		databaseMock := new(dbpointsmock.DatabaseMock)
-		databaseMock.On("GetPointTypeByNameCommand", 1, typepoints.PointTypeAvailableRolls).Return(availableRollsType, nil)
+		databaseMock.On("GetPointTypeByNameCommand", 1, availableRollsType.Name).Return(availableRollsType, nil)
 		databaseMock.On("GetUserPointCommand", 2, 1, availableRollsType.Id).
 			Return(typepoints.UserPoint{Value: 5}, nil)
 		databaseMock.On("ChangeUserPointValueCommand", 2, 1, availableRollsType.Id, -1).Return(nil)
@@ -338,7 +338,7 @@ func TestSrvPoints_ChangePointValueByTypeNameNoHistory(test *testing.T) {
 
 		sut := srvpoints.Service{Database: databaseMock}
 
-		err := sut.ChangePointValueByTypeNameNoHistory(2, 1, typepoints.PointTypeAvailableRolls, -1)
+		err := sut.ChangePointValueByTypeNameNoHistory(2, 1, availableRollsType.Name, -1)
 
 		require.NoError(test, err)
 		databaseMock.AssertExpectations(test)

@@ -5,8 +5,6 @@ import (
 	srvchanges "FGG-Service/src/changes/service"
 	"FGG-Service/src/changes/types"
 	"FGG-Service/src/common"
-	"FGG-Service/src/points/service"
-	"FGG-Service/src/points/type"
 	"FGG-Service/src/sysparams/service"
 	"FGG-Service/src/sysparams/types"
 	"FGG-Service/src/wheeleffects/database"
@@ -21,7 +19,6 @@ import (
 const defaultCollectionId = 1
 
 type IService interface {
-	GetAvailableRollsCount(userId int, partyId int) (count int, err error)
 	GetAvailableWheelRows(userId int, partyId int) (rows []typewheeleffects.WheelRow, err error)
 	MakeEffectRoll(userId int, partyId int, isReroll bool) (rolled []typewheeleffects.LastWheelRow, err error)
 	ClearLastWheelEffects(userId int, partyId int) error
@@ -36,7 +33,6 @@ type Service struct {
 	Database         dbwheeleffects.IDatabase
 	ChangesDatabase  dbchanges.IDatabase
 	ChangesService   srvchanges.IService
-	PointsService    *srvpoints.Service
 	SysParamsService srvsysparams.IService
 }
 
@@ -45,13 +41,8 @@ func NewService() *Service {
 		Database:         new(dbwheeleffects.Database),
 		ChangesDatabase:  new(dbchanges.Database),
 		ChangesService:   srvchanges.NewService(),
-		PointsService:    srvpoints.NewService(),
 		SysParamsService: srvsysparams.NewService(),
 	}
-}
-
-func (s *Service) GetAvailableRollsCount(userId int, partyId int) (count int, err error) {
-	return s.Database.GetAvailableRollsCountCommand(userId, partyId)
 }
 
 func (s *Service) GetAvailableWheelRows(userId int, partyId int) (rows []typewheeleffects.WheelRow, err error) {
@@ -59,27 +50,6 @@ func (s *Service) GetAvailableWheelRows(userId int, partyId int) (rows []typewhe
 }
 
 func (s *Service) MakeEffectRoll(userId int, partyId int, isReroll bool) (rolled []typewheeleffects.LastWheelRow, err error) {
-	if !isReroll {
-		var rollCount int
-		rollCount, err = s.GetAvailableRollsCount(userId, partyId)
-
-		if err != nil {
-			return
-		}
-
-		var minimumAvailableRollCountForRoll int
-		minimumAvailableRollCountForRoll, err = s.SysParamsService.GetInt(partyId, typesysparams.ParamMinimumAvailableRollCountForRoll)
-
-		if err != nil {
-			return
-		}
-
-		if rollCount < minimumAvailableRollCountForRoll {
-			err = common.NewAvailableRollsNotFoundError()
-			return
-		}
-	}
-
 	candidates, err := s.Database.GetAvailableWheelRowsCommand(userId, partyId, defaultCollectionId)
 
 	if err != nil {
@@ -100,21 +70,6 @@ func (s *Service) MakeEffectRoll(userId int, partyId int, isReroll bool) (rolled
 	rand.Shuffle(len(candidates), func(i, j int) {
 		candidates[i], candidates[j] = candidates[j], candidates[i]
 	})
-
-	if !isReroll {
-		var availableRollChangeByRoll int
-		availableRollChangeByRoll, err = s.SysParamsService.GetInt(partyId, typesysparams.ParamAvailableRollChangeByRoll)
-
-		if err != nil {
-			return
-		}
-
-		err = s.PointsService.ChangePointValueByTypeNameNoHistory(userId, partyId, typepoints.PointTypeAvailableRolls, availableRollChangeByRoll)
-
-		if err != nil {
-			return
-		}
-	}
 
 	err = s.Database.ClearLastWheelEffectsCommand(userId, partyId)
 

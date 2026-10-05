@@ -20,8 +20,5 @@ type DefaultSystemParameter struct {
 const (
 	ParamMinimumNumberOfWishlistGames        = "MinimumNumberOfWishlistGames"
 	ParamTimerDurationInS                    = "TimerDurationInS"
-	ParamMaximumAvailableRollCountForTimer   = "MaximumAvailableRollCountForTimer"
-	ParamAvailableRollChangeByRoll           = "AvailableRollChangeByRoll"
-	ParamMinimumAvailableRollCountForRoll    = "MinimumAvailableRollCountForRoll"
 	ParamMinimumAvailableWheelEffectsForRoll = "MinimumAvailableWheelEffectsForRoll"
 )

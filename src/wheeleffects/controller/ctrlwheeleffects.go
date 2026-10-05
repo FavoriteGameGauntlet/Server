@@ -177,29 +177,6 @@ func (c *Controller) ClearLastRolledWheelEffects(ctx echo.Context, partyId genwh
 	return ctx.NoContent(http.StatusNoContent)
 }
 
-// GetAvailableWheelEffectRollsCount (GET /parties/{partyId}/wheel-effects/available/roll/count)
-func (c *Controller) GetAvailableWheelEffectRollsCount(ctx echo.Context, partyId genwheeleffects.PartyId) error {
-	userId, err := c.AuthService.GetUserId(ctx)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	err = c.PartyService.RequireMember(userId, partyId)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	count, err := c.Service.GetAvailableRollsCount(userId, partyId)
-
-	if err != nil {
-		return common.SendJSONErrorResponse(ctx, err)
-	}
-
-	return ctx.JSON(http.StatusOK, count)
-}
-
 // GetAvailableWheelEffects (GET /parties/{partyId}/wheel-effects/available)
 func (c *Controller) GetAvailableWheelEffects(ctx echo.Context, partyId genwheeleffects.PartyId) error {
 	userId, err := c.AuthService.GetUserId(ctx)

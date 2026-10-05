@@ -2,14 +2,6 @@ package typepoints
 
 import "time"
 
-const (
-	PointTypeTerritoryHours   = "territoryHours"
-	PointTypeTerritoryPoints  = "territoryPoints"
-	PointTypeFreePoints       = "freePoints"
-	PointTypeAvailableRolls   = "availableRolls"
-	PointTypeExperiencePoints = "experiencePoints"
-)
-
 type PointType struct {
 	Id          int
 	PartyId     int
@@ -55,7 +47,7 @@ type UserPointHistoryEntry struct {
 	UserId             int
 	PartyId            int
 	PointTypeId        int
-	ActorUserId       int
+	ActorUserId        int
 	DesiredChangeValue int
 	ActualChangeValue  int
 	FinalValue         int
@@ -67,7 +59,7 @@ type PartyPointHistoryEntry struct {
 	Id                 int
 	PartyId            int
 	PointTypeId        int
-	ActorUserId       int
+	ActorUserId        int
 	DesiredChangeValue int
 	ActualChangeValue  int
 	FinalValue         int
@@ -99,6 +91,6 @@ type PointHistoryEntry struct {
 	DesiredChangeValue int
 	ActualChangeValue  int
 	FinalValue         int
-	ActorUserId       int
+	ActorUserId        int
 	ChangedDate        time.Time
 }

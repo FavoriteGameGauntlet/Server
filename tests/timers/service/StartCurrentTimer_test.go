@@ -6,7 +6,6 @@ import (
 	"FGG-Service/src/timers/types"
 	"FGG-Service/tests/games/mock"
 	"FGG-Service/tests/timers/mock/dbtimers"
-	"FGG-Service/tests/timers/mock/dbwheeleffects"
 	"database/sql"
 	"testing"
 	"time"
@@ -17,7 +16,7 @@ import (
 type StartCurrentTimerTestCase struct {
 	Name            string
 	UserId          int
-	SetupMocks      func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock)
+	SetupMocks      func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock)
 	ExpectedTimer   *typetimers.Timer
 	ExpectedErrorAs interface{}
 	ExpectedErrorIs error
@@ -62,14 +61,13 @@ var StartCurrentTimerTestCases = []StartCurrentTimerTestCase{
 		// GetCurrentTimerCommand returns sql.ErrNoRows. The CurrentTimerNotFoundError will return.
 		Name:   "NotFound",
 		UserId: 1,
-		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock) {
+		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock) {
 			timerDb := new(dbtimermock.DatabaseMock)
 			gamesDb := new(dbgamesmock.DatabaseMock)
-			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
 
 			timerDb.On("GetCurrentTimerCommand", 1, 1).Return(typetimers.CurrentTimer{}, sql.ErrNoRows)
 
-			return timerDb, gamesDb, wheelDb
+			return timerDb, gamesDb
 		},
 		ExpectedErrorAs: new(common.NotFoundError),
 	},
@@ -77,14 +75,13 @@ var StartCurrentTimerTestCases = []StartCurrentTimerTestCase{
 		// GetCurrentTimerCommand returns a database error. The error will return.
 		Name:   "DatabaseError",
 		UserId: 1,
-		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock) {
+		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock) {
 			timerDb := new(dbtimermock.DatabaseMock)
 			gamesDb := new(dbgamesmock.DatabaseMock)
-			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
 
 			timerDb.On("GetCurrentTimerCommand", 1, 1).Return(typetimers.CurrentTimer{}, dbError)
 
-			return timerDb, gamesDb, wheelDb
+			return timerDb, gamesDb
 		},
 		ExpectedErrorIs: dbError,
 	},
@@ -92,15 +89,14 @@ var StartCurrentTimerTestCases = []StartCurrentTimerTestCase{
 		// Timer is already Running. The IncorrectStateConflictError will return.
 		Name:   "IncorrectState_Running",
 		UserId: 1,
-		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock) {
+		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock) {
 			timerDb := new(dbtimermock.DatabaseMock)
 			gamesDb := new(dbgamesmock.DatabaseMock)
-			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
 
 			timerDb.On("GetCurrentTimerCommand", 1, 1).Return(
 				typetimers.CurrentTimer{State: typetimers.TimerStateRunning}, nil)
 
-			return timerDb, gamesDb, wheelDb
+			return timerDb, gamesDb
 		},
 		ExpectedErrorAs: new(common.ConflictError),
 	},
@@ -108,15 +104,14 @@ var StartCurrentTimerTestCases = []StartCurrentTimerTestCase{
 		// Timer is Finished. The IncorrectStateConflictError will return.
 		Name:   "IncorrectState_Finished",
 		UserId: 1,
-		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock) {
+		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock) {
 			timerDb := new(dbtimermock.DatabaseMock)
 			gamesDb := new(dbgamesmock.DatabaseMock)
-			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
 
 			timerDb.On("GetCurrentTimerCommand", 1, 1).Return(
 				typetimers.CurrentTimer{State: typetimers.TimerStateFinished}, nil)
 
-			return timerDb, gamesDb, wheelDb
+			return timerDb, gamesDb
 		},
 		ExpectedErrorAs: new(common.ConflictError),
 	},
@@ -124,16 +119,15 @@ var StartCurrentTimerTestCases = []StartCurrentTimerTestCase{
 		// ActTimerCommand returns a database error. The error will return.
 		Name:   "ActTimerDatabaseError",
 		UserId: 1,
-		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock) {
+		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock) {
 			timerDb := new(dbtimermock.DatabaseMock)
 			gamesDb := new(dbgamesmock.DatabaseMock)
-			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
 
 			timerDb.On("GetCurrentTimerCommand", 1, 1).Return(createdCurrentTimer, nil)
 			timerDb.On("ActTimerCommand", 1, typetimers.TimerStateRunning, createdCurrentTimer.TimeSpent).
 				Return(dbError)
 
-			return timerDb, gamesDb, wheelDb
+			return timerDb, gamesDb
 		},
 		ExpectedErrorIs: dbError,
 	},
@@ -142,17 +136,16 @@ var StartCurrentTimerTestCases = []StartCurrentTimerTestCase{
 		// The updated running timer will return.
 		Name:   "Success_Created",
 		UserId: 1,
-		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock) {
+		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock) {
 			timerDb := new(dbtimermock.DatabaseMock)
 			gamesDb := new(dbgamesmock.DatabaseMock)
-			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
 
 			timerDb.On("GetCurrentTimerCommand", 1, 1).Once().Return(createdCurrentTimer, nil)
 			timerDb.On("ActTimerCommand", 1, typetimers.TimerStateRunning, time.Duration(0)).
 				Return(nil)
 			timerDb.On("GetCurrentTimerCommand", 1, 1).Once().Return(runningCurrentTimerResult, nil)
 
-			return timerDb, gamesDb, wheelDb
+			return timerDb, gamesDb
 		},
 		ExpectedTimer: &runningTimerResult,
 	},
@@ -161,10 +154,9 @@ var StartCurrentTimerTestCases = []StartCurrentTimerTestCase{
 		// The updated running timer will return.
 		Name:   "Success_Paused",
 		UserId: 1,
-		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock, *dbwheeleffectsmock.DatabaseMock) {
+		SetupMocks: func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock) {
 			timerDb := new(dbtimermock.DatabaseMock)
 			gamesDb := new(dbgamesmock.DatabaseMock)
-			wheelDb := new(dbwheeleffectsmock.DatabaseMock)
 
 			pausedCurrentTimerLocal := typetimers.CurrentTimer{
 				Id:        1,
@@ -177,7 +169,7 @@ var StartCurrentTimerTestCases = []StartCurrentTimerTestCase{
 				Return(nil)
 			timerDb.On("GetCurrentTimerCommand", 1, 1).Once().Return(runningCurrentTimerResult, nil)
 
-			return timerDb, gamesDb, wheelDb
+			return timerDb, gamesDb
 		},
 		ExpectedTimer: &runningTimerResult,
 	},
@@ -187,11 +179,10 @@ func TestSrvTimers_StartCurrentTimer(test *testing.T) {
 	for _, testCase := range StartCurrentTimerTestCases {
 		test.Run(testCase.Name, func(test *testing.T) {
 			// Arrange
-			timerDb, gamesDb, wheelDb := testCase.SetupMocks()
+			timerDb, gamesDb := testCase.SetupMocks()
 			sut := srvtimers.Service{
-				Database:             timerDb,
-				GamesDatabase:        gamesDb,
-				WheelEffectsDatabase: wheelDb,
+				Database:      timerDb,
+				GamesDatabase: gamesDb,
 			}
 
 			// Act
@@ -214,7 +205,6 @@ func TestSrvTimers_StartCurrentTimer(test *testing.T) {
 
 			timerDb.AssertExpectations(test)
 			gamesDb.AssertExpectations(test)
-			wheelDb.AssertExpectations(test)
 		})
 	}
 }
