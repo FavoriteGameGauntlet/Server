@@ -130,9 +130,9 @@ func (s *Service) GetUserEffects(userId int, partyId int) (effects []typeeffects
 func (s *Service) GetEffectHistory(userId int, partyId int) (history []typeeffects.EffectHistory, err error) {
 	return s.Database.GetEffectHistoryCommand(userId, partyId)
 }
-// UseEffect spends one use of an active effect and grants what it carries to its holder, the same
-// way using an item does. The effect history row it produces is the source event of the resulting
-// grants. Another member may use the effect, so everything recorded names the actor, not the holder.
+// UseEffect spends one use of an active effect and grants what it carries to its holder. The effect
+// history row it produces is the source event of the resulting grants. Another member may use the
+// effect, so everything recorded names the actor, not the holder.
 func (s *Service) UseEffect(actorUserId int, userId int, partyId int, effectName string) (err error) {
 	effect, err := s.effectByName(partyId, effectName)
 

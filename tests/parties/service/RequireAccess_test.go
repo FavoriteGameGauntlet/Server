@@ -14,8 +14,9 @@ import (
 
 var requireAccessDbError = errors.New("database connection lost")
 
-// Anyone who isn't a current member of a party, including a member who has left, gets the same
-// not-found error as for a party that doesn't exist, so the answer doesn't reveal which parties exist.
+// Anyone who isn't a current member of a party, including a member who has left, gets a not-found
+// error that cannot be told apart from the one for a party that doesn't exist, so the answer doesn't
+// reveal which parties exist.
 func TestSrvParties_RequireMember(test *testing.T) {
 	test.Run("Member_Allowed", func(test *testing.T) {
 		db := new(dbpartiesmock.DatabaseMock)

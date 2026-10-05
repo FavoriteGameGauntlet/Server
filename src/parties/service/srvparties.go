@@ -54,8 +54,8 @@ func (s *Service) GetUserParties(userId int) (parties []typeparties.Party, err e
 }
 
 // RequireMember returns an error unless the user is a current member of the party. Anyone else gets
-// the same not-found error as for a party that doesn't exist, so the answer doesn't reveal which
-// parties exist.
+// a not-found error that cannot be told apart from the one for a party that doesn't exist, so the
+// answer doesn't reveal which parties exist.
 func (s *Service) RequireMember(userId int, partyId int) (err error) {
 	_, err = s.requireCurrentMember(userId, partyId)
 

@@ -195,8 +195,7 @@ func (s *Service) UseItem(actorUserId int, userId int, partyId int, itemName str
 	return s.applyItemChange(actorUserId, userId, partyId, withChange.Change.Entries, historyEventId)
 }
 
-// applyItemChange stamps the item's change template onto the user and applies it, the same way a
-// rolled wheel row is applied.
+// applyItemChange stamps the item's change template onto the user and applies it.
 func (s *Service) applyItemChange(actorUserId int, userId int, partyId int, templateEntries []typechanges.ChangeEntry, sourceEventId int) (err error) {
 	if len(templateEntries) == 0 {
 		return

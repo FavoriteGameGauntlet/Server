@@ -19,7 +19,7 @@ func ptr[T any](value T) *T {
 	return &value
 }
 
-// Using an effect spends one use and grants what the effect carries, the same way using an item does.
+// Using an effect spends one use and grants what the effect carries.
 // The effect belongs to user 7 and is used by user 9: the grants go to the holder, but everything
 // recorded names the user who used it.
 func TestSrvEffects_UseEffect(test *testing.T) {
