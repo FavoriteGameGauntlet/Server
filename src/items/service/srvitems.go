@@ -19,7 +19,7 @@ type IService interface {
 	GetUserItems(userId int, partyId int) ([]typeitems.UserItemDetail, error)
 	UseItem(actorUserId int, userId int, partyId int, itemName string) error
 	DiscardUserItem(actorUserId int, userId int, partyId int, itemName string) error
-	GetItemHistory(userId int, partyId int) ([]typeitems.ItemHistoryDetail, error)
+	GetItemHistory(userId int, partyId int) ([]typeitems.ItemHistory, error)
 }
 
 type Service struct {
@@ -116,34 +116,9 @@ func (s *Service) itemByName(partyId int, name string) (item typeitems.Item, err
 
 	return
 }
-// GetUserItems lists what the user holds, named from the party catalogue.
+// GetUserItems lists what the user holds.
 func (s *Service) GetUserItems(userId int, partyId int) (details []typeitems.UserItemDetail, err error) {
-	userItems, err := s.Database.GetUserItemsCommand(userId, partyId)
-
-	if err != nil {
-		return
-	}
-
-	itemsById, err := s.itemsById(partyId)
-
-	if err != nil {
-		return
-	}
-
-	details = make([]typeitems.UserItemDetail, 0, len(userItems))
-
-	for _, userItem := range userItems {
-		item := itemsById[userItem.ItemId]
-
-		details = append(details, typeitems.UserItemDetail{
-			Name:         item.Name,
-			Description:  item.Description,
-			UsesLeft:     userItem.UsesLeft,
-			ReceivedDate: userItem.ReceivedDate,
-		})
-	}
-
-	return
+	return s.Database.GetUserItemsCommand(userId, partyId)
 }
 
 // UseItem spends one use of an item the user holds and grants what it carries to that user. The
@@ -239,54 +214,6 @@ func (s *Service) DiscardUserItem(actorUserId int, userId int, partyId int, item
 	return s.Database.DeleteUserItemCommand(userId, partyId, item.Id, actorUserId, nil)
 }
 
-// GetItemHistory lists the recorded item events of a user, named from the party catalogue.
-func (s *Service) GetItemHistory(userId int, partyId int) (history []typeitems.ItemHistoryDetail, err error) {
-	entries, err := s.Database.GetItemHistoryCommand(userId, partyId)
-
-	if err != nil {
-		return
-	}
-
-	itemsById, err := s.itemsById(partyId)
-
-	if err != nil {
-		return
-	}
-
-	history = make([]typeitems.ItemHistoryDetail, 0, len(entries))
-
-	for _, entry := range entries {
-		history = append(history, typeitems.ItemHistoryDetail{
-			Name:        itemsById[entry.ItemId].Name,
-			Action:      entry.Action,
-			ActorUserId: entry.ActorUserId,
-			UsesLeft:    entry.UsesLeft,
-			CreatedDate: entry.CreatedDate,
-		})
-	}
-
-	return
-}
-
-// itemsById indexes the party catalogue, so reads that name many items resolve them in one query.
-func (s *Service) itemsById(partyId int) (itemsById map[int]typeitems.Item, err error) {
-	items, err := s.Database.GetActualItemsCommand(partyId)
-
-	if err != nil {
-		return
-	}
-
-	removed, err := s.Database.GetRemovedItemsCommand(partyId)
-
-	if err != nil {
-		return
-	}
-
-	itemsById = make(map[int]typeitems.Item, len(items)+len(removed))
-
-	for _, item := range append(items, removed...) {
-		itemsById[item.Id] = item
-	}
-
-	return
+func (s *Service) GetItemHistory(userId int, partyId int) (history []typeitems.ItemHistory, err error) {
+	return s.Database.GetItemHistoryCommand(userId, partyId)
 }

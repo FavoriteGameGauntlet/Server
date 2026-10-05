@@ -224,6 +224,7 @@ func (c *Controller) GetUserEffectHistory(ctx echo.Context, login geneffects.Log
 			Description: entry.Description,
 			Action:      entry.Action,
 			ActorLogin:  loginsByUserId[entry.ActorUserId],
+			UseCount:    entry.UseCount,
 			UsesLeft:    entry.UsesLeft,
 			CreatedDate: entry.CreatedDate,
 		}

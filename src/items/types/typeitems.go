@@ -38,6 +38,8 @@ type ItemHistory struct {
 	ActorUserId   int
 	PartyId       int
 	ItemId        int
+	Name          string
+	UseCount      int
 	Action        string
 	UsesLeft      *int
 	SourceEventId *int
@@ -50,13 +52,4 @@ type UserItemDetail struct {
 	Description  string
 	UsesLeft     int
 	ReceivedDate time.Time
-}
-
-// ItemHistoryDetail is one recorded item event, named by the item it concerns.
-type ItemHistoryDetail struct {
-	Name        string
-	Action      string
-	ActorUserId int
-	UsesLeft    *int
-	CreatedDate time.Time
 }

@@ -15,7 +15,7 @@ type IDatabase interface {
 	RemoveItemCommand(partyId int, itemId int) error
 	CreateUserItemCommand(userId int, partyId int, itemId int, actorUserId int, sourceEventId int) (userItem typeitems.UserItem, err error)
 	GetUserItemCommand(userId int, partyId int, itemId int) (userItem typeitems.UserItem, err error)
-	GetUserItemsCommand(userId int, partyId int) (userItems []typeitems.UserItem, err error)
+	GetUserItemsCommand(userId int, partyId int) (userItems []typeitems.UserItemDetail, err error)
 	ChangeUserItemUsesLeftCommand(userId int, partyId int, itemId int, usesLeft int, actorUserId int, sourceEventId *int) (historyEventId int, err error)
 	GetItemHistoryCommand(userId int, partyId int) (history []typeitems.ItemHistory, err error)
 	DeleteUserItemCommand(userId int, partyId int, itemId int, actorUserId int, sourceEventId *int) error
@@ -133,7 +133,7 @@ func (db *Database) GetUserItemCommand(userId int, partyId int, itemId int) (use
 
 var getUserItemsQuery = dbaccess.Query{Name: "GetUserItemsQuery", SQL: `SELECT * FROM get_user_items($1::integer, $2::integer)`}
 
-func (db *Database) GetUserItemsCommand(userId int, partyId int) (userItems []typeitems.UserItem, err error) {
+func (db *Database) GetUserItemsCommand(userId int, partyId int) (userItems []typeitems.UserItemDetail, err error) {
 	rows, err := dbaccess.QueryRows(getUserItemsQuery, userId, partyId)
 
 	if err != nil {
@@ -141,8 +141,8 @@ func (db *Database) GetUserItemsCommand(userId int, partyId int) (userItems []ty
 	}
 
 	for rows.Next() {
-		userItem := typeitems.UserItem{}
-		err = rows.Scan(&userItem.Id, &userItem.UserId, &userItem.PartyId, &userItem.ItemId, &userItem.UsesLeft, &userItem.ReceivedDate)
+		userItem := typeitems.UserItemDetail{}
+		err = rows.Scan(&userItem.Name, &userItem.Description, &userItem.UsesLeft, &userItem.ReceivedDate)
 
 		if err != nil {
 			_ = rows.Close()
@@ -181,7 +181,7 @@ func (db *Database) GetItemHistoryCommand(userId int, partyId int) (history []ty
 
 	for rows.Next() {
 		entry := typeitems.ItemHistory{}
-		err = rows.Scan(&entry.Id, &entry.UserId, &entry.ActorUserId, &entry.PartyId, &entry.ItemId, &entry.Action, &entry.UsesLeft, &entry.SourceEventId, &entry.CreatedDate)
+		err = rows.Scan(&entry.Id, &entry.UserId, &entry.ActorUserId, &entry.PartyId, &entry.ItemId, &entry.Name, &entry.UseCount, &entry.Action, &entry.UsesLeft, &entry.SourceEventId, &entry.CreatedDate)
 
 		if err != nil {
 			_ = rows.Close()

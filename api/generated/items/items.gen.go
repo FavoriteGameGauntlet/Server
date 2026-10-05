@@ -54,6 +54,7 @@ type ItemHistoryEntry struct {
 	ActorLogin  Login     `json:"actorLogin"`
 	CreatedDate time.Time `json:"createdDate"`
 	Name        Name      `json:"name"`
+	UseCount    int       `json:"useCount"`
 	UsesLeft    *int      `json:"usesLeft"`
 }
 

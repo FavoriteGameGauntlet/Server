@@ -58,9 +58,9 @@ func (m *DatabaseMock) GetUserItemCommand(userId int, partyId int, itemId int) (
 	return
 }
 
-func (m *DatabaseMock) GetUserItemsCommand(userId int, partyId int) (userItems []typeitems.UserItem, err error) {
+func (m *DatabaseMock) GetUserItemsCommand(userId int, partyId int) (userItems []typeitems.UserItemDetail, err error) {
 	args := m.Called(userId, partyId)
-	userItems = args.Get(0).([]typeitems.UserItem)
+	userItems = args.Get(0).([]typeitems.UserItemDetail)
 	err = args.Error(1)
 	return
 }

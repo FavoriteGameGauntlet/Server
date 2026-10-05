@@ -56,6 +56,7 @@ type EffectHistoryEntry struct {
 	CreatedDate time.Time `json:"createdDate"`
 	Description string    `json:"description"`
 	Name        Name      `json:"name"`
+	UseCount    int       `json:"useCount"`
 	UsesLeft    *int      `json:"usesLeft"`
 }
 

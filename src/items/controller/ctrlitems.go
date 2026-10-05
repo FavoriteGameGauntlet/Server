@@ -203,6 +203,7 @@ func (c *Controller) GetUserItemHistory(ctx echo.Context, login genitems.Login) 
 			Name:        entry.Name,
 			Action:      entry.Action,
 			ActorLogin:  loginsByUserId[entry.ActorUserId],
+			UseCount:    entry.UseCount,
 			UsesLeft:    entry.UsesLeft,
 			CreatedDate: entry.CreatedDate,
 		}

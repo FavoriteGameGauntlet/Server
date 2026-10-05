@@ -284,6 +284,9 @@ components:
           type: string
         actorLogin:
           $ref: '#/components/schemas/Login'
+        useCount:
+          type: integer
+          format: int
         usesLeft:
           type: integer
           format: int
@@ -296,6 +299,7 @@ components:
         - description
         - action
         - actorLogin
+        - useCount
         - usesLeft
         - createdDate
     EffectHistoryEntries:
