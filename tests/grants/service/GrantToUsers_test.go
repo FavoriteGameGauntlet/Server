@@ -33,16 +33,21 @@ func TestSrvGrants_GrantToUsers(test *testing.T) {
 		changesSvc.On("ResolveChangeEntries", 1, []typechanges.ChangeEntryInput{input}).
 			Return([]typechanges.ChangeEntry{resolved}, nil)
 
-		grantsDb.On("CreateManualHistoryCommand", 1, 9, []typechanges.ChangeEntry{forFirst}, (*int)(nil)).
-			Return([]typegrants.ManualHistoryEntry{{Id: 11, UserId: 3, ChangeId: 21}}, nil)
-		grantsDb.On("CreateManualHistoryCommand", 1, 9, []typechanges.ChangeEntry{forSecond}, (*int)(nil)).
-			Return([]typegrants.ManualHistoryEntry{{Id: 12, UserId: 4, ChangeId: 22}}, nil)
+		createdForFirst := typechanges.ChangeEntry{EntryId: ptr(31), Amount: 5, PointTypeId: ptr(2), UserId: ptr(3)}
+		createdForSecond := typechanges.ChangeEntry{EntryId: ptr(32), Amount: 5, PointTypeId: ptr(2), UserId: ptr(4)}
 
-		changesDb.On("GetChangeEntriesJsonbCommand", 1, 21).Return([]typechanges.ChangeEntry{forFirst}, nil)
-		changesDb.On("GetChangeEntriesJsonbCommand", 1, 22).Return([]typechanges.ChangeEntry{forSecond}, nil)
+		changesDb.On("CreateUserChangeFromJsonbCommand", 1, []typechanges.ChangeEntry{forFirst}).
+			Return(typechanges.UserChange{ChangeId: ptr(21), Entries: []typechanges.ChangeEntry{createdForFirst}}, nil)
+		changesDb.On("CreateUserChangeFromJsonbCommand", 1, []typechanges.ChangeEntry{forSecond}).
+			Return(typechanges.UserChange{ChangeId: ptr(22), Entries: []typechanges.ChangeEntry{createdForSecond}}, nil)
 
-		changesSvc.On("ApplyChangeEntries", 1, []typechanges.ChangeEntry{forFirst}, 9, 11).Return(nil)
-		changesSvc.On("ApplyChangeEntries", 1, []typechanges.ChangeEntry{forSecond}, 9, 12).Return(nil)
+		grantsDb.On("CreateManualHistoryCommand", 3, 1, 21, 9, (*int)(nil)).
+			Return(typegrants.ManualHistoryEntry{Id: 11, UserId: 3, ChangeId: 21}, nil)
+		grantsDb.On("CreateManualHistoryCommand", 4, 1, 22, 9, (*int)(nil)).
+			Return(typegrants.ManualHistoryEntry{Id: 12, UserId: 4, ChangeId: 22}, nil)
+
+		changesSvc.On("ApplyChangeEntries", 1, []typechanges.ChangeEntry{createdForFirst}, 9, 11).Return(nil)
+		changesSvc.On("ApplyChangeEntries", 1, []typechanges.ChangeEntry{createdForSecond}, 9, 12).Return(nil)
 
 		sut := srvgrants.Service{Database: grantsDb, ChangesDatabase: changesDb, ChangesService: changesSvc}
 

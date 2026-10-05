@@ -1,46 +1,24 @@
 package dbgrants
 
 import (
-	"FGG-Service/src/changes/types"
 	"FGG-Service/src/dbaccess"
 	"FGG-Service/src/grants/types"
-	"encoding/json"
 )
 
 type IDatabase interface {
-	CreateManualHistoryCommand(partyId int, actorUserId int, entries []typechanges.ChangeEntry, sourceEventId *int) (created []typegrants.ManualHistoryEntry, err error)
+	CreateManualHistoryCommand(userId int, partyId int, changeId int, actorUserId int, sourceEventId *int) (entry typegrants.ManualHistoryEntry, err error)
 }
 
 type Database struct{}
 
-var createManualHistoryQuery = dbaccess.Query{Name: "CreateManualHistoryQuery", SQL: `SELECT * FROM create_manual_history($1::integer, $2::integer, $3::jsonb, $4::integer)`}
+var createManualHistoryQuery = dbaccess.Query{Name: "CreateManualHistoryQuery", SQL: `SELECT * FROM create_manual_history($1::integer, $2::integer, $3::integer, $4::integer, $5::integer)`}
 
-func (db *Database) CreateManualHistoryCommand(partyId int, actorUserId int, entries []typechanges.ChangeEntry, sourceEventId *int) (created []typegrants.ManualHistoryEntry, err error) {
-	entriesJson, err := json.Marshal(entries)
-	if err != nil {
-		return
-	}
+func (db *Database) CreateManualHistoryCommand(userId int, partyId int, changeId int, actorUserId int, sourceEventId *int) (entry typegrants.ManualHistoryEntry, err error) {
+	row := dbaccess.QueryRow(createManualHistoryQuery, userId, partyId, changeId, actorUserId, sourceEventId)
 
-	rows, err := dbaccess.QueryRows(createManualHistoryQuery, partyId, actorUserId, entriesJson, sourceEventId)
+	err = row.Scan(&entry.Id, &entry.UserId, &entry.PartyId, &entry.ActorUserId, &entry.ChangeId, &entry.CreatedDate)
 
-	if err != nil {
-		return
-	}
+	dbaccess.LogDbResult(createManualHistoryQuery, entry, err)
 
-	for rows.Next() {
-		entry := typegrants.ManualHistoryEntry{}
-		err = rows.Scan(&entry.Id, &entry.UserId, &entry.PartyId, &entry.ActorUserId, &entry.ChangeId, &entry.CreatedDate)
-
-		if err != nil {
-			_ = rows.Close()
-			return
-		}
-
-		created = append(created, entry)
-	}
-
-	dbaccess.LogDbResult(createManualHistoryQuery, created, err)
-
-	_ = rows.Close()
 	return
 }

@@ -1,6 +1,7 @@
 package srvpoints
 
 import (
+	"FGG-Service/src/changes/database"
 	"FGG-Service/src/changes/types"
 	"FGG-Service/src/common"
 	"FGG-Service/src/grants/database"
@@ -16,6 +17,7 @@ type Service struct {
 	Database        dbpoints.IDatabase
 	PartiesDatabase dbparties.IDatabase
 	GrantsDatabase  dbgrants.IDatabase
+	ChangesDatabase dbchanges.IDatabase
 }
 
 func NewService() *Service {
@@ -23,6 +25,7 @@ func NewService() *Service {
 		Database:        new(dbpoints.Database),
 		PartiesDatabase: new(dbparties.Database),
 		GrantsDatabase:  new(dbgrants.Database),
+		ChangesDatabase: new(dbchanges.Database),
 	}
 }
 
@@ -441,18 +444,19 @@ func (s *Service) createManualSourceEvent(actorUserId int, affectedUserId int, p
 		{Amount: changeValue, PointTypeId: &pointTypeId, UserId: &affectedUserId},
 	}
 
-	created, err := s.GrantsDatabase.CreateManualHistoryCommand(partyId, actorUserId, entries, nil)
+	userChange, err := s.ChangesDatabase.CreateUserChangeFromJsonbCommand(partyId, entries)
 
 	if err != nil {
 		return
 	}
 
-	if len(created) == 0 {
-		err = errors.New("manual history recorded no entries")
+	history, err := s.GrantsDatabase.CreateManualHistoryCommand(affectedUserId, partyId, *userChange.ChangeId, actorUserId, nil)
+
+	if err != nil {
 		return
 	}
 
-	return created[0].Id, nil
+	return history.Id, nil
 }
 // GetPointTypeById reads a point type by the id a change entry stores.
 func (s *Service) GetPointTypeById(partyId int, pointTypeId int) (pointType typepoints.PointTypeInfo, err error) {

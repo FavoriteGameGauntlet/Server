@@ -47,7 +47,7 @@ func (s *Service) GrantToUsers(actorUserId int, partyId int, targetUserIds []int
 			targetedEntries = append(targetedEntries, entry)
 		}
 
-		err = s.grantToUser(actorUserId, partyId, targetedEntries)
+		err = s.grantToUser(actorUserId, partyId, targetUserId, targetedEntries)
 
 		if err != nil {
 			return
@@ -57,33 +57,25 @@ func (s *Service) GrantToUsers(actorUserId int, partyId int, targetUserIds []int
 	return
 }
 
-// grantToUser records one user's grant and applies it. The manual history is written per user so
-// that the entries behind each history row are only that user's.
-func (s *Service) grantToUser(actorUserId int, partyId int, targetedEntries []typechanges.ChangeEntry) (err error) {
+// grantToUser records one user's grant and applies it. The change is created per user so that the
+// entries behind each history row are only that user's, and the history row it is recorded under is
+// the source event of everything the change grants.
+func (s *Service) grantToUser(actorUserId int, partyId int, userId int, targetedEntries []typechanges.ChangeEntry) (err error) {
 	if len(targetedEntries) == 0 {
 		return
 	}
 
-	created, err := s.Database.CreateManualHistoryCommand(partyId, actorUserId, targetedEntries, nil)
+	userChange, err := s.ChangesDatabase.CreateUserChangeFromJsonbCommand(partyId, targetedEntries)
 
 	if err != nil {
 		return
 	}
 
-	for _, entry := range created {
-		var persistedEntries []typechanges.ChangeEntry
-		persistedEntries, err = s.ChangesDatabase.GetChangeEntriesJsonbCommand(partyId, entry.ChangeId)
+	history, err := s.Database.CreateManualHistoryCommand(userId, partyId, *userChange.ChangeId, actorUserId, nil)
 
-		if err != nil {
-			return
-		}
-
-		err = s.ChangesService.ApplyChangeEntries(partyId, persistedEntries, actorUserId, entry.Id)
-
-		if err != nil {
-			return
-		}
+	if err != nil {
+		return
 	}
 
-	return
+	return s.ChangesService.ApplyChangeEntries(partyId, userChange.Entries, actorUserId, history.Id)
 }

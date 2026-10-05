@@ -1,10 +1,12 @@
 package srvpoints_test
 
 import (
+	typechanges "FGG-Service/src/changes/types"
 	"FGG-Service/src/common"
 	srvpoints "FGG-Service/src/points/service"
 	typepoints "FGG-Service/src/points/type"
 	typegrants "FGG-Service/src/grants/types"
+	dbchangesmock "FGG-Service/tests/changes/mock"
 	dbgrantsmock "FGG-Service/tests/grants/mock"
 	dbpointsmock "FGG-Service/tests/points/mock"
 	"database/sql"
@@ -146,17 +148,20 @@ func TestSrvPoints_ChangeUserPointByTypeName(test *testing.T) {
 	test.Run("Success_RecordsManualHistoryAsSourceEvent", func(test *testing.T) {
 		databaseMock := new(dbpointsmock.DatabaseMock)
 		grantsMock := new(dbgrantsmock.DatabaseMock)
+		changesMock := new(dbchangesmock.DatabaseMock)
 
 		databaseMock.On("GetPointTypeByNameCommand", 1, availableRollsType.Name).Return(availableRollsType, nil)
-		grantsMock.On("CreateManualHistoryCommand", 1, 9, mock.Anything, (*int)(nil)).
-			Return([]typegrants.ManualHistoryEntry{{Id: 77, UserId: 2, PartyId: 1}}, nil)
+		changesMock.On("CreateUserChangeFromJsonbCommand", 1, mock.Anything).
+			Return(typechanges.UserChange{ChangeId: ptrInt(41)}, nil)
+		grantsMock.On("CreateManualHistoryCommand", 2, 1, 41, 9, (*int)(nil)).
+			Return(typegrants.ManualHistoryEntry{Id: 77, UserId: 2, PartyId: 1}, nil)
 		databaseMock.On("GetUserPointCommand", 2, 1, availableRollsType.Id).
 			Return(typepoints.UserPoint{Value: 3}, nil)
 		databaseMock.On("ChangeUserPointValueCommand", 2, 1, availableRollsType.Id, 2).Return(nil)
 		databaseMock.On("CreateUserPointHistoryCommand", 2, 1, availableRollsType.Id, 9, 2, 2, 5, 77).
 			Return(typepoints.UserPointHistoryEntry{}, nil)
 
-		sut := srvpoints.Service{Database: databaseMock, GrantsDatabase: grantsMock}
+		sut := srvpoints.Service{Database: databaseMock, GrantsDatabase: grantsMock, ChangesDatabase: changesMock}
 
 		result, err := sut.ChangeUserPointByTypeName(9, 2, 1, availableRollsType.Name, 2)
 
@@ -164,6 +169,7 @@ func TestSrvPoints_ChangeUserPointByTypeName(test *testing.T) {
 		require.Equal(test, 2, result.ActualChangeValue)
 		require.Equal(test, 5, result.FinalValue)
 		databaseMock.AssertExpectations(test)
+		changesMock.AssertExpectations(test)
 		grantsMock.AssertExpectations(test)
 	})
 
