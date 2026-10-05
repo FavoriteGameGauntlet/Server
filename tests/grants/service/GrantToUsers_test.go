@@ -24,7 +24,7 @@ func TestSrvGrants_GrantToUsers(test *testing.T) {
 		changesDb := new(dbchangesmock.DatabaseMock)
 		changesSvc := new(srvchangesmock.ServiceMock)
 
-		input := typechanges.ChangeEntryInput{PointTypeName: ptr("freePoints"), Amount: 5}
+		input := typechanges.ChangeEntryInput{PointTypeName: ptr("grantedPoints"), Amount: 5}
 		resolved := typechanges.ChangeEntry{Amount: 5, PointTypeId: ptr(2)}
 
 		forFirst := typechanges.ChangeEntry{Amount: 5, PointTypeId: ptr(2), UserId: ptr(3)}

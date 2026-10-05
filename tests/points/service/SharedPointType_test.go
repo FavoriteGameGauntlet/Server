@@ -192,7 +192,7 @@ func TestSrvPoints_ChangeUserPointByTypeName(test *testing.T) {
 func TestSrvPoints_SeedUserPoints(test *testing.T) {
 	test.Run("Success_SeedsPerUserTypesOnly", func(test *testing.T) {
 		databaseMock := new(dbpointsmock.DatabaseMock)
-		startingType := typepoints.PointTypeInfo{Id: 3, PartyId: 1, Name: "freePoints", StartValue: 8}
+		startingType := typepoints.PointTypeInfo{Id: 3, PartyId: 1, Name: "startingPoints", StartValue: 8}
 
 		databaseMock.On("GetPointTypesCommand", 1).
 			Return([]typepoints.PointTypeInfo{startingType, sharedPointType}, nil)

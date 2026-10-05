@@ -24,14 +24,14 @@ func TestSrvParties_CreateParty(test *testing.T) {
 		partiesDb := new(dbpartiesmock.DatabaseMock)
 		pointsDb := new(dbpointsmock.DatabaseMock)
 
-		freePoints := typepoints.PointTypeInfo{Id: 2, PartyId: 8, Name: "freePoints", StartValue: 3}
+		startingPoints := typepoints.PointTypeInfo{Id: 2, PartyId: 8, Name: "startingPoints", StartValue: 3}
 
 		partiesDb.On("CreatePartyCommand", "gauntlet").Return(typeparties.Party{Id: 8, Name: "gauntlet"}, nil)
 		partiesDb.On("GetMemberCommand", 5, 8).Return(typeparties.MemberWithLogin{}, sql.ErrNoRows)
 		partiesDb.On("CreateMemberCommand", 5, 8, (*string)(nil), true).
 			Return(typeparties.Member{Id: 1, UserId: 5, PartyId: 8, IsAdmin: true}, nil)
-		pointsDb.On("GetPointTypesCommand", 8).Return([]typepoints.PointTypeInfo{freePoints}, nil)
-		pointsDb.On("CreateUserPointCommand", 5, 8, freePoints.Id, freePoints.StartValue).
+		pointsDb.On("GetPointTypesCommand", 8).Return([]typepoints.PointTypeInfo{startingPoints}, nil)
+		pointsDb.On("CreateUserPointCommand", 5, 8, startingPoints.Id, startingPoints.StartValue).
 			Return(typepoints.UserPoint{}, nil)
 
 		sut := srvparties.Service{Database: partiesDb, PointsService: &srvpoints.Service{Database: pointsDb}}

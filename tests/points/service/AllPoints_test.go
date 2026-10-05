@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var personalPointType = typepoints.PointTypeInfo{Id: 3, PartyId: 1, Name: "freePoints", StartValue: 8}
+var personalPointType = typepoints.PointTypeInfo{Id: 3, PartyId: 1, Name: "personalPoints", StartValue: 8}
 
 // A user's points leave shared point types out, since those are held by the party.
 func TestSrvPoints_GetUserPoints_LeavesSharedTypesOut(test *testing.T) {

@@ -17,8 +17,8 @@ import (
 
 var seize = typeexchanges.Exchange{Id: 2, PartyId: 1, Name: "seize", Description: "takes territory"}
 
-var territoryPoints = typepoints.PointTypeInfo{
-	Id: 6, PartyId: 1, Name: "territoryPoints", Minimum: ptr(0), Maximum: ptr(100),
+var boundedPoints = typepoints.PointTypeInfo{
+	Id: 6, PartyId: 1, Name: "boundedPoints", Minimum: ptr(0), Maximum: ptr(100),
 }
 
 func ptr[T any](value T) *T {
@@ -34,7 +34,7 @@ func TestSrvExchanges_UseExchange(test *testing.T) {
 		changesDb := new(dbchangesmock.DatabaseMock)
 		changesSvc := new(srvchangesmock.ServiceMock)
 
-		cost := typechanges.ChangeEntry{Amount: -3, PointTypeId: ptr(territoryPoints.Id)}
+		cost := typechanges.ChangeEntry{Amount: -3, PointTypeId: ptr(boundedPoints.Id)}
 		reward := typechanges.ChangeEntry{Amount: 1, ItemId: ptr(9)}
 
 		exchangesDb.On("GetActualExchangesCommand", 1).Return([]typeexchanges.Exchange{seize}, nil)
@@ -43,13 +43,13 @@ func TestSrvExchanges_UseExchange(test *testing.T) {
 			SourceChange: typechanges.Change{Entries: []typechanges.ChangeEntry{cost}},
 			TargetChange: typechanges.Change{Entries: []typechanges.ChangeEntry{reward}},
 		}, nil)
-		pointsDb.On("GetPointTypeCommand", 1, territoryPoints.Id).Return(territoryPoints, nil)
-		pointsDb.On("GetPointTypeByNameCommand", 1, territoryPoints.Name).Return(territoryPoints, nil)
-		pointsDb.On("GetUserPointCommand", 5, 1, territoryPoints.Id).Return(typepoints.UserPoint{Value: 10}, nil)
+		pointsDb.On("GetPointTypeCommand", 1, boundedPoints.Id).Return(boundedPoints, nil)
+		pointsDb.On("GetPointTypeByNameCommand", 1, boundedPoints.Name).Return(boundedPoints, nil)
+		pointsDb.On("GetUserPointCommand", 5, 1, boundedPoints.Id).Return(typepoints.UserPoint{Value: 10}, nil)
 		exchangesDb.On("CreateExchangeHistoryCommand", 5, 1, seize.Id, 5, (*int)(nil)).
 			Return(typeexchanges.ExchangeHistoryEntry{Id: 31}, nil)
 
-		chargedEntry := typechanges.ChangeEntry{Amount: -3, PointTypeId: ptr(territoryPoints.Id), UserId: ptr(5)}
+		chargedEntry := typechanges.ChangeEntry{Amount: -3, PointTypeId: ptr(boundedPoints.Id), UserId: ptr(5)}
 		rewardedEntry := typechanges.ChangeEntry{Amount: 1, ItemId: ptr(9), UserId: ptr(5)}
 
 		changesDb.On("CreateUserChangeFromJsonbCommand", 1, []typechanges.ChangeEntry{chargedEntry}).
@@ -78,16 +78,16 @@ func TestSrvExchanges_UseExchange(test *testing.T) {
 		exchangesDb := new(dbexchangesmock.DatabaseMock)
 		pointsDb := new(dbpointsmock.DatabaseMock)
 
-		cost := typechanges.ChangeEntry{Amount: -30, PointTypeId: ptr(territoryPoints.Id)}
+		cost := typechanges.ChangeEntry{Amount: -30, PointTypeId: ptr(boundedPoints.Id)}
 
 		exchangesDb.On("GetActualExchangesCommand", 1).Return([]typeexchanges.Exchange{seize}, nil)
 		exchangesDb.On("GetExchangeWithEntriesCommand", 1, seize.Id).Return(typeexchanges.ExchangeWithChanges{
 			Id:           seize.Id,
 			SourceChange: typechanges.Change{Entries: []typechanges.ChangeEntry{cost}},
 		}, nil)
-		pointsDb.On("GetPointTypeCommand", 1, territoryPoints.Id).Return(territoryPoints, nil)
-		pointsDb.On("GetPointTypeByNameCommand", 1, territoryPoints.Name).Return(territoryPoints, nil)
-		pointsDb.On("GetUserPointCommand", 5, 1, territoryPoints.Id).Return(typepoints.UserPoint{Value: 10}, nil)
+		pointsDb.On("GetPointTypeCommand", 1, boundedPoints.Id).Return(boundedPoints, nil)
+		pointsDb.On("GetPointTypeByNameCommand", 1, boundedPoints.Name).Return(boundedPoints, nil)
+		pointsDb.On("GetUserPointCommand", 5, 1, boundedPoints.Id).Return(typepoints.UserPoint{Value: 10}, nil)
 
 		sut := srvexchanges.Service{Database: exchangesDb, PointsService: &srvpoints.Service{Database: pointsDb}}
 
