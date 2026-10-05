@@ -4,13 +4,13 @@ description: >
   has to be set. The amount carries the sign it is applied with, so a cost is negative.
 properties:
   pointTypeName:
-    $ref: "./Name.yaml"
+    $ref: "./NullableName.yaml"
   itemName:
-    $ref: "./Name.yaml"
+    $ref: "./NullableName.yaml"
   perkName:
-    $ref: "./Name.yaml"
+    $ref: "./NullableName.yaml"
   effectName:
-    $ref: "./Name.yaml"
+    $ref: "./NullableName.yaml"
   amount:
     type: integer
     format: int

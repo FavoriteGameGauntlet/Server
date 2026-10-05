@@ -22,6 +22,8 @@ post:
       $ref: "../../components/responses/ErrorResponse.yaml"
     "404":
       $ref: "../../components/responses/ErrorResponse.yaml"
+    "409":
+      $ref: "../../components/responses/ErrorResponse.yaml"
     "422":
       $ref: "../../components/responses/ErrorResponse.yaml"
     "500":

@@ -249,6 +249,19 @@ func NewItemNotFoundError(name string) error {
 	}
 }
 
+func NewItemAlreadyExistsConflictError(name string) error {
+	message := fmt.Sprintf(
+		"The item \"%s\" already exists.",
+		name)
+
+	return &ConflictError{
+		&BaseError{
+			Code:    "ITEM_ALREADY_EXISTS",
+			Message: message,
+		},
+	}
+}
+
 func NewPerkNotFoundError(name string) error {
 	message := fmt.Sprintf(
 		"The perk \"%s\" wasn't found.",

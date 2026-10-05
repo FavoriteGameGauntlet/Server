@@ -44,13 +44,27 @@ func (s *Service) GetRemovedItems(partyId int) (items []typeitems.Item, err erro
 	return s.Database.GetRemovedItemsCommand(partyId)
 }
 
-// CreateItem adds an item to the party catalogue. The entries describe what using it grants.
+// CreateItem adds an item to the party catalogue. The entries describe what using it grants. Names
+// identify items across the API, so a name already taken by an actual item is rejected.
 func (s *Service) CreateItem(
 	partyId int,
 	name string,
 	description string,
 	useCount int,
 	entries []typechanges.ChangeEntryInput) (item typeitems.Item, err error) {
+	actual, err := s.Database.GetActualItemsCommand(partyId)
+
+	if err != nil {
+		return
+	}
+
+	for _, candidate := range actual {
+		if candidate.Name == name {
+			err = common.NewItemAlreadyExistsConflictError(name)
+			return
+		}
+	}
+
 	resolved, err := s.ChangesService.ResolveChangeEntries(partyId, entries)
 
 	if err != nil {

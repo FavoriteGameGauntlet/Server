@@ -131,19 +131,24 @@ components:
       required:
         - code
         - message
+    NullableName:
+      allOf:
+        - $ref: '#/components/schemas/Name'
+      nullable: true
+      default: null
     ChangeEntryInput:
       type: object
       description: |
         Names one thing a change grants. Exactly one of pointTypeName, itemName, perkName or effectName has to be set. The amount carries the sign it is applied with, so a cost is negative.
       properties:
         pointTypeName:
-          $ref: '#/components/schemas/Name'
+          $ref: '#/components/schemas/NullableName'
         itemName:
-          $ref: '#/components/schemas/Name'
+          $ref: '#/components/schemas/NullableName'
         perkName:
-          $ref: '#/components/schemas/Name'
+          $ref: '#/components/schemas/NullableName'
         effectName:
-          $ref: '#/components/schemas/Name'
+          $ref: '#/components/schemas/NullableName'
         amount:
           type: integer
           format: int

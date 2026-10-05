@@ -19,11 +19,11 @@ const (
 
 // ChangeEntryInput Names one thing a change grants. Exactly one of pointTypeName, itemName, perkName or effectName has to be set. The amount carries the sign it is applied with, so a cost is negative.
 type ChangeEntryInput struct {
-	Amount        int   `json:"amount"`
-	EffectName    *Name `json:"effectName,omitempty"`
-	ItemName      *Name `json:"itemName,omitempty"`
-	PerkName      *Name `json:"perkName,omitempty"`
-	PointTypeName *Name `json:"pointTypeName,omitempty"`
+	Amount        int           `json:"amount"`
+	EffectName    *NullableName `json:"effectName"`
+	ItemName      *NullableName `json:"itemName"`
+	PerkName      *NullableName `json:"perkName"`
+	PointTypeName *NullableName `json:"pointTypeName"`
 }
 
 // ChangeEntryInputs defines model for ChangeEntryInputs.
@@ -40,6 +40,9 @@ type Error struct {
 
 // Name defines model for Name.
 type Name = string
+
+// NullableName defines model for NullableName.
+type NullableName = Name
 
 // Timer defines model for Timer.
 type Timer struct {
