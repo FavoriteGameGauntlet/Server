@@ -3,7 +3,7 @@ description: Updates whichever of the two is given.
 properties:
   displayName:
     allOf:
-      - $ref: "./Name.yaml"
+      - $ref: "./MemberDisplayName.yaml"
     nullable: true
     default: null
   isAdmin:

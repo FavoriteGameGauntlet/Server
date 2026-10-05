@@ -4,7 +4,7 @@ properties:
     $ref: "./Login.yaml"
   displayName:
     allOf:
-      - $ref: "./Name.yaml"
+      - $ref: "./MemberDisplayName.yaml"
     nullable: true
     default: null
   isAdmin:

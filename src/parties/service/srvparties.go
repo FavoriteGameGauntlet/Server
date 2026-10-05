@@ -119,7 +119,7 @@ func (s *Service) AddMember(userId int, partyId int, displayName *string, isAdmi
 		return
 	}
 
-	member, err = s.Database.CreateMemberCommand(userId, partyId, displayName, isAdmin)
+	member, err = s.Database.CreateMemberCommand(userId, partyId, nilIfEmpty(displayName), isAdmin)
 
 	if err != nil {
 		return
@@ -130,7 +130,18 @@ func (s *Service) AddMember(userId int, partyId int, displayName *string, isAdmi
 	return
 }
 
-// ChangeMember updates whichever of a member's display name and admin flag were given.
+// nilIfEmpty turns an empty display name into "no display name". The empty string is how a request
+// says "remove it", and storing it would also clash with the unique display name within a party.
+func nilIfEmpty(displayName *string) *string {
+	if displayName != nil && *displayName == "" {
+		return nil
+	}
+
+	return displayName
+}
+
+// ChangeMember updates whichever of a member's display name and admin flag were given. An empty
+// display name removes it.
 func (s *Service) ChangeMember(userId int, partyId int, displayName *string, isAdmin *bool) (err error) {
 	_, err = s.requireMember(userId, partyId)
 
@@ -139,7 +150,7 @@ func (s *Service) ChangeMember(userId int, partyId int, displayName *string, isA
 	}
 
 	if displayName != nil {
-		err = s.Database.ChangeMemberDisplayNameCommand(userId, partyId, *displayName)
+		err = s.Database.ChangeMemberDisplayNameCommand(userId, partyId, nilIfEmpty(displayName))
 
 		if err != nil {
 			return

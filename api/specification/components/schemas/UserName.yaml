@@ -1,7 +1,0 @@
-type: object
-properties:
-  login:
-    $ref: "./Login.yaml"
-  displayName:
-    $ref: "./Name.yaml"
-required: [ login ]

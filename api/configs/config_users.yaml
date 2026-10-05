@@ -1,5 +1,0 @@
-package: genusers
-output: generated/users/users.gen.go
-generate:
-  echo-server: true
-  models: true

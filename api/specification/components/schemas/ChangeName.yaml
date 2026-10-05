@@ -1,5 +1,0 @@
-type: object
-properties:
-  name:
-    $ref: "./Name.yaml"
-required: [ name ]

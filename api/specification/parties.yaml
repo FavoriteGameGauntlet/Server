@@ -218,6 +218,10 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/Member'
+    MemberDisplayName:
+      type: string
+      maxLength: 70
+      description: An empty string removes the display name.
     MemberCreate:
       type: object
       properties:
@@ -225,7 +229,7 @@ components:
           $ref: '#/components/schemas/Login'
         displayName:
           allOf:
-            - $ref: '#/components/schemas/Name'
+            - $ref: '#/components/schemas/MemberDisplayName'
           nullable: true
           default: null
         isAdmin:
@@ -239,7 +243,7 @@ components:
       properties:
         displayName:
           allOf:
-            - $ref: '#/components/schemas/Name'
+            - $ref: '#/components/schemas/MemberDisplayName'
           nullable: true
           default: null
         isAdmin:

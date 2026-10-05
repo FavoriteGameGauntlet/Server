@@ -12,7 +12,6 @@ import (
 	genpoints "FGG-Service/api/generated/points"
 	gensysparams "FGG-Service/api/generated/system_parameters"
 	gentimers "FGG-Service/api/generated/timers"
-	genusers "FGG-Service/api/generated/users"
 	genwheeleffects "FGG-Service/api/generated/wheel_effects"
 	ctrlauth "FGG-Service/src/auth/controller"
 	"FGG-Service/src/dbaccess"
@@ -27,7 +26,6 @@ import (
 	ctrlsysparams "FGG-Service/src/sysparams/controller"
 	ctrltimers "FGG-Service/src/timers/controller"
 	srvtimers "FGG-Service/src/timers/service"
-	ctrlusers "FGG-Service/src/users/controller"
 	ctrlwheeleffects "FGG-Service/src/wheeleffects/controller"
 	"embed"
 	"log/slog"
@@ -86,7 +84,6 @@ func registerHandlers(e *echo.Echo) {
 	genpoints.RegisterHandlers(e, ctrlpoints.NewController())
 	gensysparams.RegisterHandlers(e, ctrlsysparams.NewController())
 	gentimers.RegisterHandlers(e, ctrltimers.NewController(ts))
-	genusers.RegisterHandlers(e, ctrlusers.NewController())
 	genwheeleffects.RegisterHandlers(e, ctrlwheeleffects.NewController())
 }
 

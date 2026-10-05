@@ -62,7 +62,7 @@ func (m *DatabaseMock) ChangeMemberAdminStatusCommand(userId int, partyId int, i
 	return args.Error(0)
 }
 
-func (m *DatabaseMock) ChangeMemberDisplayNameCommand(userId int, partyId int, displayName string) error {
+func (m *DatabaseMock) ChangeMemberDisplayNameCommand(userId int, partyId int, displayName *string) error {
 	args := m.Called(userId, partyId, displayName)
 	return args.Error(0)
 }

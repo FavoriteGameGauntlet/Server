@@ -14,7 +14,7 @@ type IDatabase interface {
 	GetMemberCommand(userId int, partyId int) (member typeparties.MemberWithLogin, err error)
 	GetMembersCommand(partyId int) (members []typeparties.MemberWithLogin, err error)
 	ChangeMemberAdminStatusCommand(userId int, partyId int, isAdmin bool) error
-	ChangeMemberDisplayNameCommand(userId int, partyId int, displayName string) error
+	ChangeMemberDisplayNameCommand(userId int, partyId int, displayName *string) error
 	RemoveMemberCommand(userId int, partyId int) error
 }
 
@@ -167,7 +167,7 @@ func (db *Database) ChangeMemberAdminStatusCommand(userId int, partyId int, isAd
 
 var changeMemberDisplayNameQuery = dbaccess.Query{Name: "ChangeMemberDisplayNameQuery", SQL: `SELECT change_member_display_name($1::integer, $2::integer, $3::text)`}
 
-func (db *Database) ChangeMemberDisplayNameCommand(userId int, partyId int, displayName string) error {
+func (db *Database) ChangeMemberDisplayNameCommand(userId int, partyId int, displayName *string) error {
 	_, err := dbaccess.Exec(changeMemberDisplayNameQuery, userId, partyId, displayName)
 
 	dbaccess.LogDbResult(changeMemberDisplayNameQuery, nil, err)

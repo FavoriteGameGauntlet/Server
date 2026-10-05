@@ -172,15 +172,6 @@ func NewLastWheelEffectsNotFoundError() error {
 	}
 }
 
-func NewDisplayNameNotFoundError() error {
-	return &NotFoundError{
-		&BaseError{
-			Code:    "DISPLAY_NAME_NOT_FOUND",
-			Message: "The user have not added a display name.",
-		},
-	}
-}
-
 func NewSystemParameterNotFoundError(name string) error {
 	message := fmt.Sprintf(
 		"The system parameter \"%s\" wasn't found.",

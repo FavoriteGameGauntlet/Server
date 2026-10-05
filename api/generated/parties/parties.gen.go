@@ -31,16 +31,19 @@ type Member struct {
 
 // MemberChange Updates whichever of the two is given.
 type MemberChange struct {
-	DisplayName *Name `json:"displayName"`
-	IsAdmin     *bool `json:"isAdmin,omitempty"`
+	DisplayName *MemberDisplayName `json:"displayName"`
+	IsAdmin     *bool              `json:"isAdmin,omitempty"`
 }
 
 // MemberCreate defines model for MemberCreate.
 type MemberCreate struct {
-	DisplayName *Name `json:"displayName"`
-	IsAdmin     bool  `json:"isAdmin"`
-	Login       Login `json:"login"`
+	DisplayName *MemberDisplayName `json:"displayName"`
+	IsAdmin     bool               `json:"isAdmin"`
+	Login       Login              `json:"login"`
 }
+
+// MemberDisplayName An empty string removes the display name.
+type MemberDisplayName = string
 
 // Members defines model for Members.
 type Members = []Member
