@@ -208,6 +208,7 @@ func (s *Service) getSharedPointTypeByName(actorUserId int, partyId int, name st
 
 	return
 }
+
 // SeedUserPoints gives a user a starting value for every point type of the party. The schema no
 // longer seeds points on signup, so this runs when a user joins a party.
 func (s *Service) SeedUserPoints(affectedUserId int, partyId int) (err error) {
@@ -370,6 +371,7 @@ func (s *Service) GetPartyPointValueByTypeName(actorUserId int, partyId int, nam
 
 	return partyPoint.Value, err
 }
+
 // GetUserPointHistoryByTypeName returns the recorded changes to a user's value for one point type.
 func (s *Service) GetUserPointHistoryByTypeName(actorUserId int, affectedUserId int, partyId int, name string) (history []typepoints.PointHistoryEntry, err error) {
 	pointType, err := s.getUserPointTypeByName(actorUserId, partyId, name)
@@ -395,7 +397,7 @@ func (s *Service) GetUserPointHistoryByTypeName(actorUserId int, affectedUserId 
 			DesiredChangeValue: entry.DesiredChangeValue,
 			ActualChangeValue:  entry.ActualChangeValue,
 			FinalValue:         entry.FinalValue,
-			ActorUserId:       entry.ActorUserId,
+			ActorUserId:        entry.ActorUserId,
 			ChangedDate:        entry.ChangedDate,
 		})
 	}
@@ -428,7 +430,7 @@ func (s *Service) GetPartyPointHistoryByTypeName(actorUserId int, partyId int, n
 			DesiredChangeValue: entry.DesiredChangeValue,
 			ActualChangeValue:  entry.ActualChangeValue,
 			FinalValue:         entry.FinalValue,
-			ActorUserId:       entry.ActorUserId,
+			ActorUserId:        entry.ActorUserId,
 			ChangedDate:        entry.ChangedDate,
 		})
 	}
@@ -458,6 +460,7 @@ func (s *Service) createManualSourceEvent(actorUserId int, affectedUserId int, p
 
 	return history.Id, nil
 }
+
 // GetPointTypeById reads a point type by the id a change entry stores.
 func (s *Service) GetPointTypeById(partyId int, pointTypeId int) (pointType typepoints.PointTypeInfo, err error) {
 	return s.Database.GetPointTypeCommand(partyId, pointTypeId)

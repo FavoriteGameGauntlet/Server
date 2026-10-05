@@ -117,6 +117,7 @@ func (c *Controller) RemoveItem(ctx echo.Context, partyId genitems.PartyId, name
 
 	return ctx.NoContent(http.StatusNoContent)
 }
+
 // GetUserItems (GET /parties/{partyId}/items/{login})
 func (c *Controller) GetUserItems(ctx echo.Context, partyId genitems.PartyId, login genitems.Login) error {
 	_, userId, err := c.userIdFromLogin(ctx, partyId, login)

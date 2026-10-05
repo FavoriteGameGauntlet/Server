@@ -129,6 +129,7 @@ func (s *Service) GetUserEffects(userId int, partyId int) (effects []typeeffects
 func (s *Service) GetEffectHistory(userId int, partyId int) (history []typeeffects.EffectHistory, err error) {
 	return s.Database.GetEffectHistoryCommand(userId, partyId)
 }
+
 // UseEffect spends one use of an active effect and grants what it carries to its holder. The effect
 // history row it produces is the source event of the resulting grants. Another member may use the
 // effect, so everything recorded names the actor, not the holder.
@@ -229,6 +230,7 @@ func (s *Service) StopEndedUserEffects() error {
 
 	return err
 }
+
 // StartEndedEffectsScheduler clears effects whose duration has run out, the way completed timers are
 // stopped. Nothing else calls the sweep, so without this an expired effect would stay active.
 func (s *Service) StartEndedEffectsScheduler() {
@@ -252,6 +254,7 @@ func (s *Service) StartEndedEffectsScheduler() {
 
 	scheduler.Start()
 }
+
 // GetUserEffectViews lists a user's active effects with their passive point modifiers named, since
 // the modifiers come back from the schema as point type ids.
 func (s *Service) GetUserEffectViews(userId int, partyId int) (views []typeeffects.UserEffectView, err error) {

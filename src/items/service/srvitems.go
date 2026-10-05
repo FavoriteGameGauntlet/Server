@@ -116,6 +116,7 @@ func (s *Service) itemByName(partyId int, name string) (item typeitems.Item, err
 
 	return
 }
+
 // GetUserItems lists what the user holds.
 func (s *Service) GetUserItems(userId int, partyId int) (details []typeitems.UserItemDetail, err error) {
 	return s.Database.GetUserItemsCommand(userId, partyId)

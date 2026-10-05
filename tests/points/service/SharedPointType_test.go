@@ -3,9 +3,9 @@ package srvpoints_test
 import (
 	typechanges "FGG-Service/src/changes/types"
 	"FGG-Service/src/common"
+	typegrants "FGG-Service/src/grants/types"
 	srvpoints "FGG-Service/src/points/service"
 	typepoints "FGG-Service/src/points/type"
-	typegrants "FGG-Service/src/grants/types"
 	dbchangesmock "FGG-Service/tests/changes/mock"
 	dbgrantsmock "FGG-Service/tests/grants/mock"
 	dbpointsmock "FGG-Service/tests/points/mock"
@@ -73,6 +73,7 @@ func TestSrvPoints_SharedPointTypeUsesPartyPool(test *testing.T) {
 		databaseMock.AssertExpectations(test)
 	})
 }
+
 // A shared point type has no value of the user's own, so reading one for a user is a conflict.
 func TestSrvPoints_GetUserPointValueByTypeName_SharedPointType_Conflict(test *testing.T) {
 	// Arrange

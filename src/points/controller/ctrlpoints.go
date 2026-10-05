@@ -143,6 +143,7 @@ func (c *Controller) RemovePointType(ctx echo.Context, partyId genpoints.PartyId
 
 	return ctx.NoContent(http.StatusNoContent)
 }
+
 // GetUserPoints (GET /parties/{partyId}/points/users/{login})
 func (c *Controller) GetUserPoints(ctx echo.Context, partyId genpoints.PartyId, login genpoints.Login) error {
 	actorUserId, err := c.AuthService.GetUserId(ctx)
@@ -301,6 +302,7 @@ func (c *Controller) GetUserPointHistory(ctx echo.Context, partyId genpoints.Par
 
 	return ctx.JSON(http.StatusOK, historyDto)
 }
+
 // GetAllPartyPoints (GET /parties/{partyId}/points/party)
 func (c *Controller) GetAllPartyPoints(ctx echo.Context, partyId genpoints.PartyId) error {
 	actorUserId, err := c.AuthService.GetUserId(ctx)
@@ -480,7 +482,7 @@ func (c *Controller) convertHistoryToDto(history []typepoints.PointHistoryEntry)
 			DesiredChangeValue: entry.DesiredChangeValue,
 			ActualChangeValue:  entry.ActualChangeValue,
 			FinalValue:         entry.FinalValue,
-			ActorLogin:        &actorLogin,
+			ActorLogin:         &actorLogin,
 			ChangedDate:        entry.ChangedDate,
 		}
 	}

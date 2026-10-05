@@ -125,6 +125,7 @@ func (c *Controller) RemoveEffect(ctx echo.Context, partyId geneffects.PartyId, 
 
 	return ctx.NoContent(http.StatusNoContent)
 }
+
 // GetUserEffects (GET /parties/{partyId}/effects/{login})
 func (c *Controller) GetUserEffects(ctx echo.Context, partyId geneffects.PartyId, login geneffects.Login) error {
 	_, userId, err := c.userIdFromLogin(ctx, partyId, login)

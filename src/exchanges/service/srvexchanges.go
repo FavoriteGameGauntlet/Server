@@ -118,6 +118,7 @@ func (s *Service) exchangeByName(partyId int, name string) (exchange typeexchang
 
 	return
 }
+
 // UseExchange spends an exchange's source change and grants its target change. Without target
 // logins both sides fall on the user making the exchange. With them, the source change is what the
 // named users lose and the target change is what the user making the exchange gains — this is how a
