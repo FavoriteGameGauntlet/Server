@@ -12,6 +12,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log/slog"
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
@@ -232,11 +233,24 @@ func (s *Service) EndUserEffect(ctx context.Context, actorUserId int, userId int
 }
 
 // StopEndedUserEffects clears the effects whose duration has run out. Nothing else calls the sweep,
-// so it runs on a schedule the way completed timers are stopped.
+// so it runs on a schedule the way completed timers are stopped. An effect that ran out on its own
+// has no actor, so its holder is recorded as the one who ended it, the way a finished timer is.
 func (s *Service) StopEndedUserEffects(ctx context.Context) error {
-	_, err := s.Database.DeleteEndedUserEffectsCommand(ctx)
+	endedEffects, err := s.Database.GetEndedUserEffectsCommand(ctx)
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	for _, ended := range endedEffects {
+		err = s.Database.DeleteUserEffectCommand(ctx, ended.UserId, ended.PartyId, ended.EffectId, ended.UserId, nil)
+
+		if err != nil {
+			slog.Error("StopEndedUserEffect", "userEffectId", ended.Id, "userId", ended.UserId, "error", err)
+		}
+	}
+
+	return nil
 }
 
 // StartEndedEffectsScheduler clears effects whose duration has run out, the way completed timers are

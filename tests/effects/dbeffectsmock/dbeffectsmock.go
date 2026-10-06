@@ -79,9 +79,9 @@ func (m *DatabaseMock) DeleteUserEffectCommand(_ context.Context, userId int, pa
 	return args.Error(0)
 }
 
-func (m *DatabaseMock) DeleteEndedUserEffectsCommand(_ context.Context) (deleted []typeeffects.EndedUserEffect, err error) {
+func (m *DatabaseMock) GetEndedUserEffectsCommand(_ context.Context) (ended []typeeffects.EndedUserEffect, err error) {
 	args := m.Called()
-	deleted = args.Get(0).([]typeeffects.EndedUserEffect)
+	ended = args.Get(0).([]typeeffects.EndedUserEffect)
 	err = args.Error(1)
 	return
 }

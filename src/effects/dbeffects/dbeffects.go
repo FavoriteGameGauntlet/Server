@@ -21,7 +21,7 @@ type IDatabase interface {
 	GetUserEffectsCommand(ctx context.Context, userId int, partyId int) (userEffects []typeeffects.UserEffectDetail, err error)
 	ChangeUserEffectUsesLeftCommand(ctx context.Context, userId int, partyId int, effectId int, usesLeft *int, actorUserId int, sourceEventId *int) (historyEventId int, err error)
 	DeleteUserEffectCommand(ctx context.Context, userId int, partyId int, effectId int, actorUserId int, sourceEventId *int) error
-	DeleteEndedUserEffectsCommand(ctx context.Context) (deleted []typeeffects.EndedUserEffect, err error)
+	GetEndedUserEffectsCommand(ctx context.Context) (ended []typeeffects.EndedUserEffect, err error)
 	GetEffectHistoryCommand(ctx context.Context, userId int, partyId int) (history []typeeffects.EffectHistory, err error)
 	GetUserEffectPointModifiersJsonbCommand(ctx context.Context, partyId int, userEffectId int) (modifiers []typeeffects.PointModifier, err error)
 }
@@ -271,10 +271,10 @@ func (db *Database) DeleteUserEffectCommand(ctx context.Context, userId int, par
 	return err
 }
 
-var deleteEndedUserEffectsQuery = dbaccess.Query{Name: "DeleteEndedUserEffectsQuery", SQL: `SELECT * FROM delete_ended_user_effects()`}
+var getEndedUserEffectsQuery = dbaccess.Query{Name: "GetEndedUserEffectsQuery", SQL: `SELECT * FROM get_ended_user_effects()`, IsSilent: true}
 
-func (db *Database) DeleteEndedUserEffectsCommand(ctx context.Context) (deleted []typeeffects.EndedUserEffect, err error) {
-	rows, err := dbaccess.QueryRows(ctx, deleteEndedUserEffectsQuery)
+func (db *Database) GetEndedUserEffectsCommand(ctx context.Context) (ended []typeeffects.EndedUserEffect, err error) {
+	rows, err := dbaccess.QueryRows(ctx, getEndedUserEffectsQuery)
 
 	if err != nil {
 		return
@@ -289,12 +289,12 @@ func (db *Database) DeleteEndedUserEffectsCommand(ctx context.Context) (deleted 
 			return
 		}
 
-		deleted = append(deleted, entry)
+		ended = append(ended, entry)
 	}
 
 	err = rows.Err()
 
-	dbaccess.LogDbResult(deleteEndedUserEffectsQuery, deleted, err)
+	dbaccess.LogDbResult(getEndedUserEffectsQuery, ended, err)
 
 	_ = rows.Close()
 	return
