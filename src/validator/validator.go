@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"regexp"
+	"time"
 )
 
 var userNameRegex = regexp.MustCompile(`^\w+$`)
@@ -108,6 +109,38 @@ func ValidatePointTypeBounds(startValue int, minimum *int, maximum *int) error {
 func ValidateChangeAmount(amount int) error {
 	if !fitsInteger(amount) {
 		return common.NewChangeAmountUnprocessableError(amount, math.MinInt32, math.MaxInt32)
+	}
+
+	return nil
+}
+
+// ValidateEffectUseCount checks what the schema requires of an effect's use count: a positive value
+// that fits the INTEGER column. A nil use count does not limit.
+func ValidateEffectUseCount(useCount *int) error {
+	if useCount == nil {
+		return nil
+	}
+
+	if *useCount < 1 || !fitsInteger(*useCount) {
+		return common.NewEffectUseCountUnprocessableError(*useCount, 1, math.MaxInt32)
+	}
+
+	return nil
+}
+
+// maxEffectDurationInSeconds is the longest duration that still fits a time.Duration once converted.
+const maxEffectDurationInSeconds = math.MaxInt64 / int64(time.Second)
+
+// ValidateEffectDurationInSeconds checks that an effect's duration is positive, as the schema
+// requires, and short enough to be converted to a time.Duration. It has to run before that
+// conversion, which wraps around silently. A nil duration does not run out.
+func ValidateEffectDurationInSeconds(seconds *int) error {
+	if seconds == nil {
+		return nil
+	}
+
+	if *seconds < 1 || int64(*seconds) > maxEffectDurationInSeconds {
+		return common.NewEffectDurationUnprocessableError(*seconds, 1, maxEffectDurationInSeconds)
 	}
 
 	return nil

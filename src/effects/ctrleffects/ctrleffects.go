@@ -8,6 +8,7 @@ import (
 	"FGG-Service/src/effects/srveffects"
 	"FGG-Service/src/effects/typeeffects"
 	"FGG-Service/src/parties/srvparties"
+	"FGG-Service/src/validator"
 	"net/http"
 	"time"
 
@@ -85,6 +86,18 @@ func (c *Controller) CreateEffect(ctx echo.Context, partyId geneffects.PartyId) 
 
 	if err != nil {
 		err = common.NewBadRequestError(err.Error())
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	err = validator.ValidateEffectUseCount(effectDto.UseCount)
+
+	if err != nil {
+		return common.SendJSONErrorResponse(ctx, err)
+	}
+
+	err = validator.ValidateEffectDurationInSeconds(effectDto.DurationInSeconds)
+
+	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 

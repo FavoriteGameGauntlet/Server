@@ -633,6 +633,36 @@ func NewChangeAmountUnprocessableError(amount int, minimum int, maximum int) err
 	}
 }
 
+func NewEffectUseCountUnprocessableError(useCount int, minimum int, maximum int) error {
+	message := fmt.Sprintf(
+		"The effect use count (%d) should be between %d and %d, or null for no limit.",
+		useCount,
+		minimum,
+		maximum)
+
+	return &UnprocessableError{
+		&BaseError{
+			Code:    "INCORRECT_EFFECT_USE_COUNT",
+			Message: message,
+		},
+	}
+}
+
+func NewEffectDurationUnprocessableError(seconds int, minimum int, maximum int64) error {
+	message := fmt.Sprintf(
+		"The effect duration (%d seconds) should be between %d and %d seconds.",
+		seconds,
+		minimum,
+		maximum)
+
+	return &UnprocessableError{
+		&BaseError{
+			Code:    "INCORRECT_EFFECT_DURATION",
+			Message: message,
+		},
+	}
+}
+
 func NewPasswordUnprocessableError(messageDetails string) error {
 	message := fmt.Sprintf(
 		"The password does not match the format. %s",
