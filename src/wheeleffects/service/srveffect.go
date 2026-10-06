@@ -104,9 +104,12 @@ func (s *Service) ClearLastWheelEffects(ctx context.Context, userId int, partyId
 func (s *Service) GetLastRolledWheelEffects(ctx context.Context, userId int, partyId int) (rows []typewheeleffects.LastWheelRow, err error) {
 	rows, err = s.Database.GetLastRolledWheelEffectsCommand(ctx, userId, partyId)
 
-	if err == nil && len(rows) == 0 {
-		err = common.NewLastWheelEffectsNotFoundError()
+	if err != nil {
 		return
+	}
+
+	if len(rows) == 0 {
+		err = common.NewLastWheelEffectsNotFoundError()
 	}
 
 	return

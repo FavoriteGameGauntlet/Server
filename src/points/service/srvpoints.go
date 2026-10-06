@@ -183,7 +183,11 @@ func (s *Service) getVisiblePointTypeByName(ctx context.Context, actorUserId int
 
 	isAdmin, err := s.isAdmin(ctx, actorUserId, partyId)
 
-	if err == nil && !isAdmin {
+	if err != nil {
+		return
+	}
+
+	if !isAdmin {
 		err = common.NewPointTypeNotFoundError(name)
 	}
 
@@ -194,7 +198,11 @@ func (s *Service) getVisiblePointTypeByName(ctx context.Context, actorUserId int
 func (s *Service) getUserPointTypeByName(ctx context.Context, actorUserId int, partyId int, name string) (pointType typepoints.PointTypeInfo, err error) {
 	pointType, err = s.getVisiblePointTypeByName(ctx, actorUserId, partyId, name)
 
-	if err == nil && pointType.IsShared {
+	if err != nil {
+		return
+	}
+
+	if pointType.IsShared {
 		err = common.NewSharedPointTypeConflictError(name)
 	}
 
@@ -205,7 +213,11 @@ func (s *Service) getUserPointTypeByName(ctx context.Context, actorUserId int, p
 func (s *Service) getSharedPointTypeByName(ctx context.Context, actorUserId int, partyId int, name string) (pointType typepoints.PointTypeInfo, err error) {
 	pointType, err = s.getVisiblePointTypeByName(ctx, actorUserId, partyId, name)
 
-	if err == nil && !pointType.IsShared {
+	if err != nil {
+		return
+	}
+
+	if !pointType.IsShared {
 		err = common.NewNotSharedPointTypeConflictError(name)
 	}
 
