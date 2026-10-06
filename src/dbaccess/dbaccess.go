@@ -1,7 +1,7 @@
 package dbaccess
 
 import (
-	"FGG-Service/src/auth/types"
+	"FGG-Service/src/auth/typeauth"
 	"context"
 	"database/sql"
 	"log/slog"

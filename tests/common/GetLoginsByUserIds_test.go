@@ -2,7 +2,7 @@ package common_test
 
 import (
 	"FGG-Service/src/common"
-	srvauthmock "FGG-Service/tests/auth/mock"
+	"FGG-Service/tests/auth/srvauthmock"
 	"errors"
 	"testing"
 

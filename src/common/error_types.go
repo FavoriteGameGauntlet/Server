@@ -1,7 +1,7 @@
 package common
 
 import (
-	"FGG-Service/src/timers/types"
+	"FGG-Service/src/timers/typetimers"
 	"fmt"
 )
 
