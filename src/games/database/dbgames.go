@@ -3,26 +3,27 @@ package dbgames
 import (
 	"FGG-Service/src/dbaccess"
 	"FGG-Service/src/games/types"
+	"context"
 	"time"
 )
 
 type IDatabase interface {
-	GetGameByNameCommand(partyId int, name string) (game typegames.Game, err error)
-	CreateGameCommand(partyId int, name string) (game typegames.Game, err error)
-	GetGameCommand(partyId int, gameId int) (game typegames.Game, err error)
-	GetWishlistGameCommand(userId int, partyId int, gameId int) (game typegames.WishlistGame, err error)
-	CreateWishlistGameCommand(userId int, partyId int, gameId int) (game typegames.CreatedWishlistGame, err error)
-	DeleteWishlistGameCommand(userId int, partyId int, gameId int) error
-	GetWishlistGamesCommand(userId int, partyId int) (games typegames.WishlistGames, err error)
-	CreateCurrentGameCommand(userId int, partyId int, gameId int, actorUserId int, sourceEventId *int) (game typegames.CreatedUserGame, err error)
-	GetCurrentGameCommand(userId int, partyId int) (game typegames.UserGame, err error)
-	ChangeGameTimeSpentCommand(userId int, partyId int, gameId int, changeValue time.Duration, actorUserId int, sourceEventId *int) error
-	CancelCurrentGameCommand(userId int, partyId int, gameId int, actorUserId int, sourceEventId *int) (game typegames.UserGame, err error)
-	FinishCurrentGameCommand(userId int, partyId int, gameId int, actorUserId int, sourceEventId *int) (game typegames.UserGame, err error)
-	RateGameCommand(userId int, partyId int, gameId int, rating int, reviewComment *string) (gameRating typegames.GameRating, err error)
-	GetGameReviewCommand(userId int, partyId int, gameId int) (review typegames.GameReview, err error)
-	GetGameHistoryCommand(userId int, partyId int) (games []typegames.GameHistoryEntry, err error)
-	GetAllCurrentGamesCommand(partyId int) (games []typegames.UserGameWithLogin, err error)
+	GetGameByNameCommand(ctx context.Context, partyId int, name string) (game typegames.Game, err error)
+	CreateGameCommand(ctx context.Context, partyId int, name string) (game typegames.Game, err error)
+	GetGameCommand(ctx context.Context, partyId int, gameId int) (game typegames.Game, err error)
+	GetWishlistGameCommand(ctx context.Context, userId int, partyId int, gameId int) (game typegames.WishlistGame, err error)
+	CreateWishlistGameCommand(ctx context.Context, userId int, partyId int, gameId int) (game typegames.CreatedWishlistGame, err error)
+	DeleteWishlistGameCommand(ctx context.Context, userId int, partyId int, gameId int) error
+	GetWishlistGamesCommand(ctx context.Context, userId int, partyId int) (games typegames.WishlistGames, err error)
+	CreateCurrentGameCommand(ctx context.Context, userId int, partyId int, gameId int, actorUserId int, sourceEventId *int) (game typegames.CreatedUserGame, err error)
+	GetCurrentGameCommand(ctx context.Context, userId int, partyId int) (game typegames.UserGame, err error)
+	ChangeGameTimeSpentCommand(ctx context.Context, userId int, partyId int, gameId int, changeValue time.Duration, actorUserId int, sourceEventId *int) error
+	CancelCurrentGameCommand(ctx context.Context, userId int, partyId int, gameId int, actorUserId int, sourceEventId *int) (game typegames.UserGame, err error)
+	FinishCurrentGameCommand(ctx context.Context, userId int, partyId int, gameId int, actorUserId int, sourceEventId *int) (game typegames.UserGame, err error)
+	RateGameCommand(ctx context.Context, userId int, partyId int, gameId int, rating int, reviewComment *string) (gameRating typegames.GameRating, err error)
+	GetGameReviewCommand(ctx context.Context, userId int, partyId int, gameId int) (review typegames.GameReview, err error)
+	GetGameHistoryCommand(ctx context.Context, userId int, partyId int) (games []typegames.GameHistoryEntry, err error)
+	GetAllCurrentGamesCommand(ctx context.Context, partyId int) (games []typegames.UserGameWithLogin, err error)
 }
 
 type Database struct {
@@ -30,8 +31,8 @@ type Database struct {
 
 var getGameByNameQuery = dbaccess.Query{Name: "GetGameByNameQuery", SQL: `SELECT * FROM get_game_by_name($1::integer, $2::text)`}
 
-func (db *Database) GetGameByNameCommand(partyId int, name string) (game typegames.Game, err error) {
-	row := dbaccess.QueryRow(getGameByNameQuery, partyId, name)
+func (db *Database) GetGameByNameCommand(ctx context.Context, partyId int, name string) (game typegames.Game, err error) {
+	row := dbaccess.QueryRow(ctx, getGameByNameQuery, partyId, name)
 
 	err = row.Scan(&game.Id, &game.PartyId, &game.Name)
 
@@ -42,8 +43,8 @@ func (db *Database) GetGameByNameCommand(partyId int, name string) (game typegam
 
 var createGameQuery = dbaccess.Query{Name: "CreateGameQuery", SQL: `SELECT * FROM create_game($1::integer, $2::text)`}
 
-func (db *Database) CreateGameCommand(partyId int, name string) (game typegames.Game, err error) {
-	row := dbaccess.QueryRow(createGameQuery, partyId, name)
+func (db *Database) CreateGameCommand(ctx context.Context, partyId int, name string) (game typegames.Game, err error) {
+	row := dbaccess.QueryRow(ctx, createGameQuery, partyId, name)
 
 	err = row.Scan(&game.Id, &game.PartyId, &game.Name)
 
@@ -54,8 +55,8 @@ func (db *Database) CreateGameCommand(partyId int, name string) (game typegames.
 
 var getGameQuery = dbaccess.Query{Name: "GetGameQuery", SQL: `SELECT * FROM get_game($1::integer, $2::integer)`}
 
-func (db *Database) GetGameCommand(partyId int, gameId int) (game typegames.Game, err error) {
-	row := dbaccess.QueryRow(getGameQuery, partyId, gameId)
+func (db *Database) GetGameCommand(ctx context.Context, partyId int, gameId int) (game typegames.Game, err error) {
+	row := dbaccess.QueryRow(ctx, getGameQuery, partyId, gameId)
 
 	err = row.Scan(&game.Id, &game.PartyId, &game.Name)
 
@@ -66,8 +67,8 @@ func (db *Database) GetGameCommand(partyId int, gameId int) (game typegames.Game
 
 var getWishlistGameQuery = dbaccess.Query{Name: "GetWishlistGameQuery", SQL: `SELECT * FROM get_wishlist_game($1::integer, $2::integer, $3::integer)`}
 
-func (db *Database) GetWishlistGameCommand(userId int, partyId int, gameId int) (game typegames.WishlistGame, err error) {
-	row := dbaccess.QueryRow(getWishlistGameQuery, userId, partyId, gameId)
+func (db *Database) GetWishlistGameCommand(ctx context.Context, userId int, partyId int, gameId int) (game typegames.WishlistGame, err error) {
+	row := dbaccess.QueryRow(ctx, getWishlistGameQuery, userId, partyId, gameId)
 
 	err = row.Scan(&game.Id, &game.GameId, &game.Name)
 
@@ -78,8 +79,8 @@ func (db *Database) GetWishlistGameCommand(userId int, partyId int, gameId int) 
 
 var createWishlistGameQuery = dbaccess.Query{Name: "CreateWishlistGameQuery", SQL: `SELECT * FROM create_wishlist_game($1::integer, $2::integer, $3::integer)`}
 
-func (db *Database) CreateWishlistGameCommand(userId int, partyId int, gameId int) (game typegames.CreatedWishlistGame, err error) {
-	row := dbaccess.QueryRow(createWishlistGameQuery, userId, partyId, gameId)
+func (db *Database) CreateWishlistGameCommand(ctx context.Context, userId int, partyId int, gameId int) (game typegames.CreatedWishlistGame, err error) {
+	row := dbaccess.QueryRow(ctx, createWishlistGameQuery, userId, partyId, gameId)
 
 	err = row.Scan(&game.Id, &game.UserId, &game.PartyId, &game.GameId, &game.CreatedDate)
 
@@ -90,8 +91,8 @@ func (db *Database) CreateWishlistGameCommand(userId int, partyId int, gameId in
 
 var deleteWishlistGameQuery = dbaccess.Query{Name: "DeleteWishlistGameQuery", SQL: `SELECT delete_wishlist_game($1::integer, $2::integer, $3::integer)`}
 
-func (db *Database) DeleteWishlistGameCommand(userId int, partyId int, gameId int) error {
-	_, err := dbaccess.Exec(deleteWishlistGameQuery, userId, partyId, gameId)
+func (db *Database) DeleteWishlistGameCommand(ctx context.Context, userId int, partyId int, gameId int) error {
+	_, err := dbaccess.Exec(ctx, deleteWishlistGameQuery, userId, partyId, gameId)
 
 	dbaccess.LogDbResult(deleteWishlistGameQuery, nil, err)
 
@@ -100,8 +101,8 @@ func (db *Database) DeleteWishlistGameCommand(userId int, partyId int, gameId in
 
 var getWishlistGamesQuery = dbaccess.Query{Name: "GetWishlistGamesQuery", SQL: `SELECT * FROM get_wishlist_games($1::integer, $2::integer)`}
 
-func (db *Database) GetWishlistGamesCommand(userId int, partyId int) (games typegames.WishlistGames, err error) {
-	rows, err := dbaccess.QueryRows(getWishlistGamesQuery, userId, partyId)
+func (db *Database) GetWishlistGamesCommand(ctx context.Context, userId int, partyId int) (games typegames.WishlistGames, err error) {
+	rows, err := dbaccess.QueryRows(ctx, getWishlistGamesQuery, userId, partyId)
 
 	if err != nil {
 		return
@@ -129,8 +130,8 @@ func (db *Database) GetWishlistGamesCommand(userId int, partyId int) (games type
 
 var createCurrentGameQuery = dbaccess.Query{Name: "CreateCurrentGameQuery", SQL: `SELECT * FROM create_user_game($1::integer, $2::integer, $3::integer, $4::integer, $5::integer)`}
 
-func (db *Database) CreateCurrentGameCommand(userId int, partyId int, gameId int, actorUserId int, sourceEventId *int) (game typegames.CreatedUserGame, err error) {
-	row := dbaccess.QueryRow(createCurrentGameQuery, userId, partyId, gameId, actorUserId, sourceEventId)
+func (db *Database) CreateCurrentGameCommand(ctx context.Context, userId int, partyId int, gameId int, actorUserId int, sourceEventId *int) (game typegames.CreatedUserGame, err error) {
+	row := dbaccess.QueryRow(ctx, createCurrentGameQuery, userId, partyId, gameId, actorUserId, sourceEventId)
 
 	var timeSpentRaw string
 	err = row.Scan(&game.Id, &game.UserId, &game.PartyId, &game.GameId, &timeSpentRaw, &game.StartedDate)
@@ -146,8 +147,8 @@ func (db *Database) CreateCurrentGameCommand(userId int, partyId int, gameId int
 
 var getCurrentGameQuery = dbaccess.Query{Name: "GetCurrentGameQuery", SQL: `SELECT * FROM get_user_game($1::integer, $2::integer)`}
 
-func (db *Database) GetCurrentGameCommand(userId int, partyId int) (game typegames.UserGame, err error) {
-	row := dbaccess.QueryRow(getCurrentGameQuery, userId, partyId)
+func (db *Database) GetCurrentGameCommand(ctx context.Context, userId int, partyId int) (game typegames.UserGame, err error) {
+	row := dbaccess.QueryRow(ctx, getCurrentGameQuery, userId, partyId)
 
 	var timeSpentRaw string
 	err = row.Scan(&game.Id, &game.Name, &timeSpentRaw, &game.StartDate)
@@ -163,8 +164,8 @@ func (db *Database) GetCurrentGameCommand(userId int, partyId int) (game typegam
 
 var changeGameTimeSpentQuery = dbaccess.Query{Name: "ChangeGameTimeSpentQuery", SQL: `SELECT change_game_time_spent($1::integer, $2::integer, $3::integer, $4::interval, $5::integer, $6::integer)`}
 
-func (db *Database) ChangeGameTimeSpentCommand(userId int, partyId int, gameId int, changeValue time.Duration, actorUserId int, sourceEventId *int) error {
-	_, err := dbaccess.Exec(changeGameTimeSpentQuery, userId, partyId, gameId, changeValue, actorUserId, sourceEventId)
+func (db *Database) ChangeGameTimeSpentCommand(ctx context.Context, userId int, partyId int, gameId int, changeValue time.Duration, actorUserId int, sourceEventId *int) error {
+	_, err := dbaccess.Exec(ctx, changeGameTimeSpentQuery, userId, partyId, gameId, changeValue, actorUserId, sourceEventId)
 
 	dbaccess.LogDbResult(changeGameTimeSpentQuery, nil, err)
 
@@ -175,8 +176,8 @@ var cancelCurrentGameQuery = dbaccess.Query{Name: "CancelCurrentGameQuery", SQL:
 
 // CancelCurrentGameCommand returns the cancelled game with the time spent on it as it was recorded in
 // the history. No row means the user has no such current game.
-func (db *Database) CancelCurrentGameCommand(userId int, partyId int, gameId int, actorUserId int, sourceEventId *int) (game typegames.UserGame, err error) {
-	row := dbaccess.QueryRow(cancelCurrentGameQuery, userId, partyId, gameId, actorUserId, sourceEventId)
+func (db *Database) CancelCurrentGameCommand(ctx context.Context, userId int, partyId int, gameId int, actorUserId int, sourceEventId *int) (game typegames.UserGame, err error) {
+	row := dbaccess.QueryRow(ctx, cancelCurrentGameQuery, userId, partyId, gameId, actorUserId, sourceEventId)
 
 	var timeSpentRaw string
 	err = row.Scan(&game.Id, &game.Name, &timeSpentRaw, &game.StartDate)
@@ -194,8 +195,8 @@ var finishCurrentGameQuery = dbaccess.Query{Name: "FinishCurrentGameQuery", SQL:
 
 // FinishCurrentGameCommand returns the finished game with the time spent on it as it was recorded in
 // the history. No row means the user has no such current game.
-func (db *Database) FinishCurrentGameCommand(userId int, partyId int, gameId int, actorUserId int, sourceEventId *int) (game typegames.UserGame, err error) {
-	row := dbaccess.QueryRow(finishCurrentGameQuery, userId, partyId, gameId, actorUserId, sourceEventId)
+func (db *Database) FinishCurrentGameCommand(ctx context.Context, userId int, partyId int, gameId int, actorUserId int, sourceEventId *int) (game typegames.UserGame, err error) {
+	row := dbaccess.QueryRow(ctx, finishCurrentGameQuery, userId, partyId, gameId, actorUserId, sourceEventId)
 
 	var timeSpentRaw string
 	err = row.Scan(&game.Id, &game.Name, &timeSpentRaw, &game.StartDate)
@@ -213,8 +214,8 @@ var rateGameQuery = dbaccess.Query{Name: "RateGameQuery", SQL: `SELECT * FROM ra
 
 // RateGameCommand upserts the rating a user left for a game. Only a game the user has already
 // finished or cancelled can be rated, and rating any other one writes nothing and returns no row.
-func (db *Database) RateGameCommand(userId int, partyId int, gameId int, rating int, reviewComment *string) (gameRating typegames.GameRating, err error) {
-	row := dbaccess.QueryRow(rateGameQuery, userId, partyId, gameId, rating, reviewComment)
+func (db *Database) RateGameCommand(ctx context.Context, userId int, partyId int, gameId int, rating int, reviewComment *string) (gameRating typegames.GameRating, err error) {
+	row := dbaccess.QueryRow(ctx, rateGameQuery, userId, partyId, gameId, rating, reviewComment)
 
 	err = row.Scan(
 		&gameRating.Id,
@@ -233,8 +234,8 @@ func (db *Database) RateGameCommand(userId int, partyId int, gameId int, rating 
 
 var getGameReviewQuery = dbaccess.Query{Name: "GetGameReviewQuery", SQL: `SELECT * FROM get_game_review($1::integer, $2::integer, $3::integer)`}
 
-func (db *Database) GetGameReviewCommand(userId int, partyId int, gameId int) (review typegames.GameReview, err error) {
-	row := dbaccess.QueryRow(getGameReviewQuery, userId, partyId, gameId)
+func (db *Database) GetGameReviewCommand(ctx context.Context, userId int, partyId int, gameId int) (review typegames.GameReview, err error) {
+	row := dbaccess.QueryRow(ctx, getGameReviewQuery, userId, partyId, gameId)
 
 	err = row.Scan(&review.Rating, &review.ReviewComment)
 
@@ -245,8 +246,8 @@ func (db *Database) GetGameReviewCommand(userId int, partyId int, gameId int) (r
 
 var getGameHistoryQuery = dbaccess.Query{Name: "GetGameHistoryQuery", SQL: `SELECT * FROM get_game_history($1::integer, $2::integer)`}
 
-func (db *Database) GetGameHistoryCommand(userId int, partyId int) (games []typegames.GameHistoryEntry, err error) {
-	rows, err := dbaccess.QueryRows(getGameHistoryQuery, userId, partyId)
+func (db *Database) GetGameHistoryCommand(ctx context.Context, userId int, partyId int) (games []typegames.GameHistoryEntry, err error) {
+	rows, err := dbaccess.QueryRows(ctx, getGameHistoryQuery, userId, partyId)
 
 	if err != nil {
 		return
@@ -287,8 +288,8 @@ func (db *Database) GetGameHistoryCommand(userId int, partyId int) (games []type
 
 var getAllCurrentGamesQuery = dbaccess.Query{Name: "GetAllCurrentGamesQuery", SQL: `SELECT * FROM get_all_user_games($1::integer)`}
 
-func (db *Database) GetAllCurrentGamesCommand(partyId int) (games []typegames.UserGameWithLogin, err error) {
-	rows, err := dbaccess.QueryRows(getAllCurrentGamesQuery, partyId)
+func (db *Database) GetAllCurrentGamesCommand(ctx context.Context, partyId int) (games []typegames.UserGameWithLogin, err error) {
+	rows, err := dbaccess.QueryRows(ctx, getAllCurrentGamesQuery, partyId)
 
 	if err != nil {
 		return

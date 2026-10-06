@@ -199,7 +199,7 @@ func TestSrvTimers_CreateCurrentTimer(test *testing.T) {
 			}
 
 			// Act
-			timer, err := sut.CreateCurrentTimer(testCase.UserId, 1)
+			timer, err := sut.CreateCurrentTimer(test.Context(), testCase.UserId, 1)
 
 			// Assert
 			if testCase.ExpectedErrorAs != nil {
@@ -235,7 +235,7 @@ func TestSrvTimers_CreateCurrentTimer_ExistingTimer_AlreadyExistsCode(test *test
 	sut := srvtimers.Service{Database: timerDb, GamesDatabase: gamesDb}
 
 	// Act
-	_, err := sut.CreateCurrentTimer(1, 1)
+	_, err := sut.CreateCurrentTimer(test.Context(), 1, 1)
 
 	// Assert
 	var conflict *common.ConflictError

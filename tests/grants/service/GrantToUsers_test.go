@@ -51,7 +51,7 @@ func TestSrvGrants_GrantToUsers(test *testing.T) {
 
 		sut := srvgrants.Service{Database: grantsDb, ChangesDatabase: changesDb, ChangesService: changesSvc}
 
-		err := sut.GrantToUsers(9, 1, []int{3, 4}, []typechanges.ChangeEntryInput{input})
+		err := sut.GrantToUsers(test.Context(), 9, 1, []int{3, 4}, []typechanges.ChangeEntryInput{input})
 
 		require.NoError(test, err)
 		grantsDb.AssertExpectations(test)
@@ -70,7 +70,7 @@ func TestSrvGrants_GrantToUsers(test *testing.T) {
 
 		sut := srvgrants.Service{Database: grantsDb, ChangesService: changesSvc}
 
-		err := sut.GrantToUsers(9, 1, []int{3}, []typechanges.ChangeEntryInput{input})
+		err := sut.GrantToUsers(test.Context(), 9, 1, []int{3}, []typechanges.ChangeEntryInput{input})
 
 		require.Error(test, err)
 		grantsDb.AssertNotCalled(test, "CreateManualHistoryCommand")

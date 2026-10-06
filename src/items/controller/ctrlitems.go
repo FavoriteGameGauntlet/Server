@@ -39,13 +39,13 @@ func (c *Controller) GetItems(ctx echo.Context, partyId genitems.PartyId) error 
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.PartyService.RequireMember(userId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	items, err := c.Service.GetItems(partyId)
+	items, err := c.Service.GetItems(ctx.Request().Context(), partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -62,7 +62,7 @@ func (c *Controller) GetRemovedItems(ctx echo.Context, partyId genitems.PartyId)
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	items, err := c.Service.GetRemovedItems(partyId)
+	items, err := c.Service.GetRemovedItems(ctx.Request().Context(), partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -88,6 +88,7 @@ func (c *Controller) CreateItem(ctx echo.Context, partyId genitems.PartyId) erro
 	}
 
 	item, err := c.Service.CreateItem(
+		ctx.Request().Context(),
 		partyId,
 		itemDto.Name,
 		itemDto.Description,
@@ -109,7 +110,7 @@ func (c *Controller) RemoveItem(ctx echo.Context, partyId genitems.PartyId, name
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.RemoveItem(partyId, name)
+	err = c.Service.RemoveItem(ctx.Request().Context(), partyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -126,7 +127,7 @@ func (c *Controller) GetUserItems(ctx echo.Context, partyId genitems.PartyId, lo
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	userItems, err := c.Service.GetUserItems(userId, partyId)
+	userItems, err := c.Service.GetUserItems(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -153,7 +154,7 @@ func (c *Controller) UseUserItem(ctx echo.Context, partyId genitems.PartyId, log
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.UseItem(actorUserId, userId, partyId, name)
+	err = c.Service.UseItem(ctx.Request().Context(), actorUserId, userId, partyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -170,7 +171,7 @@ func (c *Controller) DiscardUserItem(ctx echo.Context, partyId genitems.PartyId,
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.DiscardUserItem(actorUserId, userId, partyId, name)
+	err = c.Service.DiscardUserItem(ctx.Request().Context(), actorUserId, userId, partyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -187,7 +188,7 @@ func (c *Controller) GetUserItemHistory(ctx echo.Context, partyId genitems.Party
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	history, err := c.Service.GetItemHistory(userId, partyId)
+	history, err := c.Service.GetItemHistory(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -198,7 +199,7 @@ func (c *Controller) GetUserItemHistory(ctx echo.Context, partyId genitems.Party
 		actorUserIds[i] = entry.ActorUserId
 	}
 
-	loginsByUserId, err := common.GetLoginsByUserIds(c.AuthService, actorUserIds)
+	loginsByUserId, err := common.GetLoginsByUserIds(ctx.Request().Context(), c.AuthService, actorUserIds)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -229,13 +230,13 @@ func (c *Controller) userIdFromLogin(ctx echo.Context, partyId genitems.PartyId,
 		return
 	}
 
-	err = c.PartyService.RequireMember(actorUserId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), actorUserId, partyId)
 
 	if err != nil {
 		return
 	}
 
-	userId, err = c.AuthService.GetUserIdByLogin(login)
+	userId, err = c.AuthService.GetUserIdByLogin(ctx.Request().Context(), login)
 
 	return
 }

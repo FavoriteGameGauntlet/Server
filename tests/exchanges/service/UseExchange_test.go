@@ -66,7 +66,7 @@ func TestSrvExchanges_UseExchange(test *testing.T) {
 			PointsService:   &srvpoints.Service{Database: pointsDb},
 		}
 
-		err := sut.UseExchange(5, 1, seize.Name, nil)
+		err := sut.UseExchange(test.Context(), 5, 1, seize.Name, nil)
 
 		require.NoError(test, err)
 		exchangesDb.AssertExpectations(test)
@@ -91,7 +91,7 @@ func TestSrvExchanges_UseExchange(test *testing.T) {
 
 		sut := srvexchanges.Service{Database: exchangesDb, PointsService: &srvpoints.Service{Database: pointsDb}}
 
-		err := sut.UseExchange(5, 1, seize.Name, nil)
+		err := sut.UseExchange(test.Context(), 5, 1, seize.Name, nil)
 
 		require.Error(test, err)
 		exchangesDb.AssertNotCalled(test, "CreateExchangeHistoryCommand")

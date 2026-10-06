@@ -36,7 +36,7 @@ func TestSrvParties_CreateParty(test *testing.T) {
 
 		sut := srvparties.Service{Database: partiesDb, PointsService: &srvpoints.Service{Database: pointsDb}}
 
-		party, err := sut.CreateParty(5, "gauntlet")
+		party, err := sut.CreateParty(test.Context(), 5, "gauntlet")
 
 		require.NoError(test, err)
 		require.Equal(test, 8, party.Id)
@@ -52,7 +52,7 @@ func TestSrvParties_CreateParty(test *testing.T) {
 
 		sut := srvparties.Service{Database: partiesDb}
 
-		_, err := sut.AddMember(5, 8, nil, false)
+		_, err := sut.AddMember(test.Context(), 5, 8, nil, false)
 
 		require.Error(test, err)
 		partiesDb.AssertNotCalled(test, "CreateMemberCommand")

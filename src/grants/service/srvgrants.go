@@ -5,10 +5,11 @@ import (
 	srvchanges "FGG-Service/src/changes/service"
 	"FGG-Service/src/changes/types"
 	"FGG-Service/src/grants/database"
+	"context"
 )
 
 type IService interface {
-	GrantToUsers(actorUserId int, partyId int, targetUserIds []int, inputs []typechanges.ChangeEntryInput) error
+	GrantToUsers(ctx context.Context, actorUserId int, partyId int, targetUserIds []int, inputs []typechanges.ChangeEntryInput) error
 }
 
 type Service struct {
@@ -29,8 +30,8 @@ func NewService() *Service {
 // than as the outcome of a game action. Each user gets their own manual history entry, whose id is
 // the source event their grants are recorded against, so a grant can be traced back to the
 // administrator who made it.
-func (s *Service) GrantToUsers(actorUserId int, partyId int, targetUserIds []int, inputs []typechanges.ChangeEntryInput) (err error) {
-	resolved, err := s.ChangesService.ResolveChangeEntries(partyId, inputs)
+func (s *Service) GrantToUsers(ctx context.Context, actorUserId int, partyId int, targetUserIds []int, inputs []typechanges.ChangeEntryInput) (err error) {
+	resolved, err := s.ChangesService.ResolveChangeEntries(ctx, partyId, inputs)
 
 	if err != nil {
 		return
@@ -45,7 +46,7 @@ func (s *Service) GrantToUsers(actorUserId int, partyId int, targetUserIds []int
 			targetedEntries = append(targetedEntries, entry)
 		}
 
-		err = s.grantToUser(actorUserId, partyId, targetUserId, targetedEntries)
+		err = s.grantToUser(ctx, actorUserId, partyId, targetUserId, targetedEntries)
 
 		if err != nil {
 			return
@@ -58,22 +59,22 @@ func (s *Service) GrantToUsers(actorUserId int, partyId int, targetUserIds []int
 // grantToUser records one user's grant and applies it. The change is created per user so that the
 // entries behind each history row are only that user's, and the history row it is recorded under is
 // the source event of everything the change grants.
-func (s *Service) grantToUser(actorUserId int, partyId int, userId int, targetedEntries []typechanges.ChangeEntry) (err error) {
+func (s *Service) grantToUser(ctx context.Context, actorUserId int, partyId int, userId int, targetedEntries []typechanges.ChangeEntry) (err error) {
 	if len(targetedEntries) == 0 {
 		return
 	}
 
-	userChange, err := s.ChangesDatabase.CreateUserChangeFromJsonbCommand(partyId, targetedEntries)
+	userChange, err := s.ChangesDatabase.CreateUserChangeFromJsonbCommand(ctx, partyId, targetedEntries)
 
 	if err != nil {
 		return
 	}
 
-	history, err := s.Database.CreateManualHistoryCommand(userId, partyId, *userChange.ChangeId, actorUserId, nil)
+	history, err := s.Database.CreateManualHistoryCommand(ctx, userId, partyId, *userChange.ChangeId, actorUserId, nil)
 
 	if err != nil {
 		return
 	}
 
-	return s.ChangesService.ApplyChangeEntries(partyId, userChange.Entries, actorUserId, history.Id)
+	return s.ChangesService.ApplyChangeEntries(ctx, partyId, userChange.Entries, actorUserId, history.Id)
 }

@@ -31,7 +31,7 @@ func TestSrvPoints_SharedPointTypeUsesPartyPool(test *testing.T) {
 
 		sut := srvpoints.Service{Database: databaseMock}
 
-		value, err := sut.GetPointValueByTypeName(2, 1, sharedPointType.Name)
+		value, err := sut.GetPointValueByTypeName(test.Context(), 2, 1, sharedPointType.Name)
 
 		require.NoError(test, err)
 		require.Equal(test, 42, value)
@@ -50,7 +50,7 @@ func TestSrvPoints_SharedPointTypeUsesPartyPool(test *testing.T) {
 
 		sut := srvpoints.Service{Database: databaseMock}
 
-		err := sut.ChangeUserPointValueClamped(2, 1, sharedPointType.Id, 5, 9, 99)
+		err := sut.ChangeUserPointValueClamped(test.Context(), 2, 1, sharedPointType.Id, 5, 9, 99)
 
 		require.NoError(test, err)
 		databaseMock.AssertExpectations(test)
@@ -66,7 +66,7 @@ func TestSrvPoints_SharedPointTypeUsesPartyPool(test *testing.T) {
 
 		sut := srvpoints.Service{Database: databaseMock}
 
-		value, err := sut.GetPointValueByTypeName(2, 1, sharedPointType.Name)
+		value, err := sut.GetPointValueByTypeName(test.Context(), 2, 1, sharedPointType.Name)
 
 		require.NoError(test, err)
 		require.Equal(test, sharedPointType.StartValue, value)
@@ -83,7 +83,7 @@ func TestSrvPoints_GetUserPointValueByTypeName_SharedPointType_Conflict(test *te
 	sut := srvpoints.Service{Database: databaseMock}
 
 	// Act
-	_, err := sut.GetUserPointValueByTypeName(9, 2, 1, sharedPointType.Name)
+	_, err := sut.GetUserPointValueByTypeName(test.Context(), 9, 2, 1, sharedPointType.Name)
 
 	// Assert
 	var conflict *common.ConflictError
@@ -101,7 +101,7 @@ func TestSrvPoints_GetUserPointHistoryByTypeName_SharedPointType_Conflict(test *
 	sut := srvpoints.Service{Database: databaseMock}
 
 	// Act
-	_, err := sut.GetUserPointHistoryByTypeName(9, 2, 1, sharedPointType.Name)
+	_, err := sut.GetUserPointHistoryByTypeName(test.Context(), 9, 2, 1, sharedPointType.Name)
 
 	// Assert
 	var conflict *common.ConflictError
@@ -118,7 +118,7 @@ func TestSrvPoints_GetPartyPointValueByTypeName_NotSharedPointType_Conflict(test
 	sut := srvpoints.Service{Database: databaseMock}
 
 	// Act
-	_, err := sut.GetPartyPointValueByTypeName(9, 1, availableRollsType.Name)
+	_, err := sut.GetPartyPointValueByTypeName(test.Context(), 9, 1, availableRollsType.Name)
 
 	// Assert
 	var conflict *common.ConflictError
@@ -135,7 +135,7 @@ func TestSrvPoints_GetPartyPointHistoryByTypeName_NotSharedPointType_Conflict(te
 	sut := srvpoints.Service{Database: databaseMock}
 
 	// Act
-	_, err := sut.GetPartyPointHistoryByTypeName(9, 1, availableRollsType.Name)
+	_, err := sut.GetPartyPointHistoryByTypeName(test.Context(), 9, 1, availableRollsType.Name)
 
 	// Assert
 	var conflict *common.ConflictError
@@ -164,7 +164,7 @@ func TestSrvPoints_ChangeUserPointByTypeName(test *testing.T) {
 
 		sut := srvpoints.Service{Database: databaseMock, GrantsDatabase: grantsMock, ChangesDatabase: changesMock}
 
-		result, err := sut.ChangeUserPointByTypeName(9, 2, 1, availableRollsType.Name, 2)
+		result, err := sut.ChangeUserPointByTypeName(test.Context(), 9, 2, 1, availableRollsType.Name, 2)
 
 		require.NoError(test, err)
 		require.Equal(test, 2, result.ActualChangeValue)
@@ -180,7 +180,7 @@ func TestSrvPoints_ChangeUserPointByTypeName(test *testing.T) {
 
 		sut := srvpoints.Service{Database: databaseMock}
 
-		_, err := sut.ChangeUserPointByTypeName(9, 2, 1, sharedPointType.Name, 2)
+		_, err := sut.ChangeUserPointByTypeName(test.Context(), 9, 2, 1, sharedPointType.Name, 2)
 
 		require.Error(test, err)
 		databaseMock.AssertNotCalled(test, "ChangeUserPointValueCommand")
@@ -201,7 +201,7 @@ func TestSrvPoints_SeedUserPoints(test *testing.T) {
 
 		sut := srvpoints.Service{Database: databaseMock}
 
-		err := sut.SeedUserPoints(2, 1)
+		err := sut.SeedUserPoints(test.Context(), 2, 1)
 
 		require.NoError(test, err)
 		databaseMock.AssertExpectations(test)

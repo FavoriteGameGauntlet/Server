@@ -47,7 +47,7 @@ func TestSrvItems_UseItem(test *testing.T) {
 
 		sut := srvitems.Service{Database: itemsDb, ChangesDatabase: changesDb, ChangesService: changesSvc}
 
-		err := sut.UseItem(9, 7, 1, potion.Name)
+		err := sut.UseItem(test.Context(), 9, 7, 1, potion.Name)
 
 		require.NoError(test, err)
 		itemsDb.AssertExpectations(test)
@@ -68,7 +68,7 @@ func TestSrvItems_UseItem(test *testing.T) {
 
 		sut := srvitems.Service{Database: itemsDb}
 
-		err := sut.UseItem(9, 7, 1, potion.Name)
+		err := sut.UseItem(test.Context(), 9, 7, 1, potion.Name)
 
 		require.NoError(test, err)
 		itemsDb.AssertExpectations(test)
@@ -81,7 +81,7 @@ func TestSrvItems_UseItem(test *testing.T) {
 
 		sut := srvitems.Service{Database: itemsDb}
 
-		err := sut.UseItem(9, 7, 1, potion.Name)
+		err := sut.UseItem(test.Context(), 9, 7, 1, potion.Name)
 
 		require.Error(test, err)
 		itemsDb.AssertNotCalled(test, "ChangeUserItemUsesLeftCommand")
@@ -94,7 +94,7 @@ func TestSrvItems_UseItem(test *testing.T) {
 
 		sut := srvitems.Service{Database: itemsDb}
 
-		err := sut.UseItem(9, 7, 1, potion.Name)
+		err := sut.UseItem(test.Context(), 9, 7, 1, potion.Name)
 
 		require.Error(test, err)
 		itemsDb.AssertNotCalled(test, "ChangeUserItemUsesLeftCommand")
@@ -106,7 +106,7 @@ func TestSrvItems_UseItem(test *testing.T) {
 
 		sut := srvitems.Service{Database: itemsDb}
 
-		err := sut.UseItem(9, 7, 1, "unknown")
+		err := sut.UseItem(test.Context(), 9, 7, 1, "unknown")
 
 		require.Error(test, err)
 		itemsDb.AssertNotCalled(test, "GetUserItemCommand")
@@ -118,7 +118,7 @@ func TestSrvItems_UseItem(test *testing.T) {
 
 		sut := srvitems.Service{Database: itemsDb}
 
-		err := sut.UseItem(9, 7, 1, potion.Name)
+		err := sut.UseItem(test.Context(), 9, 7, 1, potion.Name)
 
 		require.ErrorIs(test, err, dbError)
 	})
@@ -137,7 +137,7 @@ func TestSrvItems_DiscardUserItem(test *testing.T) {
 
 		sut := srvitems.Service{Database: itemsDb}
 
-		err := sut.DiscardUserItem(9, 7, 1, potion.Name)
+		err := sut.DiscardUserItem(test.Context(), 9, 7, 1, potion.Name)
 
 		require.NoError(test, err)
 		itemsDb.AssertExpectations(test)

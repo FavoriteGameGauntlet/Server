@@ -90,7 +90,7 @@ func TestSrvPoints_GetPointValueByTypeName(test *testing.T) {
 			sut := srvpoints.Service{Database: databaseMock}
 
 			// Act
-			value, err := sut.GetPointValueByTypeName(2, 1, availableRollsType.Name)
+			value, err := sut.GetPointValueByTypeName(test.Context(), 2, 1, availableRollsType.Name)
 
 			// Assert
 			if testCase.ExpectedError != nil {
@@ -298,7 +298,7 @@ func TestSrvPoints_ChangeUserPointValueClamped(test *testing.T) {
 			sut := srvpoints.Service{Database: databaseMock}
 
 			// Act
-			err := sut.ChangeUserPointValueClamped(2, 1, availableRollsType.Id, testCase.ChangeValue, 9, 999)
+			err := sut.ChangeUserPointValueClamped(test.Context(), 2, 1, availableRollsType.Id, testCase.ChangeValue, 9, 999)
 
 			// Assert
 			if testCase.ExpectedError != nil {
@@ -321,7 +321,7 @@ func TestSrvPoints_ChangePointValueByTypeNameNoHistory(test *testing.T) {
 
 		sut := srvpoints.Service{Database: databaseMock}
 
-		err := sut.ChangePointValueByTypeNameNoHistory(2, 1, availableRollsType.Name, -1)
+		err := sut.ChangePointValueByTypeNameNoHistory(test.Context(), 2, 1, availableRollsType.Name, -1)
 
 		require.Error(test, err)
 		databaseMock.AssertExpectations(test)
@@ -338,7 +338,7 @@ func TestSrvPoints_ChangePointValueByTypeNameNoHistory(test *testing.T) {
 
 		sut := srvpoints.Service{Database: databaseMock}
 
-		err := sut.ChangePointValueByTypeNameNoHistory(2, 1, availableRollsType.Name, -1)
+		err := sut.ChangePointValueByTypeNameNoHistory(test.Context(), 2, 1, availableRollsType.Name, -1)
 
 		require.NoError(test, err)
 		databaseMock.AssertExpectations(test)

@@ -24,7 +24,7 @@ func TestSrvPerks_CreatePerk(test *testing.T) {
 
 		sut := srvperks.Service{Database: perksDb, EffectsDatabase: effectsDb}
 
-		perk, err := sut.CreatePerk(1, "swift", "moves faster", "haste")
+		perk, err := sut.CreatePerk(test.Context(), 1, "swift", "moves faster", "haste")
 
 		require.NoError(test, err)
 		require.Equal(test, 12, perk.EffectId)
@@ -40,7 +40,7 @@ func TestSrvPerks_CreatePerk(test *testing.T) {
 
 		sut := srvperks.Service{Database: perksDb, EffectsDatabase: effectsDb}
 
-		_, err := sut.CreatePerk(1, "swift", "moves faster", "missing")
+		_, err := sut.CreatePerk(test.Context(), 1, "swift", "moves faster", "missing")
 
 		require.Error(test, err)
 		perksDb.AssertNotCalled(test, "CreatePerkCommand")

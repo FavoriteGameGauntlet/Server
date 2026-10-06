@@ -50,14 +50,14 @@ func (c *Controller) GrantToUsers(ctx echo.Context, partyId gengrants.PartyId) e
 
 	targetUserIds := make([]int, len(grantDto.TargetLogins))
 	for i, login := range grantDto.TargetLogins {
-		targetUserIds[i], err = c.AuthService.GetUserIdByLogin(login)
+		targetUserIds[i], err = c.AuthService.GetUserIdByLogin(ctx.Request().Context(), login)
 
 		if err != nil {
 			return common.SendJSONErrorResponse(ctx, err)
 		}
 	}
 
-	err = c.Service.GrantToUsers(actorUserId, partyId, targetUserIds, convertDtoToChangeEntryInputs(grantDto.Entries))
+	err = c.Service.GrantToUsers(ctx.Request().Context(), actorUserId, partyId, targetUserIds, convertDtoToChangeEntryInputs(grantDto.Entries))
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)

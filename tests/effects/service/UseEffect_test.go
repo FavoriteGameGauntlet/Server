@@ -43,7 +43,7 @@ func TestSrvEffects_UseEffect(test *testing.T) {
 
 		sut := srveffects.Service{Database: effectsDb, ChangesDatabase: changesDb, ChangesService: changesSvc}
 
-		err := sut.UseEffect(9, 7, 1, haste.Name)
+		err := sut.UseEffect(test.Context(), 9, 7, 1, haste.Name)
 
 		require.NoError(test, err)
 		effectsDb.AssertExpectations(test)
@@ -64,7 +64,7 @@ func TestSrvEffects_UseEffect(test *testing.T) {
 
 		sut := srveffects.Service{Database: effectsDb}
 
-		err := sut.UseEffect(9, 7, 1, haste.Name)
+		err := sut.UseEffect(test.Context(), 9, 7, 1, haste.Name)
 
 		require.NoError(test, err)
 		effectsDb.AssertExpectations(test)
@@ -77,7 +77,7 @@ func TestSrvEffects_UseEffect(test *testing.T) {
 
 		sut := srveffects.Service{Database: effectsDb}
 
-		err := sut.UseEffect(9, 7, 1, haste.Name)
+		err := sut.UseEffect(test.Context(), 9, 7, 1, haste.Name)
 
 		require.Error(test, err)
 		effectsDb.AssertNotCalled(test, "ChangeUserEffectUsesLeftCommand")
@@ -90,7 +90,7 @@ func TestSrvEffects_UseEffect(test *testing.T) {
 
 		sut := srveffects.Service{Database: effectsDb}
 
-		err := sut.UseEffect(9, 7, 1, haste.Name)
+		err := sut.UseEffect(test.Context(), 9, 7, 1, haste.Name)
 
 		require.Error(test, err)
 		effectsDb.AssertNotCalled(test, "ChangeUserEffectUsesLeftCommand")
@@ -109,7 +109,7 @@ func TestSrvEffects_EndUserEffect(test *testing.T) {
 
 		sut := srveffects.Service{Database: effectsDb}
 
-		err := sut.EndUserEffect(9, 7, 1, haste.Name)
+		err := sut.EndUserEffect(test.Context(), 9, 7, 1, haste.Name)
 
 		require.NoError(test, err)
 		effectsDb.AssertExpectations(test)

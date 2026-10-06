@@ -43,7 +43,7 @@ func (c *Controller) Login(ctx echo.Context) error {
 
 	loginUser := convertDtoToLoginUser(loginUserDto)
 
-	userSession, err := c.Service.CreateSession(loginUser)
+	userSession, err := c.Service.CreateSession(ctx.Request().Context(), loginUser)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -83,7 +83,7 @@ func (c *Controller) Logout(ctx echo.Context) error {
 	}
 
 	sessionId := cookie.Value
-	err = c.Service.DeleteUserSession(sessionId)
+	err = c.Service.DeleteUserSession(ctx.Request().Context(), sessionId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -125,7 +125,7 @@ func (c *Controller) SignUp(ctx echo.Context) error {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.CreateUser(signupUser)
+	err = c.Service.CreateUser(ctx.Request().Context(), signupUser)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)

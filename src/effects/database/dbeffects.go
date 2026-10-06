@@ -4,25 +4,26 @@ import (
 	"FGG-Service/src/changes/types"
 	"FGG-Service/src/dbaccess"
 	"FGG-Service/src/effects/types"
+	"context"
 	"database/sql"
 	"encoding/json"
 	"time"
 )
 
 type IDatabase interface {
-	CreateEffectCommand(partyId int, name string, description string, useCount int, duration *time.Duration, change typechanges.Change) (effect typeeffects.EffectWithChange, err error)
-	GetEffectCommand(partyId int, effectId int) (effect typeeffects.EffectWithChange, err error)
-	GetActualEffectsCommand(partyId int) (effects []typeeffects.Effect, err error)
-	GetRemovedEffectsCommand(partyId int) (effects []typeeffects.Effect, err error)
-	RemoveEffectCommand(partyId int, effectId int) error
-	CreateUserEffectCommand(userId int, partyId int, effectId int, actorUserId int, sourceEventId int) (userEffect typeeffects.UserEffect, err error)
-	GetUserEffectCommand(userId int, partyId int, effectId int) (userEffect typeeffects.UserEffectDetail, err error)
-	GetUserEffectsCommand(userId int, partyId int) (userEffects []typeeffects.UserEffectDetail, err error)
-	ChangeUserEffectUsesLeftCommand(userId int, partyId int, effectId int, usesLeft int, actorUserId int, sourceEventId *int) (historyEventId int, err error)
-	DeleteUserEffectCommand(userId int, partyId int, effectId int, actorUserId int, sourceEventId *int) error
-	DeleteEndedUserEffectsCommand() (deleted []typeeffects.EndedUserEffect, err error)
-	GetEffectHistoryCommand(userId int, partyId int) (history []typeeffects.EffectHistory, err error)
-	GetUserEffectPointModifiersJsonbCommand(partyId int, userEffectId int) (modifiers []typeeffects.PointModifier, err error)
+	CreateEffectCommand(ctx context.Context, partyId int, name string, description string, useCount int, duration *time.Duration, change typechanges.Change) (effect typeeffects.EffectWithChange, err error)
+	GetEffectCommand(ctx context.Context, partyId int, effectId int) (effect typeeffects.EffectWithChange, err error)
+	GetActualEffectsCommand(ctx context.Context, partyId int) (effects []typeeffects.Effect, err error)
+	GetRemovedEffectsCommand(ctx context.Context, partyId int) (effects []typeeffects.Effect, err error)
+	RemoveEffectCommand(ctx context.Context, partyId int, effectId int) error
+	CreateUserEffectCommand(ctx context.Context, userId int, partyId int, effectId int, actorUserId int, sourceEventId int) (userEffect typeeffects.UserEffect, err error)
+	GetUserEffectCommand(ctx context.Context, userId int, partyId int, effectId int) (userEffect typeeffects.UserEffectDetail, err error)
+	GetUserEffectsCommand(ctx context.Context, userId int, partyId int) (userEffects []typeeffects.UserEffectDetail, err error)
+	ChangeUserEffectUsesLeftCommand(ctx context.Context, userId int, partyId int, effectId int, usesLeft int, actorUserId int, sourceEventId *int) (historyEventId int, err error)
+	DeleteUserEffectCommand(ctx context.Context, userId int, partyId int, effectId int, actorUserId int, sourceEventId *int) error
+	DeleteEndedUserEffectsCommand(ctx context.Context) (deleted []typeeffects.EndedUserEffect, err error)
+	GetEffectHistoryCommand(ctx context.Context, userId int, partyId int) (history []typeeffects.EffectHistory, err error)
+	GetUserEffectPointModifiersJsonbCommand(ctx context.Context, partyId int, userEffectId int) (modifiers []typeeffects.PointModifier, err error)
 }
 
 type Database struct{}
@@ -50,13 +51,13 @@ func durationArg(duration *time.Duration) any {
 
 var createEffectQuery = dbaccess.Query{Name: "CreateEffectQuery", SQL: `SELECT * FROM create_effect($1::integer, $2::text, $3::text, $4::integer, $5::interval, $6::jsonb)`}
 
-func (db *Database) CreateEffectCommand(partyId int, name string, description string, useCount int, duration *time.Duration, change typechanges.Change) (effect typeeffects.EffectWithChange, err error) {
+func (db *Database) CreateEffectCommand(ctx context.Context, partyId int, name string, description string, useCount int, duration *time.Duration, change typechanges.Change) (effect typeeffects.EffectWithChange, err error) {
 	changeJson, err := json.Marshal(change)
 	if err != nil {
 		return
 	}
 
-	row := dbaccess.QueryRow(createEffectQuery, partyId, name, description, useCount, durationArg(duration), changeJson)
+	row := dbaccess.QueryRow(ctx, createEffectQuery, partyId, name, description, useCount, durationArg(duration), changeJson)
 
 	var durationRaw sql.NullString
 	var changeRaw []byte
@@ -76,8 +77,8 @@ func (db *Database) CreateEffectCommand(partyId int, name string, description st
 
 var getEffectQuery = dbaccess.Query{Name: "GetEffectQuery", SQL: `SELECT * FROM get_effect($1::integer, $2::integer)`}
 
-func (db *Database) GetEffectCommand(partyId int, effectId int) (effect typeeffects.EffectWithChange, err error) {
-	row := dbaccess.QueryRow(getEffectQuery, partyId, effectId)
+func (db *Database) GetEffectCommand(ctx context.Context, partyId int, effectId int) (effect typeeffects.EffectWithChange, err error) {
+	row := dbaccess.QueryRow(ctx, getEffectQuery, partyId, effectId)
 
 	var durationRaw sql.NullString
 	var changeRaw []byte
@@ -95,8 +96,8 @@ func (db *Database) GetEffectCommand(partyId int, effectId int) (effect typeeffe
 	return
 }
 
-func scanEffects(q dbaccess.Query, partyId int) (effects []typeeffects.Effect, err error) {
-	rows, err := dbaccess.QueryRows(q, partyId)
+func scanEffects(ctx context.Context, q dbaccess.Query, partyId int) (effects []typeeffects.Effect, err error) {
+	rows, err := dbaccess.QueryRows(ctx, q, partyId)
 
 	if err != nil {
 		return
@@ -129,20 +130,20 @@ func scanEffects(q dbaccess.Query, partyId int) (effects []typeeffects.Effect, e
 
 var getActualEffectsQuery = dbaccess.Query{Name: "GetActualEffectsQuery", SQL: `SELECT * FROM get_actual_effects($1::integer)`}
 
-func (db *Database) GetActualEffectsCommand(partyId int) (effects []typeeffects.Effect, err error) {
-	return scanEffects(getActualEffectsQuery, partyId)
+func (db *Database) GetActualEffectsCommand(ctx context.Context, partyId int) (effects []typeeffects.Effect, err error) {
+	return scanEffects(ctx, getActualEffectsQuery, partyId)
 }
 
 var getRemovedEffectsQuery = dbaccess.Query{Name: "GetRemovedEffectsQuery", SQL: `SELECT * FROM get_removed_effects($1::integer)`}
 
-func (db *Database) GetRemovedEffectsCommand(partyId int) (effects []typeeffects.Effect, err error) {
-	return scanEffects(getRemovedEffectsQuery, partyId)
+func (db *Database) GetRemovedEffectsCommand(ctx context.Context, partyId int) (effects []typeeffects.Effect, err error) {
+	return scanEffects(ctx, getRemovedEffectsQuery, partyId)
 }
 
 var removeEffectQuery = dbaccess.Query{Name: "RemoveEffectQuery", SQL: `SELECT remove_effect($1::integer, $2::integer)`}
 
-func (db *Database) RemoveEffectCommand(partyId int, effectId int) error {
-	_, err := dbaccess.Exec(removeEffectQuery, partyId, effectId)
+func (db *Database) RemoveEffectCommand(ctx context.Context, partyId int, effectId int) error {
+	_, err := dbaccess.Exec(ctx, removeEffectQuery, partyId, effectId)
 
 	dbaccess.LogDbResult(removeEffectQuery, nil, err)
 
@@ -151,8 +152,8 @@ func (db *Database) RemoveEffectCommand(partyId int, effectId int) error {
 
 var createUserEffectQuery = dbaccess.Query{Name: "CreateUserEffectQuery", SQL: `SELECT * FROM create_user_effect($1::integer, $2::integer, $3::integer, $4::integer, $5::integer)`}
 
-func (db *Database) CreateUserEffectCommand(userId int, partyId int, effectId int, actorUserId int, sourceEventId int) (userEffect typeeffects.UserEffect, err error) {
-	row := dbaccess.QueryRow(createUserEffectQuery, userId, partyId, effectId, actorUserId, sourceEventId)
+func (db *Database) CreateUserEffectCommand(ctx context.Context, userId int, partyId int, effectId int, actorUserId int, sourceEventId int) (userEffect typeeffects.UserEffect, err error) {
+	row := dbaccess.QueryRow(ctx, createUserEffectQuery, userId, partyId, effectId, actorUserId, sourceEventId)
 
 	err = row.Scan(&userEffect.Id, &userEffect.UserId, &userEffect.PartyId, &userEffect.EffectId, &userEffect.UsesLeft, &userEffect.EffectHistoryId)
 
@@ -189,8 +190,8 @@ func scanUserEffectDetail(row *sql.Row) (userEffect typeeffects.UserEffectDetail
 
 var getUserEffectQuery = dbaccess.Query{Name: "GetUserEffectQuery", SQL: `SELECT * FROM get_user_effect($1::integer, $2::integer, $3::integer)`}
 
-func (db *Database) GetUserEffectCommand(userId int, partyId int, effectId int) (userEffect typeeffects.UserEffectDetail, err error) {
-	row := dbaccess.QueryRow(getUserEffectQuery, userId, partyId, effectId)
+func (db *Database) GetUserEffectCommand(ctx context.Context, userId int, partyId int, effectId int) (userEffect typeeffects.UserEffectDetail, err error) {
+	row := dbaccess.QueryRow(ctx, getUserEffectQuery, userId, partyId, effectId)
 
 	userEffect, err = scanUserEffectDetail(row)
 
@@ -201,8 +202,8 @@ func (db *Database) GetUserEffectCommand(userId int, partyId int, effectId int) 
 
 var getUserEffectsQuery = dbaccess.Query{Name: "GetUserEffectsQuery", SQL: `SELECT * FROM get_user_effects($1::integer, $2::integer)`}
 
-func (db *Database) GetUserEffectsCommand(userId int, partyId int) (userEffects []typeeffects.UserEffectDetail, err error) {
-	rows, err := dbaccess.QueryRows(getUserEffectsQuery, userId, partyId)
+func (db *Database) GetUserEffectsCommand(ctx context.Context, userId int, partyId int) (userEffects []typeeffects.UserEffectDetail, err error) {
+	rows, err := dbaccess.QueryRows(ctx, getUserEffectsQuery, userId, partyId)
 
 	if err != nil {
 		return
@@ -250,8 +251,8 @@ func (db *Database) GetUserEffectsCommand(userId int, partyId int) (userEffects 
 
 var changeUserEffectUsesLeftQuery = dbaccess.Query{Name: "ChangeUserEffectUsesLeftQuery", SQL: `SELECT change_user_effect_uses_left($1::integer, $2::integer, $3::integer, $4::integer, $5::integer, $6::integer)`}
 
-func (db *Database) ChangeUserEffectUsesLeftCommand(userId int, partyId int, effectId int, usesLeft int, actorUserId int, sourceEventId *int) (historyEventId int, err error) {
-	row := dbaccess.QueryRow(changeUserEffectUsesLeftQuery, userId, partyId, effectId, usesLeft, actorUserId, sourceEventId)
+func (db *Database) ChangeUserEffectUsesLeftCommand(ctx context.Context, userId int, partyId int, effectId int, usesLeft int, actorUserId int, sourceEventId *int) (historyEventId int, err error) {
+	row := dbaccess.QueryRow(ctx, changeUserEffectUsesLeftQuery, userId, partyId, effectId, usesLeft, actorUserId, sourceEventId)
 
 	err = row.Scan(&historyEventId)
 
@@ -262,8 +263,8 @@ func (db *Database) ChangeUserEffectUsesLeftCommand(userId int, partyId int, eff
 
 var deleteUserEffectQuery = dbaccess.Query{Name: "DeleteUserEffectQuery", SQL: `SELECT delete_user_effect($1::integer, $2::integer, $3::integer, $4::integer, $5::integer)`}
 
-func (db *Database) DeleteUserEffectCommand(userId int, partyId int, effectId int, actorUserId int, sourceEventId *int) error {
-	_, err := dbaccess.Exec(deleteUserEffectQuery, userId, partyId, effectId, actorUserId, sourceEventId)
+func (db *Database) DeleteUserEffectCommand(ctx context.Context, userId int, partyId int, effectId int, actorUserId int, sourceEventId *int) error {
+	_, err := dbaccess.Exec(ctx, deleteUserEffectQuery, userId, partyId, effectId, actorUserId, sourceEventId)
 
 	dbaccess.LogDbResult(deleteUserEffectQuery, nil, err)
 
@@ -272,8 +273,8 @@ func (db *Database) DeleteUserEffectCommand(userId int, partyId int, effectId in
 
 var deleteEndedUserEffectsQuery = dbaccess.Query{Name: "DeleteEndedUserEffectsQuery", SQL: `SELECT * FROM delete_ended_user_effects()`}
 
-func (db *Database) DeleteEndedUserEffectsCommand() (deleted []typeeffects.EndedUserEffect, err error) {
-	rows, err := dbaccess.QueryRows(deleteEndedUserEffectsQuery)
+func (db *Database) DeleteEndedUserEffectsCommand(ctx context.Context) (deleted []typeeffects.EndedUserEffect, err error) {
+	rows, err := dbaccess.QueryRows(ctx, deleteEndedUserEffectsQuery)
 
 	if err != nil {
 		return
@@ -301,8 +302,8 @@ func (db *Database) DeleteEndedUserEffectsCommand() (deleted []typeeffects.Ended
 
 var getEffectHistoryQuery = dbaccess.Query{Name: "GetEffectHistoryQuery", SQL: `SELECT * FROM get_effect_history($1::integer, $2::integer)`}
 
-func (db *Database) GetEffectHistoryCommand(userId int, partyId int) (history []typeeffects.EffectHistory, err error) {
-	rows, err := dbaccess.QueryRows(getEffectHistoryQuery, userId, partyId)
+func (db *Database) GetEffectHistoryCommand(ctx context.Context, userId int, partyId int) (history []typeeffects.EffectHistory, err error) {
+	rows, err := dbaccess.QueryRows(ctx, getEffectHistoryQuery, userId, partyId)
 
 	if err != nil {
 		return
@@ -348,8 +349,8 @@ func (db *Database) GetEffectHistoryCommand(userId int, partyId int) (history []
 
 var getUserEffectPointModifiersJsonbQuery = dbaccess.Query{Name: "GetUserEffectPointModifiersJsonbQuery", SQL: `SELECT get_user_effect_point_modifiers_jsonb($1::integer, $2::integer)`}
 
-func (db *Database) GetUserEffectPointModifiersJsonbCommand(partyId int, userEffectId int) (modifiers []typeeffects.PointModifier, err error) {
-	row := dbaccess.QueryRow(getUserEffectPointModifiersJsonbQuery, partyId, userEffectId)
+func (db *Database) GetUserEffectPointModifiersJsonbCommand(ctx context.Context, partyId int, userEffectId int) (modifiers []typeeffects.PointModifier, err error) {
+	row := dbaccess.QueryRow(ctx, getUserEffectPointModifiersJsonbQuery, partyId, userEffectId)
 
 	var raw []byte
 	err = row.Scan(&raw)

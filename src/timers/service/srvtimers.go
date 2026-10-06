@@ -9,6 +9,7 @@ import (
 	"FGG-Service/src/sysparams/types"
 	"FGG-Service/src/timers/database"
 	"FGG-Service/src/timers/types"
+	"context"
 	"database/sql"
 	"errors"
 	"log/slog"
@@ -19,8 +20,8 @@ import (
 )
 
 type IService interface {
-	GetCurrentTimerTimeSpent(userId int, partyId int) (time.Duration, error)
-	ForceStopCurrentTimer(userId int, partyId int) (typetimers.Timer, error)
+	GetCurrentTimerTimeSpent(ctx context.Context, userId int, partyId int) (time.Duration, error)
+	ForceStopCurrentTimer(ctx context.Context, userId int, partyId int) (typetimers.Timer, error)
 }
 
 // toTimer computes the derived Timer view (with RemainingTime) from a raw CurrentTimer DB row.
@@ -85,8 +86,8 @@ func (s *Service) StartTimerFinisherScheduler() {
 }
 
 // GetCurrentTimer returns the user's current timer.
-func (s *Service) GetCurrentTimer(userId int, partyId int) (timer typetimers.Timer, err error) {
-	currentTimer, err := s.Database.GetCurrentTimerCommand(userId, partyId)
+func (s *Service) GetCurrentTimer(ctx context.Context, userId int, partyId int) (timer typetimers.Timer, err error) {
+	currentTimer, err := s.Database.GetCurrentTimerCommand(ctx, userId, partyId)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = common.NewCurrentTimerNotFoundError()
@@ -102,8 +103,8 @@ func (s *Service) GetCurrentTimer(userId int, partyId int) (timer typetimers.Tim
 
 // CreateCurrentTimer creates a timer for the user's current game. A user has at most one timer, so
 // creating another while one exists is a conflict.
-func (s *Service) CreateCurrentTimer(userId int, partyId int) (timer typetimers.Timer, err error) {
-	game, err := s.GamesDatabase.GetCurrentGameCommand(userId, partyId)
+func (s *Service) CreateCurrentTimer(ctx context.Context, userId int, partyId int) (timer typetimers.Timer, err error) {
+	game, err := s.GamesDatabase.GetCurrentGameCommand(ctx, userId, partyId)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = common.NewCurrentGameNotFoundError()
@@ -114,7 +115,7 @@ func (s *Service) CreateCurrentTimer(userId int, partyId int) (timer typetimers.
 		return
 	}
 
-	currentTimer, err := s.Database.GetCurrentTimerCommand(userId, partyId)
+	currentTimer, err := s.Database.GetCurrentTimerCommand(ctx, userId, partyId)
 
 	if err == nil {
 		err = common.NewCurrentTimerAlreadyExistsConflictError()
@@ -125,19 +126,19 @@ func (s *Service) CreateCurrentTimer(userId int, partyId int) (timer typetimers.
 		return
 	}
 
-	durationInS, err := s.SysParamsService.GetInt(partyId, typesysparams.ParamTimerDurationInS)
+	durationInS, err := s.SysParamsService.GetInt(ctx, partyId, typesysparams.ParamTimerDurationInS)
 
 	if err != nil {
 		return
 	}
 
-	_, err = s.Database.CreateCurrentTimerCommand(userId, partyId, game.Id, time.Duration(durationInS)*time.Second)
+	_, err = s.Database.CreateCurrentTimerCommand(ctx, userId, partyId, game.Id, time.Duration(durationInS)*time.Second)
 
 	if err != nil {
 		return
 	}
 
-	currentTimer, err = s.Database.GetCurrentTimerCommand(userId, partyId)
+	currentTimer, err = s.Database.GetCurrentTimerCommand(ctx, userId, partyId)
 
 	if err != nil {
 		return
@@ -148,8 +149,9 @@ func (s *Service) CreateCurrentTimer(userId int, partyId int) (timer typetimers.
 	return
 }
 
-func (s *Service) StartCurrentTimer(userId int, partyId int) (typetimers.Timer, error) {
+func (s *Service) StartCurrentTimer(ctx context.Context, userId int, partyId int) (typetimers.Timer, error) {
 	return s.actCurrentTimer(
+		ctx,
 		userId,
 		partyId,
 		typetimers.TimerStateRunning,
@@ -159,8 +161,9 @@ func (s *Service) StartCurrentTimer(userId int, partyId int) (typetimers.Timer, 
 		})
 }
 
-func (s *Service) PauseCurrentTimer(userId int, partyId int) (typetimers.Timer, error) {
+func (s *Service) PauseCurrentTimer(ctx context.Context, userId int, partyId int) (typetimers.Timer, error) {
 	return s.actCurrentTimer(
+		ctx,
 		userId,
 		partyId,
 		typetimers.TimerStatePaused,
@@ -172,8 +175,8 @@ func (s *Service) PauseCurrentTimer(userId int, partyId int) (typetimers.Timer, 
 }
 
 // GetCurrentTimerTimeSpent returns how much of the current timer has passed, or zero without a timer.
-func (s *Service) GetCurrentTimerTimeSpent(userId int, partyId int) (time.Duration, error) {
-	currentTimer, err := s.Database.GetCurrentTimerCommand(userId, partyId)
+func (s *Service) GetCurrentTimerTimeSpent(ctx context.Context, userId int, partyId int) (time.Duration, error) {
+	currentTimer, err := s.Database.GetCurrentTimerCommand(ctx, userId, partyId)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return 0, nil
@@ -188,8 +191,8 @@ func (s *Service) GetCurrentTimerTimeSpent(userId int, partyId int) (time.Durati
 
 // ForceStopCurrentTimer deletes the current timer, if any, and adds the time already spent on it to
 // its game. It grants none of the rewards of a completed timer.
-func (s *Service) ForceStopCurrentTimer(userId int, partyId int) (timer typetimers.Timer, err error) {
-	deletedTimer, err := s.Database.DeleteCurrentTimerCommand(userId, partyId)
+func (s *Service) ForceStopCurrentTimer(ctx context.Context, userId int, partyId int) (timer typetimers.Timer, err error) {
+	deletedTimer, err := s.Database.DeleteCurrentTimerCommand(ctx, userId, partyId)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = nil
@@ -201,7 +204,7 @@ func (s *Service) ForceStopCurrentTimer(userId int, partyId int) (timer typetime
 	}
 
 	if deletedTimer.TimeSpent > 0 {
-		err = s.GamesDatabase.ChangeGameTimeSpentCommand(userId, deletedTimer.PartyId, deletedTimer.GameId, deletedTimer.TimeSpent, userId, nil)
+		err = s.GamesDatabase.ChangeGameTimeSpentCommand(ctx, userId, deletedTimer.PartyId, deletedTimer.GameId, deletedTimer.TimeSpent, userId, nil)
 
 		if err != nil {
 			return
@@ -221,12 +224,13 @@ func (s *Service) ForceStopCurrentTimer(userId int, partyId int) (timer typetime
 }
 
 func (s *Service) actCurrentTimer(
+	ctx context.Context,
 	userId int,
 	partyId int,
 	timerState typetimers.TimerStateType,
 	incorrectStates []typetimers.TimerStateType) (timer typetimers.Timer, err error) {
 
-	currentTimer, err := s.Database.GetCurrentTimerCommand(userId, partyId)
+	currentTimer, err := s.Database.GetCurrentTimerCommand(ctx, userId, partyId)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = common.NewCurrentTimerNotFoundError()
@@ -247,13 +251,13 @@ func (s *Service) actCurrentTimer(
 	// get_timer already includes the elapsed running time in TimeSpent.
 	timeSpent := min(currentTimer.TimeSpent, currentTimer.Duration)
 
-	err = s.Database.ActTimerCommand(timer.Id, timerState, timeSpent)
+	err = s.Database.ActTimerCommand(ctx, timer.Id, timerState, timeSpent)
 
 	if err != nil {
 		return
 	}
 
-	currentTimer, err = s.Database.GetCurrentTimerCommand(userId, partyId)
+	currentTimer, err = s.Database.GetCurrentTimerCommand(ctx, userId, partyId)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = common.NewCurrentTimerNotFoundError()
@@ -269,15 +273,15 @@ func (s *Service) actCurrentTimer(
 	return
 }
 
-func (s *Service) StopAllCompletedTimers() error {
-	endedTimers, err := s.Database.GetCompletedTimerUsersCommand()
+func (s *Service) StopAllCompletedTimers(ctx context.Context) error {
+	endedTimers, err := s.Database.GetCompletedTimerUsersCommand(ctx)
 
 	if err != nil {
 		return err
 	}
 
 	for _, endedTimer := range endedTimers {
-		err = s.completeTimer(endedTimer)
+		err = s.completeTimer(ctx, endedTimer)
 
 		if err != nil {
 			slog.Error("CompleteTimer", "timerId", endedTimer.Id, "userId", endedTimer.UserId, "error", err)
@@ -290,11 +294,11 @@ func (s *Service) StopAllCompletedTimers() error {
 // completeTimer records a completed timer as a timer history event, which is then the source of the
 // time it adds to its game and of the party's timer reward. A party without a reward still gets the
 // event and the game time.
-func (s *Service) completeTimer(timer typetimers.EndedTimer) (err error) {
+func (s *Service) completeTimer(ctx context.Context, timer typetimers.EndedTimer) (err error) {
 	var rewardId *int
 	var rewardEntries []typechanges.ChangeEntry
 
-	reward, err := s.Database.GetTimerRewardCommand(timer.PartyId)
+	reward, err := s.Database.GetTimerRewardCommand(ctx, timer.PartyId)
 
 	if err == nil {
 		rewardId = &reward.Id
@@ -303,13 +307,13 @@ func (s *Service) completeTimer(timer typetimers.EndedTimer) (err error) {
 		return
 	}
 
-	history, err := s.Database.CreateTimerHistoryCommand(timer.UserId, timer.PartyId, rewardId, timer.UserId)
+	history, err := s.Database.CreateTimerHistoryCommand(ctx, timer.UserId, timer.PartyId, rewardId, timer.UserId)
 
 	if err != nil {
 		return
 	}
 
-	err = s.GamesDatabase.ChangeGameTimeSpentCommand(timer.UserId, timer.PartyId, timer.GameId, timer.TimeSpent, timer.UserId, &history.Id)
+	err = s.GamesDatabase.ChangeGameTimeSpentCommand(ctx, timer.UserId, timer.PartyId, timer.GameId, timer.TimeSpent, timer.UserId, &history.Id)
 
 	if err != nil {
 		return
@@ -319,31 +323,31 @@ func (s *Service) completeTimer(timer typetimers.EndedTimer) (err error) {
 		rewardEntries[i].UserId = &timer.UserId
 	}
 
-	return s.ChangesService.ApplyChangeEntries(timer.PartyId, rewardEntries, timer.UserId, history.Id)
+	return s.ChangesService.ApplyChangeEntries(ctx, timer.PartyId, rewardEntries, timer.UserId, history.Id)
 }
 
-func (s *Service) GetTimerReward(partyId int) ([]typechanges.ChangeEntryInput, error) {
-	return s.Database.GetTimerRewardEntriesCommand(partyId)
+func (s *Service) GetTimerReward(ctx context.Context, partyId int) ([]typechanges.ChangeEntryInput, error) {
+	return s.Database.GetTimerRewardEntriesCommand(ctx, partyId)
 }
 
 // SetTimerReward replaces the party's timer reward. The previous one is kept as removed, so the
 // history of timers completed under it still points at what they granted.
-func (s *Service) SetTimerReward(partyId int, entries []typechanges.ChangeEntryInput) (reward []typechanges.ChangeEntryInput, err error) {
-	resolved, err := s.ChangesService.ResolveChangeEntries(partyId, entries)
+func (s *Service) SetTimerReward(ctx context.Context, partyId int, entries []typechanges.ChangeEntryInput) (reward []typechanges.ChangeEntryInput, err error) {
+	resolved, err := s.ChangesService.ResolveChangeEntries(ctx, partyId, entries)
 
 	if err != nil {
 		return
 	}
 
-	_, err = s.Database.SetTimerRewardCommand(partyId, typechanges.Change{Entries: resolved})
+	_, err = s.Database.SetTimerRewardCommand(ctx, partyId, typechanges.Change{Entries: resolved})
 
 	if err != nil {
 		return
 	}
 
-	return s.Database.GetTimerRewardEntriesCommand(partyId)
+	return s.Database.GetTimerRewardEntriesCommand(ctx, partyId)
 }
 
-func (s *Service) RemoveTimerReward(partyId int) error {
-	return s.Database.RemoveTimerRewardCommand(partyId)
+func (s *Service) RemoveTimerReward(ctx context.Context, partyId int) error {
+	return s.Database.RemoveTimerRewardCommand(ctx, partyId)
 }

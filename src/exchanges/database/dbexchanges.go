@@ -4,17 +4,18 @@ import (
 	"FGG-Service/src/changes/types"
 	"FGG-Service/src/dbaccess"
 	"FGG-Service/src/exchanges/types"
+	"context"
 	"encoding/json"
 )
 
 type IDatabase interface {
-	CreateExchangeCommand(partyId int, name string, description string, sourceChange typechanges.Change, targetChange typechanges.Change) (exchange typeexchanges.ExchangeWithChanges, err error)
-	GetExchangeWithEntriesCommand(partyId int, exchangeId int) (exchange typeexchanges.ExchangeWithChanges, err error)
-	GetActualExchangesCommand(partyId int) (exchanges []typeexchanges.Exchange, err error)
-	GetRemovedExchangesCommand(partyId int) (exchanges []typeexchanges.Exchange, err error)
-	RemoveExchangeCommand(partyId int, exchangeId int) error
-	CreateExchangeHistoryCommand(userId int, partyId int, exchangeId int, actorUserId int, sourceEventId *int) (entry typeexchanges.ExchangeHistoryEntry, err error)
-	GetExchangeHistoryCommand(userId int, partyId int) (history []typeexchanges.ExchangeHistory, err error)
+	CreateExchangeCommand(ctx context.Context, partyId int, name string, description string, sourceChange typechanges.Change, targetChange typechanges.Change) (exchange typeexchanges.ExchangeWithChanges, err error)
+	GetExchangeWithEntriesCommand(ctx context.Context, partyId int, exchangeId int) (exchange typeexchanges.ExchangeWithChanges, err error)
+	GetActualExchangesCommand(ctx context.Context, partyId int) (exchanges []typeexchanges.Exchange, err error)
+	GetRemovedExchangesCommand(ctx context.Context, partyId int) (exchanges []typeexchanges.Exchange, err error)
+	RemoveExchangeCommand(ctx context.Context, partyId int, exchangeId int) error
+	CreateExchangeHistoryCommand(ctx context.Context, userId int, partyId int, exchangeId int, actorUserId int, sourceEventId *int) (entry typeexchanges.ExchangeHistoryEntry, err error)
+	GetExchangeHistoryCommand(ctx context.Context, userId int, partyId int) (history []typeexchanges.ExchangeHistory, err error)
 }
 
 type Database struct{}
@@ -37,7 +38,7 @@ func scanExchangeWithChanges(row interface {
 
 var createExchangeQuery = dbaccess.Query{Name: "CreateExchangeQuery", SQL: `SELECT * FROM create_exchange($1::integer, $2::text, $3::text, $4::jsonb, $5::jsonb)`}
 
-func (db *Database) CreateExchangeCommand(partyId int, name string, description string, sourceChange typechanges.Change, targetChange typechanges.Change) (exchange typeexchanges.ExchangeWithChanges, err error) {
+func (db *Database) CreateExchangeCommand(ctx context.Context, partyId int, name string, description string, sourceChange typechanges.Change, targetChange typechanges.Change) (exchange typeexchanges.ExchangeWithChanges, err error) {
 	sourceJson, err := json.Marshal(sourceChange)
 	if err != nil {
 		return
@@ -48,7 +49,7 @@ func (db *Database) CreateExchangeCommand(partyId int, name string, description 
 		return
 	}
 
-	row := dbaccess.QueryRow(createExchangeQuery, partyId, name, description, sourceJson, targetJson)
+	row := dbaccess.QueryRow(ctx, createExchangeQuery, partyId, name, description, sourceJson, targetJson)
 
 	exchange, err = scanExchangeWithChanges(row)
 
@@ -59,8 +60,8 @@ func (db *Database) CreateExchangeCommand(partyId int, name string, description 
 
 var getExchangeWithEntriesQuery = dbaccess.Query{Name: "GetExchangeWithEntriesQuery", SQL: `SELECT * FROM get_exchange_with_entries($1::integer, $2::integer)`}
 
-func (db *Database) GetExchangeWithEntriesCommand(partyId int, exchangeId int) (exchange typeexchanges.ExchangeWithChanges, err error) {
-	row := dbaccess.QueryRow(getExchangeWithEntriesQuery, partyId, exchangeId)
+func (db *Database) GetExchangeWithEntriesCommand(ctx context.Context, partyId int, exchangeId int) (exchange typeexchanges.ExchangeWithChanges, err error) {
+	row := dbaccess.QueryRow(ctx, getExchangeWithEntriesQuery, partyId, exchangeId)
 
 	exchange, err = scanExchangeWithChanges(row)
 
@@ -69,8 +70,8 @@ func (db *Database) GetExchangeWithEntriesCommand(partyId int, exchangeId int) (
 	return
 }
 
-func scanExchanges(q dbaccess.Query, partyId int) (exchanges []typeexchanges.Exchange, err error) {
-	rows, err := dbaccess.QueryRows(q, partyId)
+func scanExchanges(ctx context.Context, q dbaccess.Query, partyId int) (exchanges []typeexchanges.Exchange, err error) {
+	rows, err := dbaccess.QueryRows(ctx, q, partyId)
 
 	if err != nil {
 		return
@@ -98,20 +99,20 @@ func scanExchanges(q dbaccess.Query, partyId int) (exchanges []typeexchanges.Exc
 
 var getActualExchangesQuery = dbaccess.Query{Name: "GetActualExchangesQuery", SQL: `SELECT * FROM get_actual_exchanges($1::integer)`}
 
-func (db *Database) GetActualExchangesCommand(partyId int) (exchanges []typeexchanges.Exchange, err error) {
-	return scanExchanges(getActualExchangesQuery, partyId)
+func (db *Database) GetActualExchangesCommand(ctx context.Context, partyId int) (exchanges []typeexchanges.Exchange, err error) {
+	return scanExchanges(ctx, getActualExchangesQuery, partyId)
 }
 
 var getRemovedExchangesQuery = dbaccess.Query{Name: "GetRemovedExchangesQuery", SQL: `SELECT * FROM get_removed_exchanges($1::integer)`}
 
-func (db *Database) GetRemovedExchangesCommand(partyId int) (exchanges []typeexchanges.Exchange, err error) {
-	return scanExchanges(getRemovedExchangesQuery, partyId)
+func (db *Database) GetRemovedExchangesCommand(ctx context.Context, partyId int) (exchanges []typeexchanges.Exchange, err error) {
+	return scanExchanges(ctx, getRemovedExchangesQuery, partyId)
 }
 
 var removeExchangeQuery = dbaccess.Query{Name: "RemoveExchangeQuery", SQL: `SELECT remove_exchange($1::integer, $2::integer)`}
 
-func (db *Database) RemoveExchangeCommand(partyId int, exchangeId int) error {
-	_, err := dbaccess.Exec(removeExchangeQuery, partyId, exchangeId)
+func (db *Database) RemoveExchangeCommand(ctx context.Context, partyId int, exchangeId int) error {
+	_, err := dbaccess.Exec(ctx, removeExchangeQuery, partyId, exchangeId)
 
 	dbaccess.LogDbResult(removeExchangeQuery, nil, err)
 
@@ -120,8 +121,8 @@ func (db *Database) RemoveExchangeCommand(partyId int, exchangeId int) error {
 
 var createExchangeHistoryQuery = dbaccess.Query{Name: "CreateExchangeHistoryQuery", SQL: `SELECT * FROM create_exchange_history($1::integer, $2::integer, $3::integer, $4::integer, $5::integer)`}
 
-func (db *Database) CreateExchangeHistoryCommand(userId int, partyId int, exchangeId int, actorUserId int, sourceEventId *int) (entry typeexchanges.ExchangeHistoryEntry, err error) {
-	row := dbaccess.QueryRow(createExchangeHistoryQuery, userId, partyId, exchangeId, actorUserId, sourceEventId)
+func (db *Database) CreateExchangeHistoryCommand(ctx context.Context, userId int, partyId int, exchangeId int, actorUserId int, sourceEventId *int) (entry typeexchanges.ExchangeHistoryEntry, err error) {
+	row := dbaccess.QueryRow(ctx, createExchangeHistoryQuery, userId, partyId, exchangeId, actorUserId, sourceEventId)
 
 	err = row.Scan(&entry.Id, &entry.UserId, &entry.PartyId, &entry.ExchangeId, &entry.UsedDate)
 
@@ -132,8 +133,8 @@ func (db *Database) CreateExchangeHistoryCommand(userId int, partyId int, exchan
 
 var getExchangeHistoryQuery = dbaccess.Query{Name: "GetExchangeHistoryQuery", SQL: `SELECT * FROM get_exchange_history($1::integer, $2::integer)`}
 
-func (db *Database) GetExchangeHistoryCommand(userId int, partyId int) (history []typeexchanges.ExchangeHistory, err error) {
-	rows, err := dbaccess.QueryRows(getExchangeHistoryQuery, userId, partyId)
+func (db *Database) GetExchangeHistoryCommand(ctx context.Context, userId int, partyId int) (history []typeexchanges.ExchangeHistory, err error) {
+	rows, err := dbaccess.QueryRows(ctx, getExchangeHistoryQuery, userId, partyId)
 
 	if err != nil {
 		return

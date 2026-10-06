@@ -27,7 +27,7 @@ func TestSrvPoints_GetUserPoints_LeavesSharedTypesOut(test *testing.T) {
 	sut := srvpoints.Service{Database: databaseMock, PartiesDatabase: partiesMock}
 
 	// Act
-	values, err := sut.GetUserPoints(9, 2, 1)
+	values, err := sut.GetUserPoints(test.Context(), 9, 2, 1)
 
 	// Assert
 	require.NoError(test, err)
@@ -52,7 +52,7 @@ func TestSrvPoints_GetAllUserPoints_LeavesSharedTypesOut(test *testing.T) {
 	sut := srvpoints.Service{Database: databaseMock, PartiesDatabase: partiesMock}
 
 	// Act
-	byLogin, err := sut.GetAllUserPoints(9, 1)
+	byLogin, err := sut.GetAllUserPoints(test.Context(), 9, 1)
 
 	// Assert
 	require.NoError(test, err)
@@ -79,7 +79,7 @@ func TestSrvPoints_GetAllPartyPoints_ListsSharedTypesOnly(test *testing.T) {
 	sut := srvpoints.Service{Database: databaseMock, PartiesDatabase: partiesMock}
 
 	// Act
-	values, err := sut.GetAllPartyPoints(9, 1)
+	values, err := sut.GetAllPartyPoints(test.Context(), 9, 1)
 
 	// Assert
 	require.NoError(test, err)

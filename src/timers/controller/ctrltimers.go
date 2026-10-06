@@ -38,13 +38,13 @@ func (c *Controller) GetCurrentTimer(ctx echo.Context, partyId gentimers.PartyId
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.PartyService.RequireMember(userId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	timer, err := c.Service.GetCurrentTimer(userId, partyId)
+	timer, err := c.Service.GetCurrentTimer(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -63,13 +63,13 @@ func (c *Controller) CreateCurrentTimer(ctx echo.Context, partyId gentimers.Part
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.PartyService.RequireMember(userId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	timer, err := c.Service.CreateCurrentTimer(userId, partyId)
+	timer, err := c.Service.CreateCurrentTimer(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -95,13 +95,13 @@ func (c *Controller) PauseCurrentTimer(ctx echo.Context, partyId gentimers.Party
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.PartyService.RequireMember(userId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	timer, err := c.Service.PauseCurrentTimer(userId, partyId)
+	timer, err := c.Service.PauseCurrentTimer(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -120,13 +120,13 @@ func (c *Controller) StartCurrentTimer(ctx echo.Context, partyId gentimers.Party
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.PartyService.RequireMember(userId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	timer, err := c.Service.StartCurrentTimer(userId, partyId)
+	timer, err := c.Service.StartCurrentTimer(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -145,13 +145,13 @@ func (c *Controller) GetTimerReward(ctx echo.Context, partyId gentimers.PartyId)
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.PartyService.RequireMember(userId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	reward, err := c.Service.GetTimerReward(partyId)
+	reward, err := c.Service.GetTimerReward(ctx.Request().Context(), partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -176,7 +176,7 @@ func (c *Controller) SetTimerReward(ctx echo.Context, partyId gentimers.PartyId)
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	reward, err := c.Service.SetTimerReward(partyId, convertDtoToChangeEntryInputs(rewardDto.Entries))
+	reward, err := c.Service.SetTimerReward(ctx.Request().Context(), partyId, convertDtoToChangeEntryInputs(rewardDto.Entries))
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -193,7 +193,7 @@ func (c *Controller) RemoveTimerReward(ctx echo.Context, partyId gentimers.Party
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.RemoveTimerReward(partyId)
+	err = c.Service.RemoveTimerReward(ctx.Request().Context(), partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)

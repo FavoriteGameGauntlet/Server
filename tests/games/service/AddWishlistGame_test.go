@@ -177,7 +177,7 @@ func TestSrvGames_AddWishlistGame(test *testing.T) {
 			sut := srvgames.Service{Database: databaseMock}
 
 			// Act
-			err := sut.AddWishlistGame(testCase.UserId, 1, testCase.WishlistGame)
+			err := sut.AddWishlistGame(test.Context(), testCase.UserId, 1, testCase.WishlistGame)
 
 			// Assert
 			if testCase.ExpectedErrorAs != nil {

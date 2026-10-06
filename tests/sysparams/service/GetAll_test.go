@@ -75,7 +75,7 @@ func TestSrvSysParams_GetAll(test *testing.T) {
 			sut := srvsysparams.Service{Database: databaseMock}
 
 			// Act
-			parameters, err := sut.GetAll(1)
+			parameters, err := sut.GetAll(test.Context(), 1)
 
 			// Assert
 			if testCase.ExpectedErrorIs != nil {

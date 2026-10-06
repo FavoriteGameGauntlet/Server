@@ -25,7 +25,7 @@ func TestSrvParties_RequireMember(test *testing.T) {
 
 		sut := srvparties.Service{Database: db}
 
-		err := sut.RequireMember(5, 8)
+		err := sut.RequireMember(test.Context(), 5, 8)
 
 		require.NoError(test, err)
 	})
@@ -37,7 +37,7 @@ func TestSrvParties_RequireMember(test *testing.T) {
 
 		sut := srvparties.Service{Database: db}
 
-		err := sut.RequireMember(5, 8)
+		err := sut.RequireMember(test.Context(), 5, 8)
 
 		require.NoError(test, err)
 	})
@@ -49,7 +49,7 @@ func TestSrvParties_RequireMember(test *testing.T) {
 
 		sut := srvparties.Service{Database: db}
 
-		err := sut.RequireMember(5, 8)
+		err := sut.RequireMember(test.Context(), 5, 8)
 
 		requirePartyNotFound(test, err)
 	})
@@ -61,7 +61,7 @@ func TestSrvParties_RequireMember(test *testing.T) {
 
 		sut := srvparties.Service{Database: db}
 
-		err := sut.RequireMember(5, 8)
+		err := sut.RequireMember(test.Context(), 5, 8)
 
 		requirePartyNotFound(test, err)
 	})
@@ -73,7 +73,7 @@ func TestSrvParties_RequireMember(test *testing.T) {
 
 		sut := srvparties.Service{Database: db}
 
-		err := sut.RequireMember(5, 8)
+		err := sut.RequireMember(test.Context(), 5, 8)
 
 		require.ErrorIs(test, err, requireAccessDbError)
 	})
@@ -88,7 +88,7 @@ func TestSrvParties_RequireAdmin(test *testing.T) {
 
 		sut := srvparties.Service{Database: db}
 
-		err := sut.RequireAdmin(5, 8)
+		err := sut.RequireAdmin(test.Context(), 5, 8)
 
 		require.NoError(test, err)
 	})
@@ -100,7 +100,7 @@ func TestSrvParties_RequireAdmin(test *testing.T) {
 
 		sut := srvparties.Service{Database: db}
 
-		err := sut.RequireAdmin(5, 8)
+		err := sut.RequireAdmin(test.Context(), 5, 8)
 
 		var unauthorized *common.UnauthorizedError
 		require.ErrorAs(test, err, &unauthorized)
@@ -114,7 +114,7 @@ func TestSrvParties_RequireAdmin(test *testing.T) {
 
 		sut := srvparties.Service{Database: db}
 
-		err := sut.RequireAdmin(5, 8)
+		err := sut.RequireAdmin(test.Context(), 5, 8)
 
 		requirePartyNotFound(test, err)
 	})
@@ -126,7 +126,7 @@ func TestSrvParties_RequireAdmin(test *testing.T) {
 
 		sut := srvparties.Service{Database: db}
 
-		err := sut.RequireAdmin(5, 8)
+		err := sut.RequireAdmin(test.Context(), 5, 8)
 
 		requirePartyNotFound(test, err)
 	})
@@ -138,7 +138,7 @@ func TestSrvParties_RequireAdmin(test *testing.T) {
 
 		sut := srvparties.Service{Database: db}
 
-		err := sut.RequireAdmin(5, 8)
+		err := sut.RequireAdmin(test.Context(), 5, 8)
 
 		require.ErrorIs(test, err, requireAccessDbError)
 	})

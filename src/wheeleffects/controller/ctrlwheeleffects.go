@@ -46,7 +46,7 @@ func (c *Controller) RollAvailableWheelEffects(ctx echo.Context, partyId genwhee
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.PartyService.RequireMember(userId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -54,7 +54,7 @@ func (c *Controller) RollAvailableWheelEffects(ctx echo.Context, partyId genwhee
 
 	isReroll := rollDto.IsReroll != nil && *rollDto.IsReroll
 
-	rolled, err := c.Service.MakeEffectRoll(userId, partyId, isReroll)
+	rolled, err := c.Service.MakeEffectRoll(ctx.Request().Context(), userId, partyId, isReroll)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -107,7 +107,7 @@ func (c *Controller) ApplyAvailableWheelEffectRoll(ctx echo.Context, partyId gen
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.PartyService.RequireMember(userId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -115,14 +115,14 @@ func (c *Controller) ApplyAvailableWheelEffectRoll(ctx echo.Context, partyId gen
 
 	targetUserIds := make([]int, len(rollApplyDto.TargetLogins))
 	for i, login := range rollApplyDto.TargetLogins {
-		targetUserIds[i], err = c.AuthService.GetUserIdByLogin(login)
+		targetUserIds[i], err = c.AuthService.GetUserIdByLogin(ctx.Request().Context(), login)
 
 		if err != nil {
 			return common.SendJSONErrorResponse(ctx, err)
 		}
 	}
 
-	err = c.Service.ApplyWheelEffectRoll(userId, partyId, rollApplyDto.WheelRowName, targetUserIds)
+	err = c.Service.ApplyWheelEffectRoll(ctx.Request().Context(), userId, partyId, rollApplyDto.WheelRowName, targetUserIds)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -139,13 +139,13 @@ func (c *Controller) GetLastRolledWheelEffects(ctx echo.Context, partyId genwhee
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.PartyService.RequireMember(userId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	rows, err := c.Service.GetLastRolledWheelEffects(userId, partyId)
+	rows, err := c.Service.GetLastRolledWheelEffects(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -162,13 +162,13 @@ func (c *Controller) ClearLastRolledWheelEffects(ctx echo.Context, partyId genwh
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.PartyService.RequireMember(userId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.ClearLastWheelEffects(userId, partyId)
+	err = c.Service.ClearLastWheelEffects(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -185,13 +185,13 @@ func (c *Controller) GetAvailableWheelEffects(ctx echo.Context, partyId genwheel
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.PartyService.RequireMember(userId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	rows, err := c.Service.GetAvailableWheelRows(userId, partyId)
+	rows, err := c.Service.GetAvailableWheelRows(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -208,19 +208,19 @@ func (c *Controller) GetUserWheelEffectHistory(ctx echo.Context, partyId genwhee
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.PartyService.RequireMember(actorUserId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), actorUserId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	userId, err := c.AuthService.GetUserIdByLogin(login)
+	userId, err := c.AuthService.GetUserIdByLogin(ctx.Request().Context(), login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	history, err := c.Service.GetEffectHistory(userId, partyId)
+	history, err := c.Service.GetEffectHistory(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)

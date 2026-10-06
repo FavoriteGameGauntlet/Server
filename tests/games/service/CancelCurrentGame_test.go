@@ -151,7 +151,7 @@ func TestSrvGames_CancelCurrentGame(test *testing.T) {
 			}
 
 			// Act
-			game, err := sut.CancelCurrentGame(testCase.UserId, 1)
+			game, err := sut.CancelCurrentGame(test.Context(), testCase.UserId, 1)
 
 			// Assert
 			if testCase.ExpectedErrorAs != nil {

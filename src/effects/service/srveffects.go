@@ -9,6 +9,7 @@ import (
 	"FGG-Service/src/effects/types"
 	"FGG-Service/src/points/service"
 	"FGG-Service/src/sysparams/service"
+	"context"
 	"database/sql"
 	"errors"
 	"time"
@@ -17,16 +18,16 @@ import (
 )
 
 type IService interface {
-	GetEffects(partyId int) ([]typeeffects.Effect, error)
-	GetRemovedEffects(partyId int) ([]typeeffects.Effect, error)
-	CreateEffect(partyId int, name string, description string, useCount int, duration *time.Duration, entries []typechanges.ChangeEntryInput) (typeeffects.Effect, error)
-	RemoveEffect(partyId int, name string) error
-	GetUserEffects(userId int, partyId int) ([]typeeffects.UserEffectDetail, error)
-	GetUserEffectViews(userId int, partyId int) ([]typeeffects.UserEffectView, error)
-	UseEffect(actorUserId int, userId int, partyId int, effectName string) error
-	EndUserEffect(actorUserId int, userId int, partyId int, effectName string) error
-	GetEffectHistory(userId int, partyId int) ([]typeeffects.EffectHistory, error)
-	StopEndedUserEffects() error
+	GetEffects(ctx context.Context, partyId int) ([]typeeffects.Effect, error)
+	GetRemovedEffects(ctx context.Context, partyId int) ([]typeeffects.Effect, error)
+	CreateEffect(ctx context.Context, partyId int, name string, description string, useCount int, duration *time.Duration, entries []typechanges.ChangeEntryInput) (typeeffects.Effect, error)
+	RemoveEffect(ctx context.Context, partyId int, name string) error
+	GetUserEffects(ctx context.Context, userId int, partyId int) ([]typeeffects.UserEffectDetail, error)
+	GetUserEffectViews(ctx context.Context, userId int, partyId int) ([]typeeffects.UserEffectView, error)
+	UseEffect(ctx context.Context, actorUserId int, userId int, partyId int, effectName string) error
+	EndUserEffect(ctx context.Context, actorUserId int, userId int, partyId int, effectName string) error
+	GetEffectHistory(ctx context.Context, userId int, partyId int) ([]typeeffects.EffectHistory, error)
+	StopEndedUserEffects(ctx context.Context) error
 }
 
 type Service struct {
@@ -52,30 +53,31 @@ func NewService() *Service {
 	return s
 }
 
-func (s *Service) GetEffects(partyId int) (effects []typeeffects.Effect, err error) {
-	return s.Database.GetActualEffectsCommand(partyId)
+func (s *Service) GetEffects(ctx context.Context, partyId int) (effects []typeeffects.Effect, err error) {
+	return s.Database.GetActualEffectsCommand(ctx, partyId)
 }
 
-func (s *Service) GetRemovedEffects(partyId int) (effects []typeeffects.Effect, err error) {
-	return s.Database.GetRemovedEffectsCommand(partyId)
+func (s *Service) GetRemovedEffects(ctx context.Context, partyId int) (effects []typeeffects.Effect, err error) {
+	return s.Database.GetRemovedEffectsCommand(ctx, partyId)
 }
 
 // CreateEffect adds an effect to the party catalogue. The entries describe what using it grants,
 // separately from the point modifiers it applies passively while it is active.
 func (s *Service) CreateEffect(
+	ctx context.Context,
 	partyId int,
 	name string,
 	description string,
 	useCount int,
 	duration *time.Duration,
 	entries []typechanges.ChangeEntryInput) (effect typeeffects.Effect, err error) {
-	resolved, err := s.ChangesService.ResolveChangeEntries(partyId, entries)
+	resolved, err := s.ChangesService.ResolveChangeEntries(ctx, partyId, entries)
 
 	if err != nil {
 		return
 	}
 
-	created, err := s.Database.CreateEffectCommand(partyId, name, description, useCount, duration, typechanges.Change{Entries: resolved})
+	created, err := s.Database.CreateEffectCommand(ctx, partyId, name, description, useCount, duration, typechanges.Change{Entries: resolved})
 
 	if err != nil {
 		return
@@ -93,19 +95,19 @@ func (s *Service) CreateEffect(
 	return
 }
 
-func (s *Service) RemoveEffect(partyId int, name string) (err error) {
-	effect, err := s.effectByName(partyId, name)
+func (s *Service) RemoveEffect(ctx context.Context, partyId int, name string) (err error) {
+	effect, err := s.effectByName(ctx, partyId, name)
 
 	if err != nil {
 		return
 	}
 
-	return s.Database.RemoveEffectCommand(partyId, effect.Id)
+	return s.Database.RemoveEffectCommand(ctx, partyId, effect.Id)
 }
 
 // effectByName resolves an effect from the name the API addresses it by.
-func (s *Service) effectByName(partyId int, name string) (effect typeeffects.Effect, err error) {
-	effects, err := s.Database.GetActualEffectsCommand(partyId)
+func (s *Service) effectByName(ctx context.Context, partyId int, name string) (effect typeeffects.Effect, err error) {
+	effects, err := s.Database.GetActualEffectsCommand(ctx, partyId)
 
 	if err != nil {
 		return
@@ -122,25 +124,25 @@ func (s *Service) effectByName(partyId int, name string) (effect typeeffects.Eff
 	return
 }
 
-func (s *Service) GetUserEffects(userId int, partyId int) (effects []typeeffects.UserEffectDetail, err error) {
-	return s.Database.GetUserEffectsCommand(userId, partyId)
+func (s *Service) GetUserEffects(ctx context.Context, userId int, partyId int) (effects []typeeffects.UserEffectDetail, err error) {
+	return s.Database.GetUserEffectsCommand(ctx, userId, partyId)
 }
 
-func (s *Service) GetEffectHistory(userId int, partyId int) (history []typeeffects.EffectHistory, err error) {
-	return s.Database.GetEffectHistoryCommand(userId, partyId)
+func (s *Service) GetEffectHistory(ctx context.Context, userId int, partyId int) (history []typeeffects.EffectHistory, err error) {
+	return s.Database.GetEffectHistoryCommand(ctx, userId, partyId)
 }
 
 // UseEffect spends one use of an active effect and grants what it carries to its holder. The effect
 // history row it produces is the source event of the resulting grants. Another member may use the
 // effect, so everything recorded names the actor, not the holder.
-func (s *Service) UseEffect(actorUserId int, userId int, partyId int, effectName string) (err error) {
-	effect, err := s.effectByName(partyId, effectName)
+func (s *Service) UseEffect(ctx context.Context, actorUserId int, userId int, partyId int, effectName string) (err error) {
+	effect, err := s.effectByName(ctx, partyId, effectName)
 
 	if err != nil {
 		return
 	}
 
-	userEffect, err := s.Database.GetUserEffectCommand(userId, partyId, effect.Id)
+	userEffect, err := s.Database.GetUserEffectCommand(ctx, userId, partyId, effect.Id)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return common.NewEffectNotActiveConflictError(effectName)
@@ -154,7 +156,7 @@ func (s *Service) UseEffect(actorUserId int, userId int, partyId int, effectName
 		return common.NewEffectUsedUpConflictError(effectName)
 	}
 
-	withChange, err := s.Database.GetEffectCommand(partyId, effect.Id)
+	withChange, err := s.Database.GetEffectCommand(ctx, partyId, effect.Id)
 
 	if err != nil {
 		return
@@ -162,25 +164,25 @@ func (s *Service) UseEffect(actorUserId int, userId int, partyId int, effectName
 
 	usesLeft := userEffect.UsesLeft - 1
 
-	historyEventId, err := s.Database.ChangeUserEffectUsesLeftCommand(userId, partyId, effect.Id, usesLeft, actorUserId, nil)
+	historyEventId, err := s.Database.ChangeUserEffectUsesLeftCommand(ctx, userId, partyId, effect.Id, usesLeft, actorUserId, nil)
 
 	if err != nil {
 		return
 	}
 
 	if usesLeft == 0 {
-		err = s.Database.DeleteUserEffectCommand(userId, partyId, effect.Id, actorUserId, &historyEventId)
+		err = s.Database.DeleteUserEffectCommand(ctx, userId, partyId, effect.Id, actorUserId, &historyEventId)
 
 		if err != nil {
 			return
 		}
 	}
 
-	return s.applyEffectChange(actorUserId, userId, partyId, withChange.Change.Entries, historyEventId)
+	return s.applyEffectChange(ctx, actorUserId, userId, partyId, withChange.Change.Entries, historyEventId)
 }
 
 // applyEffectChange stamps the effect's change template onto the user and applies it.
-func (s *Service) applyEffectChange(actorUserId int, userId int, partyId int, templateEntries []typechanges.ChangeEntry, sourceEventId int) (err error) {
+func (s *Service) applyEffectChange(ctx context.Context, actorUserId int, userId int, partyId int, templateEntries []typechanges.ChangeEntry, sourceEventId int) (err error) {
 	if len(templateEntries) == 0 {
 		return
 	}
@@ -193,24 +195,24 @@ func (s *Service) applyEffectChange(actorUserId int, userId int, partyId int, te
 		targetedEntries = append(targetedEntries, entry)
 	}
 
-	userChange, err := s.ChangesDatabase.CreateUserChangeFromJsonbCommand(partyId, targetedEntries)
+	userChange, err := s.ChangesDatabase.CreateUserChangeFromJsonbCommand(ctx, partyId, targetedEntries)
 
 	if err != nil {
 		return
 	}
 
-	return s.ChangesService.ApplyChangeEntries(partyId, userChange.Entries, actorUserId, sourceEventId)
+	return s.ChangesService.ApplyChangeEntries(ctx, partyId, userChange.Entries, actorUserId, sourceEventId)
 }
 
 // EndUserEffect ends an active effect before it runs out on its own.
-func (s *Service) EndUserEffect(actorUserId int, userId int, partyId int, effectName string) (err error) {
-	effect, err := s.effectByName(partyId, effectName)
+func (s *Service) EndUserEffect(ctx context.Context, actorUserId int, userId int, partyId int, effectName string) (err error) {
+	effect, err := s.effectByName(ctx, partyId, effectName)
 
 	if err != nil {
 		return
 	}
 
-	_, err = s.Database.GetUserEffectCommand(userId, partyId, effect.Id)
+	_, err = s.Database.GetUserEffectCommand(ctx, userId, partyId, effect.Id)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return common.NewEffectNotActiveConflictError(effectName)
@@ -220,13 +222,13 @@ func (s *Service) EndUserEffect(actorUserId int, userId int, partyId int, effect
 		return
 	}
 
-	return s.Database.DeleteUserEffectCommand(userId, partyId, effect.Id, actorUserId, nil)
+	return s.Database.DeleteUserEffectCommand(ctx, userId, partyId, effect.Id, actorUserId, nil)
 }
 
 // StopEndedUserEffects clears the effects whose duration has run out. Nothing else calls the sweep,
 // so it runs on a schedule the way completed timers are stopped.
-func (s *Service) StopEndedUserEffects() error {
-	_, err := s.Database.DeleteEndedUserEffectsCommand()
+func (s *Service) StopEndedUserEffects(ctx context.Context) error {
+	_, err := s.Database.DeleteEndedUserEffectsCommand(ctx)
 
 	return err
 }
@@ -257,14 +259,14 @@ func (s *Service) StartEndedEffectsScheduler() {
 
 // GetUserEffectViews lists a user's active effects with their passive point modifiers named, since
 // the modifiers come back from the schema as point type ids.
-func (s *Service) GetUserEffectViews(userId int, partyId int) (views []typeeffects.UserEffectView, err error) {
-	details, err := s.Database.GetUserEffectsCommand(userId, partyId)
+func (s *Service) GetUserEffectViews(ctx context.Context, userId int, partyId int) (views []typeeffects.UserEffectView, err error) {
+	details, err := s.Database.GetUserEffectsCommand(ctx, userId, partyId)
 
 	if err != nil {
 		return
 	}
 
-	pointTypes, err := s.PointsService.GetPointTypes(partyId)
+	pointTypes, err := s.PointsService.GetPointTypes(ctx, partyId)
 
 	if err != nil {
 		return

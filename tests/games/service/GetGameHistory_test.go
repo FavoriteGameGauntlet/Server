@@ -101,7 +101,7 @@ func TestSrvGames_GetGameHistory(test *testing.T) {
 			sut := srvgames.Service{Database: databaseMock}
 
 			// Act
-			history, err := sut.GetGameHistory(testCase.UserId, 1)
+			history, err := sut.GetGameHistory(test.Context(), testCase.UserId, 1)
 
 			// Assert
 			if testCase.ExpectedErrorIs != nil {

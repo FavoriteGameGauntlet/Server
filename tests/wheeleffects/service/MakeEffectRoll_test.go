@@ -203,7 +203,7 @@ func TestSrvWheelEffects_MakeEffectRoll(test *testing.T) {
 			}
 
 			// Act
-			effects, err := sut.MakeEffectRoll(testCase.UserId, 1, false)
+			effects, err := sut.MakeEffectRoll(test.Context(), testCase.UserId, 1, false)
 
 			// Assert
 			if testCase.ExpectedErrorCode != "" {

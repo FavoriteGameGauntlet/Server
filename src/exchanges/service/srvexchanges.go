@@ -9,15 +9,16 @@ import (
 	"FGG-Service/src/exchanges/types"
 	srvpoints "FGG-Service/src/points/service"
 	typepoints "FGG-Service/src/points/type"
+	"context"
 )
 
 type IService interface {
-	GetExchanges(partyId int) ([]typeexchanges.Exchange, error)
-	GetRemovedExchanges(partyId int) ([]typeexchanges.Exchange, error)
-	CreateExchange(partyId int, name string, description string, sourceEntries []typechanges.ChangeEntryInput, targetEntries []typechanges.ChangeEntryInput) (typeexchanges.Exchange, error)
-	RemoveExchange(partyId int, name string) error
-	UseExchange(userId int, partyId int, exchangeName string, targetUserIds []int) error
-	GetExchangeHistory(userId int, partyId int) ([]typeexchanges.ExchangeHistory, error)
+	GetExchanges(ctx context.Context, partyId int) ([]typeexchanges.Exchange, error)
+	GetRemovedExchanges(ctx context.Context, partyId int) ([]typeexchanges.Exchange, error)
+	CreateExchange(ctx context.Context, partyId int, name string, description string, sourceEntries []typechanges.ChangeEntryInput, targetEntries []typechanges.ChangeEntryInput) (typeexchanges.Exchange, error)
+	RemoveExchange(ctx context.Context, partyId int, name string) error
+	UseExchange(ctx context.Context, userId int, partyId int, exchangeName string, targetUserIds []int) error
+	GetExchangeHistory(ctx context.Context, userId int, partyId int) ([]typeexchanges.ExchangeHistory, error)
 }
 
 type Service struct {
@@ -36,40 +37,42 @@ func NewService() *Service {
 	}
 }
 
-func (s *Service) GetExchanges(partyId int) (exchanges []typeexchanges.Exchange, err error) {
-	return s.Database.GetActualExchangesCommand(partyId)
+func (s *Service) GetExchanges(ctx context.Context, partyId int) (exchanges []typeexchanges.Exchange, err error) {
+	return s.Database.GetActualExchangesCommand(ctx, partyId)
 }
 
-func (s *Service) GetRemovedExchanges(partyId int) (exchanges []typeexchanges.Exchange, err error) {
-	return s.Database.GetRemovedExchangesCommand(partyId)
+func (s *Service) GetRemovedExchanges(ctx context.Context, partyId int) (exchanges []typeexchanges.Exchange, err error) {
+	return s.Database.GetRemovedExchangesCommand(ctx, partyId)
 }
 
-func (s *Service) GetExchangeHistory(userId int, partyId int) (history []typeexchanges.ExchangeHistory, err error) {
-	return s.Database.GetExchangeHistoryCommand(userId, partyId)
+func (s *Service) GetExchangeHistory(ctx context.Context, userId int, partyId int) (history []typeexchanges.ExchangeHistory, err error) {
+	return s.Database.GetExchangeHistoryCommand(ctx, userId, partyId)
 }
 
 // CreateExchange adds an exchange to the party catalogue. The source entries are what it costs and
 // the target entries are what it gives; both carry the sign they are applied with, so a cost is
 // negative.
 func (s *Service) CreateExchange(
+	ctx context.Context,
 	partyId int,
 	name string,
 	description string,
 	sourceEntries []typechanges.ChangeEntryInput,
 	targetEntries []typechanges.ChangeEntryInput) (exchange typeexchanges.Exchange, err error) {
-	resolvedSource, err := s.ChangesService.ResolveChangeEntries(partyId, sourceEntries)
+	resolvedSource, err := s.ChangesService.ResolveChangeEntries(ctx, partyId, sourceEntries)
 
 	if err != nil {
 		return
 	}
 
-	resolvedTarget, err := s.ChangesService.ResolveChangeEntries(partyId, targetEntries)
+	resolvedTarget, err := s.ChangesService.ResolveChangeEntries(ctx, partyId, targetEntries)
 
 	if err != nil {
 		return
 	}
 
 	created, err := s.Database.CreateExchangeCommand(
+		ctx,
 		partyId,
 		name,
 		description,
@@ -90,19 +93,19 @@ func (s *Service) CreateExchange(
 	return
 }
 
-func (s *Service) RemoveExchange(partyId int, name string) (err error) {
-	exchange, err := s.exchangeByName(partyId, name)
+func (s *Service) RemoveExchange(ctx context.Context, partyId int, name string) (err error) {
+	exchange, err := s.exchangeByName(ctx, partyId, name)
 
 	if err != nil {
 		return
 	}
 
-	return s.Database.RemoveExchangeCommand(partyId, exchange.Id)
+	return s.Database.RemoveExchangeCommand(ctx, partyId, exchange.Id)
 }
 
 // exchangeByName resolves an exchange from the name the API addresses it by.
-func (s *Service) exchangeByName(partyId int, name string) (exchange typeexchanges.Exchange, err error) {
-	exchanges, err := s.Database.GetActualExchangesCommand(partyId)
+func (s *Service) exchangeByName(ctx context.Context, partyId int, name string) (exchange typeexchanges.Exchange, err error) {
+	exchanges, err := s.Database.GetActualExchangesCommand(ctx, partyId)
 
 	if err != nil {
 		return
@@ -123,14 +126,14 @@ func (s *Service) exchangeByName(partyId int, name string) (exchange typeexchang
 // logins both sides fall on the user making the exchange. With them, the source change is what the
 // named users lose and the target change is what the user making the exchange gains — this is how a
 // mechanic that takes something from another player is expressed.
-func (s *Service) UseExchange(userId int, partyId int, exchangeName string, targetUserIds []int) (err error) {
-	exchange, err := s.exchangeByName(partyId, exchangeName)
+func (s *Service) UseExchange(ctx context.Context, userId int, partyId int, exchangeName string, targetUserIds []int) (err error) {
+	exchange, err := s.exchangeByName(ctx, partyId, exchangeName)
 
 	if err != nil {
 		return
 	}
 
-	withChanges, err := s.Database.GetExchangeWithEntriesCommand(partyId, exchange.Id)
+	withChanges, err := s.Database.GetExchangeWithEntriesCommand(ctx, partyId, exchange.Id)
 
 	if err != nil {
 		return
@@ -141,38 +144,38 @@ func (s *Service) UseExchange(userId int, partyId int, exchangeName string, targ
 		payingUserIds = []int{userId}
 	}
 
-	err = s.requireAffordable(partyId, payingUserIds, withChanges.SourceChange.Entries)
+	err = s.requireAffordable(ctx, partyId, payingUserIds, withChanges.SourceChange.Entries)
 
 	if err != nil {
 		return
 	}
 
-	history, err := s.Database.CreateExchangeHistoryCommand(userId, partyId, exchange.Id, userId, nil)
+	history, err := s.Database.CreateExchangeHistoryCommand(ctx, userId, partyId, exchange.Id, userId, nil)
 
 	if err != nil {
 		return
 	}
 
-	err = s.applyEntriesTo(partyId, payingUserIds, withChanges.SourceChange.Entries, userId, history.Id)
+	err = s.applyEntriesTo(ctx, partyId, payingUserIds, withChanges.SourceChange.Entries, userId, history.Id)
 
 	if err != nil {
 		return
 	}
 
-	return s.applyEntriesTo(partyId, []int{userId}, withChanges.TargetChange.Entries, userId, history.Id)
+	return s.applyEntriesTo(ctx, partyId, []int{userId}, withChanges.TargetChange.Entries, userId, history.Id)
 }
 
 // requireAffordable rejects an exchange whose cost the payer cannot cover. Point changes clamp to
 // the point type's minimum, so without this check an unaffordable cost would quietly take less than
 // it should instead of failing.
-func (s *Service) requireAffordable(partyId int, payingUserIds []int, sourceEntries []typechanges.ChangeEntry) (err error) {
+func (s *Service) requireAffordable(ctx context.Context, partyId int, payingUserIds []int, sourceEntries []typechanges.ChangeEntry) (err error) {
 	for _, entry := range sourceEntries {
 		if entry.PointTypeId == nil || entry.Amount >= 0 {
 			continue
 		}
 
 		var pointType typepoints.PointTypeInfo
-		pointType, err = s.PointsService.GetPointTypeById(partyId, *entry.PointTypeId)
+		pointType, err = s.PointsService.GetPointTypeById(ctx, partyId, *entry.PointTypeId)
 
 		if err != nil {
 			return
@@ -180,7 +183,7 @@ func (s *Service) requireAffordable(partyId int, payingUserIds []int, sourceEntr
 
 		for _, payingUserId := range payingUserIds {
 			var value int
-			value, err = s.PointsService.GetPointValueByTypeName(payingUserId, partyId, pointType.Name)
+			value, err = s.PointsService.GetPointValueByTypeName(ctx, payingUserId, partyId, pointType.Name)
 
 			if err != nil {
 				return
@@ -196,7 +199,7 @@ func (s *Service) requireAffordable(partyId int, payingUserIds []int, sourceEntr
 }
 
 // applyEntriesTo stamps a change template onto each of the given users and applies it.
-func (s *Service) applyEntriesTo(partyId int, targetUserIds []int, templateEntries []typechanges.ChangeEntry, actorUserId int, sourceEventId int) (err error) {
+func (s *Service) applyEntriesTo(ctx context.Context, partyId int, targetUserIds []int, templateEntries []typechanges.ChangeEntry, actorUserId int, sourceEventId int) (err error) {
 	if len(templateEntries) == 0 {
 		return
 	}
@@ -211,11 +214,11 @@ func (s *Service) applyEntriesTo(partyId int, targetUserIds []int, templateEntri
 		}
 	}
 
-	userChange, err := s.ChangesDatabase.CreateUserChangeFromJsonbCommand(partyId, targetedEntries)
+	userChange, err := s.ChangesDatabase.CreateUserChangeFromJsonbCommand(ctx, partyId, targetedEntries)
 
 	if err != nil {
 		return
 	}
 
-	return s.ChangesService.ApplyChangeEntries(partyId, userChange.Entries, actorUserId, sourceEventId)
+	return s.ChangesService.ApplyChangeEntries(ctx, partyId, userChange.Entries, actorUserId, sourceEventId)
 }

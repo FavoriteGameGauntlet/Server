@@ -82,7 +82,7 @@ func TestSrvGames_GetWishlistGames(test *testing.T) {
 			sut := srvgames.GettingService{Database: databaseMock}
 
 			// Act
-			games, err := sut.GetWishlistGames(testCase.UserId, 1)
+			games, err := sut.GetWishlistGames(test.Context(), testCase.UserId, 1)
 
 			// Assert
 			if testCase.ExpectedErrorIs != nil {

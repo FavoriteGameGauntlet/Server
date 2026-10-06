@@ -21,7 +21,7 @@ func TestSrvPerks_RevokeUserPerk(test *testing.T) {
 
 		sut := srvperks.Service{Database: perksDb}
 
-		err := sut.RevokeUserPerk(9, 7, 1, "swift")
+		err := sut.RevokeUserPerk(test.Context(), 9, 7, 1, "swift")
 
 		require.NoError(test, err)
 		perksDb.AssertExpectations(test)

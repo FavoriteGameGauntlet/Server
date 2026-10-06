@@ -243,7 +243,7 @@ func TestSrvWheelEffects_ApplyWheelEffectRoll(test *testing.T) {
 			}
 
 			// Act
-			err := sut.ApplyWheelEffectRoll(testCase.UserId, 1, testCase.WheelRowName, testCase.TargetUserIds)
+			err := sut.ApplyWheelEffectRoll(test.Context(), testCase.UserId, 1, testCase.WheelRowName, testCase.TargetUserIds)
 
 			// Assert
 			if testCase.ExpectedErrorCode != "" {

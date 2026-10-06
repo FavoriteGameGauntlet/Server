@@ -18,7 +18,7 @@ func TestSrvPoints_ChangeUserPointByTypeName_AmountOutOfIntegerRange_Unprocessab
 	sut := srvpoints.Service{Database: databaseMock}
 
 	// Act
-	_, err := sut.ChangeUserPointByTypeName(9, 2, 1, "Rolls", math.MaxInt32+1)
+	_, err := sut.ChangeUserPointByTypeName(test.Context(), 9, 2, 1, "Rolls", math.MaxInt32+1)
 
 	// Assert
 	var unprocessable *common.UnprocessableError
@@ -32,7 +32,7 @@ func TestSrvPoints_ChangePartyPointByTypeName_AmountOutOfIntegerRange_Unprocessa
 	sut := srvpoints.Service{Database: databaseMock}
 
 	// Act
-	_, err := sut.ChangePartyPointByTypeName(9, 1, "Rolls", math.MinInt32-1)
+	_, err := sut.ChangePartyPointByTypeName(test.Context(), 9, 1, "Rolls", math.MinInt32-1)
 
 	// Assert
 	var unprocessable *common.UnprocessableError

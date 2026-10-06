@@ -38,13 +38,13 @@ func (c *Controller) GetSystemParameters(ctx echo.Context, partyId gensysparams.
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.PartyService.RequireMember(userId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	parameters, err := c.Service.GetAll(partyId)
+	parameters, err := c.Service.GetAll(ctx.Request().Context(), partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -63,13 +63,13 @@ func (c *Controller) GetSystemParameter(ctx echo.Context, partyId gensysparams.P
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.PartyService.RequireMember(userId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	parameter, err := c.Service.GetParameter(partyId, name)
+	parameter, err := c.Service.GetParameter(ctx.Request().Context(), partyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -96,7 +96,7 @@ func (c *Controller) ChangeSystemParameter(ctx echo.Context, partyId gensysparam
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	created, err := c.Service.ChangeValue(partyId, name, parameterDto.Value)
+	created, err := c.Service.ChangeValue(ctx.Request().Context(), partyId, name, parameterDto.Value)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -117,7 +117,7 @@ func (c *Controller) ResetSystemParameter(ctx echo.Context, partyId gensysparams
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.ResetParameter(partyId, name)
+	err = c.Service.ResetParameter(ctx.Request().Context(), partyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)

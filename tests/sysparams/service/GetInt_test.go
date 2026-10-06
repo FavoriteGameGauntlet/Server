@@ -94,7 +94,7 @@ func TestSrvSysParams_GetInt(test *testing.T) {
 			sut := srvsysparams.Service{Database: databaseMock}
 
 			// Act
-			value, err := sut.GetInt(1, testCase.ParameterName)
+			value, err := sut.GetInt(test.Context(), 1, testCase.ParameterName)
 
 			// Assert
 			if testCase.ExpectedErrorCode != "" {

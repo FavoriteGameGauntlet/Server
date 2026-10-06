@@ -4,13 +4,14 @@ import (
 	"FGG-Service/src/common"
 	"FGG-Service/src/games/database"
 	"FGG-Service/src/games/types"
+	"context"
 	"database/sql"
 	"errors"
 )
 
 type IGettingService interface {
-	GetWishlistGames(userId int, partyId int) (typegames.WishlistGames, error)
-	GetCurrentGame(userId int, partyId int) (typegames.CurrentGame, error)
+	GetWishlistGames(ctx context.Context, userId int, partyId int) (typegames.WishlistGames, error)
+	GetCurrentGame(ctx context.Context, userId int, partyId int) (typegames.CurrentGame, error)
 }
 
 type GettingService struct {
@@ -25,8 +26,8 @@ func NewGettingService() IGettingService {
 	}
 }
 
-func (s *GettingService) GetCurrentGame(userId int, partyId int) (game typegames.CurrentGame, err error) {
-	userGame, err := s.Database.GetCurrentGameCommand(userId, partyId)
+func (s *GettingService) GetCurrentGame(ctx context.Context, userId int, partyId int) (game typegames.CurrentGame, err error) {
+	userGame, err := s.Database.GetCurrentGameCommand(ctx, userId, partyId)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = common.NewCurrentGameNotFoundError()
@@ -47,6 +48,6 @@ func (s *GettingService) GetCurrentGame(userId int, partyId int) (game typegames
 	return
 }
 
-func (s *GettingService) GetWishlistGames(userId int, partyId int) (typegames.WishlistGames, error) {
-	return s.Database.GetWishlistGamesCommand(userId, partyId)
+func (s *GettingService) GetWishlistGames(ctx context.Context, userId int, partyId int) (typegames.WishlistGames, error) {
+	return s.Database.GetWishlistGamesCommand(ctx, userId, partyId)
 }

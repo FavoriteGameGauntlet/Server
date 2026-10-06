@@ -58,7 +58,7 @@ func TestSrvTimers_StopAllCompletedTimers_GrantsRewardFromTimerEvent(test *testi
 	sut := srvtimers.Service{Database: timerDb, GamesDatabase: gamesDb, ChangesService: changes}
 
 	// Act
-	err := sut.StopAllCompletedTimers()
+	err := sut.StopAllCompletedTimers(test.Context())
 
 	// Assert
 	require.NoError(test, err)
@@ -85,7 +85,7 @@ func TestSrvTimers_StopAllCompletedTimers_WithoutReward_StillAddsGameTime(test *
 	sut := srvtimers.Service{Database: timerDb, GamesDatabase: gamesDb, ChangesService: changes}
 
 	// Act
-	err := sut.StopAllCompletedTimers()
+	err := sut.StopAllCompletedTimers(test.Context())
 
 	// Assert
 	require.NoError(test, err)
@@ -112,7 +112,7 @@ func TestSrvTimers_StopAllCompletedTimers_FailedTimer_DoesNotStopOthers(test *te
 	sut := srvtimers.Service{Database: timerDb, GamesDatabase: gamesDb, ChangesService: changes}
 
 	// Act
-	err := sut.StopAllCompletedTimers()
+	err := sut.StopAllCompletedTimers(test.Context())
 
 	// Assert
 	require.NoError(test, err)
@@ -129,7 +129,7 @@ func TestSrvTimers_StopAllCompletedTimers_LookupFails_ReturnsError(test *testing
 	sut := srvtimers.Service{Database: timerDb}
 
 	// Act
-	err := sut.StopAllCompletedTimers()
+	err := sut.StopAllCompletedTimers(test.Context())
 
 	// Assert
 	require.ErrorIs(test, err, dbError)

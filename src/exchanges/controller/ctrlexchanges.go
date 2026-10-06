@@ -39,13 +39,13 @@ func (c *Controller) GetExchanges(ctx echo.Context, partyId genexchanges.PartyId
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.PartyService.RequireMember(userId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	exchanges, err := c.Service.GetExchanges(partyId)
+	exchanges, err := c.Service.GetExchanges(ctx.Request().Context(), partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -62,7 +62,7 @@ func (c *Controller) GetRemovedExchanges(ctx echo.Context, partyId genexchanges.
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	exchanges, err := c.Service.GetRemovedExchanges(partyId)
+	exchanges, err := c.Service.GetRemovedExchanges(ctx.Request().Context(), partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -88,6 +88,7 @@ func (c *Controller) CreateExchange(ctx echo.Context, partyId genexchanges.Party
 	}
 
 	exchange, err := c.Service.CreateExchange(
+		ctx.Request().Context(),
 		partyId,
 		exchangeDto.Name,
 		exchangeDto.Description,
@@ -109,7 +110,7 @@ func (c *Controller) RemoveExchange(ctx echo.Context, partyId genexchanges.Party
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.RemoveExchange(partyId, name)
+	err = c.Service.RemoveExchange(ctx.Request().Context(), partyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -126,7 +127,7 @@ func (c *Controller) UseExchange(ctx echo.Context, partyId genexchanges.PartyId,
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.PartyService.RequireMember(userId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -145,7 +146,7 @@ func (c *Controller) UseExchange(ctx echo.Context, partyId genexchanges.PartyId,
 		targetUserIds = make([]int, len(*useDto.TargetLogins))
 
 		for i, login := range *useDto.TargetLogins {
-			targetUserIds[i], err = c.AuthService.GetUserIdByLogin(login)
+			targetUserIds[i], err = c.AuthService.GetUserIdByLogin(ctx.Request().Context(), login)
 
 			if err != nil {
 				return common.SendJSONErrorResponse(ctx, err)
@@ -153,7 +154,7 @@ func (c *Controller) UseExchange(ctx echo.Context, partyId genexchanges.PartyId,
 		}
 	}
 
-	err = c.Service.UseExchange(userId, partyId, name, targetUserIds)
+	err = c.Service.UseExchange(ctx.Request().Context(), userId, partyId, name, targetUserIds)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -170,19 +171,19 @@ func (c *Controller) GetUserExchangeHistory(ctx echo.Context, partyId genexchang
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.PartyService.RequireMember(actorUserId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), actorUserId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	userId, err := c.AuthService.GetUserIdByLogin(login)
+	userId, err := c.AuthService.GetUserIdByLogin(ctx.Request().Context(), login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	history, err := c.Service.GetExchangeHistory(userId, partyId)
+	history, err := c.Service.GetExchangeHistory(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)

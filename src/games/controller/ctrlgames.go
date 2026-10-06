@@ -40,19 +40,19 @@ func (c *Controller) GetUserCurrentGame(ctx echo.Context, partyId gengames.Party
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.PartyService.RequireMember(actorUserId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), actorUserId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	userId, err := c.AuthService.GetUserIdByLogin(login)
+	userId, err := c.AuthService.GetUserIdByLogin(ctx.Request().Context(), login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	game, err := c.Service.GetCurrentGame(userId, partyId)
+	game, err := c.Service.GetCurrentGame(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -79,7 +79,7 @@ func (c *Controller) CreateCurrentGameAction(ctx echo.Context, partyId gengames.
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.PartyService.RequireMember(userId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -97,11 +97,11 @@ func (c *Controller) CreateCurrentGameAction(ctx echo.Context, partyId gengames.
 
 	switch actionDto.Action {
 	case gengames.Start:
-		game, err = c.Service.StartCurrentGame(userId, partyId)
+		game, err = c.Service.StartCurrentGame(ctx.Request().Context(), userId, partyId)
 	case gengames.Finish:
-		game, err = c.Service.FinishCurrentGame(userId, partyId)
+		game, err = c.Service.FinishCurrentGame(ctx.Request().Context(), userId, partyId)
 	case gengames.Cancel:
-		game, err = c.Service.CancelCurrentGame(userId, partyId)
+		game, err = c.Service.CancelCurrentGame(ctx.Request().Context(), userId, partyId)
 	default:
 		err = common.NewCurrentGameActionUnprocessableError(string(actionDto.Action))
 	}
@@ -121,19 +121,19 @@ func (c *Controller) GetUserGameHistory(ctx echo.Context, partyId gengames.Party
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.PartyService.RequireMember(actorUserId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), actorUserId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	userId, err := c.AuthService.GetUserIdByLogin(login)
+	userId, err := c.AuthService.GetUserIdByLogin(ctx.Request().Context(), login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	history, err := c.Service.GetGameHistory(userId, partyId)
+	history, err := c.Service.GetGameHistory(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -170,19 +170,19 @@ func (c *Controller) GetUserWishlistGames(ctx echo.Context, partyId gengames.Par
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.PartyService.RequireMember(actorUserId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), actorUserId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	userId, err := c.AuthService.GetUserIdByLogin(login)
+	userId, err := c.AuthService.GetUserIdByLogin(ctx.Request().Context(), login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	games, err := c.Service.GetWishlistGames(userId, partyId)
+	games, err := c.Service.GetWishlistGames(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -213,13 +213,13 @@ func (c *Controller) AddUserWishlistGame(ctx echo.Context, partyId gengames.Part
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.PartyService.RequireMember(actorUserId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), actorUserId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	userId, err := c.AuthService.GetUserIdByLogin(login)
+	userId, err := c.AuthService.GetUserIdByLogin(ctx.Request().Context(), login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -241,7 +241,7 @@ func (c *Controller) AddUserWishlistGame(ctx echo.Context, partyId gengames.Part
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.AddWishlistGame(userId, partyId, game)
+	err = c.Service.AddWishlistGame(ctx.Request().Context(), userId, partyId, game)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -264,13 +264,13 @@ func (c *Controller) GetAllCurrentGame(ctx echo.Context, partyId gengames.PartyI
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.PartyService.RequireMember(actorUserId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), actorUserId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	games, err := c.Service.GetAllCurrentGames(partyId)
+	games, err := c.Service.GetAllCurrentGames(ctx.Request().Context(), partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -301,7 +301,7 @@ func (c *Controller) PutGameReview(ctx echo.Context, partyId gengames.PartyId, n
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.PartyService.RequireMember(userId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -327,7 +327,7 @@ func (c *Controller) PutGameReview(ctx echo.Context, partyId gengames.PartyId, n
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	created, err := c.Service.RateGame(userId, partyId, name, reviewDto.Rating, reviewDto.ReviewComment)
+	created, err := c.Service.RateGame(ctx.Request().Context(), userId, partyId, name, reviewDto.Rating, reviewDto.ReviewComment)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -348,7 +348,7 @@ func (c *Controller) GetGameReview(ctx echo.Context, partyId gengames.PartyId, n
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.PartyService.RequireMember(userId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -360,7 +360,7 @@ func (c *Controller) GetGameReview(ctx echo.Context, partyId gengames.PartyId, n
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	review, err := c.Service.GetGameReview(userId, partyId, name)
+	review, err := c.Service.GetGameReview(ctx.Request().Context(), userId, partyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)

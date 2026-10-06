@@ -88,7 +88,7 @@ func TestSrvGames_GetCurrentGame(test *testing.T) {
 			sut := srvgames.GettingService{Database: databaseMock}
 
 			// Act
-			game, err := sut.GetCurrentGame(testCase.UserId, 1)
+			game, err := sut.GetCurrentGame(test.Context(), testCase.UserId, 1)
 
 			// Assert
 			if testCase.ExpectedErrorAs != nil {

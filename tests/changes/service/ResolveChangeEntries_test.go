@@ -23,7 +23,7 @@ func TestSrvChanges_ResolveChangeEntries_AmountOutOfIntegerRange_Unprocessable(t
 		name := "Rolls"
 
 		// Act
-		_, err := sut.ResolveChangeEntries(1, []typechanges.ChangeEntryInput{{PointTypeName: &name, Amount: amount}})
+		_, err := sut.ResolveChangeEntries(test.Context(), 1, []typechanges.ChangeEntryInput{{PointTypeName: &name, Amount: amount}})
 
 		// Assert
 		var unprocessable *common.UnprocessableError

@@ -28,7 +28,7 @@ func TestSrvTimers_SetTimerReward_StoresResolvedEntries(test *testing.T) {
 	sut := srvtimers.Service{Database: timerDb, ChangesService: changes}
 
 	// Act
-	reward, err := sut.SetTimerReward(1, inputs)
+	reward, err := sut.SetTimerReward(test.Context(), 1, inputs)
 
 	// Assert
 	require.NoError(test, err)
@@ -50,7 +50,7 @@ func TestSrvTimers_SetTimerReward_UnresolvableEntry_KeepsCurrentReward(test *tes
 	sut := srvtimers.Service{Database: timerDb, ChangesService: changes}
 
 	// Act
-	_, err := sut.SetTimerReward(1, inputs)
+	_, err := sut.SetTimerReward(test.Context(), 1, inputs)
 
 	// Assert
 	require.ErrorIs(test, err, dbError)

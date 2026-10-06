@@ -3,27 +3,28 @@ package dbparties
 import (
 	"FGG-Service/src/dbaccess"
 	"FGG-Service/src/parties/types"
+	"context"
 )
 
 type IDatabase interface {
-	CreatePartyCommand(name string) (party typeparties.Party, err error)
-	GetPartyCommand(partyId int) (party typeparties.Party, err error)
-	GetUserPartiesCommand(userId int) (parties []typeparties.Party, err error)
-	ChangePartyNameCommand(partyId int, name string) error
-	CreateMemberCommand(userId int, partyId int, displayName *string, isAdmin bool) (member typeparties.Member, err error)
-	GetMemberCommand(userId int, partyId int) (member typeparties.MemberWithLogin, err error)
-	GetMembersCommand(partyId int) (members []typeparties.MemberWithLogin, err error)
-	ChangeMemberAdminStatusCommand(userId int, partyId int, isAdmin bool) error
-	ChangeMemberDisplayNameCommand(userId int, partyId int, displayName *string) error
-	RemoveMemberCommand(userId int, partyId int) error
+	CreatePartyCommand(ctx context.Context, name string) (party typeparties.Party, err error)
+	GetPartyCommand(ctx context.Context, partyId int) (party typeparties.Party, err error)
+	GetUserPartiesCommand(ctx context.Context, userId int) (parties []typeparties.Party, err error)
+	ChangePartyNameCommand(ctx context.Context, partyId int, name string) error
+	CreateMemberCommand(ctx context.Context, userId int, partyId int, displayName *string, isAdmin bool) (member typeparties.Member, err error)
+	GetMemberCommand(ctx context.Context, userId int, partyId int) (member typeparties.MemberWithLogin, err error)
+	GetMembersCommand(ctx context.Context, partyId int) (members []typeparties.MemberWithLogin, err error)
+	ChangeMemberAdminStatusCommand(ctx context.Context, userId int, partyId int, isAdmin bool) error
+	ChangeMemberDisplayNameCommand(ctx context.Context, userId int, partyId int, displayName *string) error
+	RemoveMemberCommand(ctx context.Context, userId int, partyId int) error
 }
 
 type Database struct{}
 
 var createPartyQuery = dbaccess.Query{Name: "CreatePartyQuery", SQL: `SELECT * FROM create_party($1::text)`}
 
-func (db *Database) CreatePartyCommand(name string) (party typeparties.Party, err error) {
-	row := dbaccess.QueryRow(createPartyQuery, name)
+func (db *Database) CreatePartyCommand(ctx context.Context, name string) (party typeparties.Party, err error) {
+	row := dbaccess.QueryRow(ctx, createPartyQuery, name)
 
 	err = row.Scan(&party.Id, &party.Name, &party.CreatedDate)
 
@@ -34,8 +35,8 @@ func (db *Database) CreatePartyCommand(name string) (party typeparties.Party, er
 
 var getPartyQuery = dbaccess.Query{Name: "GetPartyQuery", SQL: `SELECT * FROM get_party($1::integer)`}
 
-func (db *Database) GetPartyCommand(partyId int) (party typeparties.Party, err error) {
-	row := dbaccess.QueryRow(getPartyQuery, partyId)
+func (db *Database) GetPartyCommand(ctx context.Context, partyId int) (party typeparties.Party, err error) {
+	row := dbaccess.QueryRow(ctx, getPartyQuery, partyId)
 
 	err = row.Scan(&party.Id, &party.Name, &party.CreatedDate)
 
@@ -46,8 +47,8 @@ func (db *Database) GetPartyCommand(partyId int) (party typeparties.Party, err e
 
 var getUserPartiesQuery = dbaccess.Query{Name: "GetUserPartiesQuery", SQL: `SELECT * FROM get_user_parties($1::integer)`}
 
-func (db *Database) GetUserPartiesCommand(userId int) (parties []typeparties.Party, err error) {
-	rows, err := dbaccess.QueryRows(getUserPartiesQuery, userId)
+func (db *Database) GetUserPartiesCommand(ctx context.Context, userId int) (parties []typeparties.Party, err error) {
+	rows, err := dbaccess.QueryRows(ctx, getUserPartiesQuery, userId)
 
 	if err != nil {
 		return
@@ -75,8 +76,8 @@ func (db *Database) GetUserPartiesCommand(userId int) (parties []typeparties.Par
 
 var changePartyNameQuery = dbaccess.Query{Name: "ChangePartyNameQuery", SQL: `SELECT change_party_name($1::integer, $2::text)`}
 
-func (db *Database) ChangePartyNameCommand(partyId int, name string) error {
-	_, err := dbaccess.Exec(changePartyNameQuery, partyId, name)
+func (db *Database) ChangePartyNameCommand(ctx context.Context, partyId int, name string) error {
+	_, err := dbaccess.Exec(ctx, changePartyNameQuery, partyId, name)
 
 	dbaccess.LogDbResult(changePartyNameQuery, nil, err)
 
@@ -85,8 +86,8 @@ func (db *Database) ChangePartyNameCommand(partyId int, name string) error {
 
 var createMemberQuery = dbaccess.Query{Name: "CreateMemberQuery", SQL: `SELECT * FROM create_member($1::integer, $2::integer, $3::text, $4::boolean)`}
 
-func (db *Database) CreateMemberCommand(userId int, partyId int, displayName *string, isAdmin bool) (member typeparties.Member, err error) {
-	row := dbaccess.QueryRow(createMemberQuery, userId, partyId, displayName, isAdmin)
+func (db *Database) CreateMemberCommand(ctx context.Context, userId int, partyId int, displayName *string, isAdmin bool) (member typeparties.Member, err error) {
+	row := dbaccess.QueryRow(ctx, createMemberQuery, userId, partyId, displayName, isAdmin)
 
 	err = row.Scan(
 		&member.Id,
@@ -104,8 +105,8 @@ func (db *Database) CreateMemberCommand(userId int, partyId int, displayName *st
 
 var getMemberQuery = dbaccess.Query{Name: "GetMemberQuery", SQL: `SELECT * FROM get_member($1::integer, $2::integer)`}
 
-func (db *Database) GetMemberCommand(userId int, partyId int) (member typeparties.MemberWithLogin, err error) {
-	row := dbaccess.QueryRow(getMemberQuery, userId, partyId)
+func (db *Database) GetMemberCommand(ctx context.Context, userId int, partyId int) (member typeparties.MemberWithLogin, err error) {
+	row := dbaccess.QueryRow(ctx, getMemberQuery, userId, partyId)
 
 	err = row.Scan(
 		&member.Id,
@@ -124,8 +125,8 @@ func (db *Database) GetMemberCommand(userId int, partyId int) (member typepartie
 
 var getMembersQuery = dbaccess.Query{Name: "GetMembersQuery", SQL: `SELECT * FROM get_members($1::integer)`}
 
-func (db *Database) GetMembersCommand(partyId int) (members []typeparties.MemberWithLogin, err error) {
-	rows, err := dbaccess.QueryRows(getMembersQuery, partyId)
+func (db *Database) GetMembersCommand(ctx context.Context, partyId int) (members []typeparties.MemberWithLogin, err error) {
+	rows, err := dbaccess.QueryRows(ctx, getMembersQuery, partyId)
 
 	if err != nil {
 		return
@@ -161,8 +162,8 @@ func (db *Database) GetMembersCommand(partyId int) (members []typeparties.Member
 
 var changeMemberAdminStatusQuery = dbaccess.Query{Name: "ChangeMemberAdminStatusQuery", SQL: `SELECT change_member_admin_status($1::integer, $2::integer, $3::boolean)`}
 
-func (db *Database) ChangeMemberAdminStatusCommand(userId int, partyId int, isAdmin bool) error {
-	_, err := dbaccess.Exec(changeMemberAdminStatusQuery, userId, partyId, isAdmin)
+func (db *Database) ChangeMemberAdminStatusCommand(ctx context.Context, userId int, partyId int, isAdmin bool) error {
+	_, err := dbaccess.Exec(ctx, changeMemberAdminStatusQuery, userId, partyId, isAdmin)
 
 	dbaccess.LogDbResult(changeMemberAdminStatusQuery, nil, err)
 
@@ -171,8 +172,8 @@ func (db *Database) ChangeMemberAdminStatusCommand(userId int, partyId int, isAd
 
 var changeMemberDisplayNameQuery = dbaccess.Query{Name: "ChangeMemberDisplayNameQuery", SQL: `SELECT change_member_display_name($1::integer, $2::integer, $3::text)`}
 
-func (db *Database) ChangeMemberDisplayNameCommand(userId int, partyId int, displayName *string) error {
-	_, err := dbaccess.Exec(changeMemberDisplayNameQuery, userId, partyId, displayName)
+func (db *Database) ChangeMemberDisplayNameCommand(ctx context.Context, userId int, partyId int, displayName *string) error {
+	_, err := dbaccess.Exec(ctx, changeMemberDisplayNameQuery, userId, partyId, displayName)
 
 	dbaccess.LogDbResult(changeMemberDisplayNameQuery, nil, err)
 
@@ -181,8 +182,8 @@ func (db *Database) ChangeMemberDisplayNameCommand(userId int, partyId int, disp
 
 var removeMemberQuery = dbaccess.Query{Name: "RemoveMemberQuery", SQL: `SELECT remove_member($1::integer, $2::integer)`}
 
-func (db *Database) RemoveMemberCommand(userId int, partyId int) error {
-	_, err := dbaccess.Exec(removeMemberQuery, userId, partyId)
+func (db *Database) RemoveMemberCommand(ctx context.Context, userId int, partyId int) error {
+	_, err := dbaccess.Exec(ctx, removeMemberQuery, userId, partyId)
 
 	dbaccess.LogDbResult(removeMemberQuery, nil, err)
 

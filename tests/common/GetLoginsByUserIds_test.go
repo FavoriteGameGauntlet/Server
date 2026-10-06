@@ -17,7 +17,7 @@ func TestGetLoginsByUserIds(test *testing.T) {
 		authMock.On("GetLoginByUserId", 3).Return("Jegern", nil).Once()
 		authMock.On("GetLoginByUserId", 9).Return("North", nil).Once()
 
-		logins, err := common.GetLoginsByUserIds(authMock, []int{3, 9, 3, 3, 9})
+		logins, err := common.GetLoginsByUserIds(test.Context(), authMock, []int{3, 9, 3, 3, 9})
 
 		require.NoError(test, err)
 		require.Equal(test, map[int]string{3: "Jegern", 9: "North"}, logins)
@@ -27,7 +27,7 @@ func TestGetLoginsByUserIds(test *testing.T) {
 	test.Run("NoIds_NothingLookedUp", func(test *testing.T) {
 		authMock := new(srvauthmock.ServiceMock)
 
-		logins, err := common.GetLoginsByUserIds(authMock, nil)
+		logins, err := common.GetLoginsByUserIds(test.Context(), authMock, nil)
 
 		require.NoError(test, err)
 		require.Empty(test, logins)
@@ -39,7 +39,7 @@ func TestGetLoginsByUserIds(test *testing.T) {
 		authMock := new(srvauthmock.ServiceMock)
 		authMock.On("GetLoginByUserId", 3).Return("", lookupError)
 
-		_, err := common.GetLoginsByUserIds(authMock, []int{3})
+		_, err := common.GetLoginsByUserIds(test.Context(), authMock, []int{3})
 
 		require.ErrorIs(test, err, lookupError)
 	})

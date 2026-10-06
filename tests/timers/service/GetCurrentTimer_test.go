@@ -20,7 +20,7 @@ func TestSrvTimers_GetCurrentTimer_ExistingTimer(test *testing.T) {
 	sut := srvtimers.Service{Database: timerDb}
 
 	// Act
-	timer, err := sut.GetCurrentTimer(1, 1)
+	timer, err := sut.GetCurrentTimer(test.Context(), 1, 1)
 
 	// Assert
 	require.NoError(test, err)
@@ -36,7 +36,7 @@ func TestSrvTimers_GetCurrentTimer_NoTimer_NotFound(test *testing.T) {
 	sut := srvtimers.Service{Database: timerDb}
 
 	// Act
-	_, err := sut.GetCurrentTimer(1, 1)
+	_, err := sut.GetCurrentTimer(test.Context(), 1, 1)
 
 	// Assert
 	var notFound *common.NotFoundError
@@ -54,7 +54,7 @@ func TestSrvTimers_GetCurrentTimer_DatabaseError(test *testing.T) {
 	sut := srvtimers.Service{Database: timerDb}
 
 	// Act
-	_, err := sut.GetCurrentTimer(1, 1)
+	_, err := sut.GetCurrentTimer(test.Context(), 1, 1)
 
 	// Assert
 	require.ErrorIs(test, err, dbError)

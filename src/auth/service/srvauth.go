@@ -5,6 +5,7 @@ import (
 	"FGG-Service/src/auth/types"
 	"FGG-Service/src/common"
 	"FGG-Service/src/parties/database"
+	"context"
 	"database/sql"
 	"errors"
 	"net/http"
@@ -15,9 +16,9 @@ import (
 type IService interface {
 	DoesUserSessionExist(ctx echo.Context) (bool, error)
 	GetUserId(ctx echo.Context) (int, error)
-	GetUserIdByLogin(login string) (int, error)
-	GetLoginByUserId(userId int) (string, error)
-	IsAdmin(userId int, partyId int) (bool, error)
+	GetUserIdByLogin(ctx context.Context, login string) (int, error)
+	GetLoginByUserId(ctx context.Context, userId int) (string, error)
+	IsAdmin(ctx context.Context, userId int, partyId int) (bool, error)
 }
 
 type Service struct {
@@ -42,7 +43,7 @@ func (s *Service) DoesUserSessionExist(ctx echo.Context) (doesExist bool, err er
 
 	sessionId := cookie.Value
 
-	_, err = s.GetUserSessionById(sessionId)
+	_, err = s.GetUserSessionById(ctx.Request().Context(), sessionId)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = nil
@@ -77,7 +78,7 @@ func (s *Service) GetUserId(ctx echo.Context) (userId int, err error) {
 
 	sessionId := cookie.Value
 
-	userSession, err := s.GetUserSessionById(sessionId)
+	userSession, err := s.GetUserSessionById(ctx.Request().Context(), sessionId)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = common.NewActiveSessionNotFoundUnauthorizedError()
@@ -93,8 +94,8 @@ func (s *Service) GetUserId(ctx echo.Context) (userId int, err error) {
 	return
 }
 
-func (s *Service) CreateUser(signupUser typeauth.SignupUser) error {
-	user, err := s.Database.GetUserByLoginCommand(signupUser.Login)
+func (s *Service) CreateUser(ctx context.Context, signupUser typeauth.SignupUser) error {
+	user, err := s.Database.GetUserByLoginCommand(ctx, signupUser.Login)
 
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
@@ -104,7 +105,7 @@ func (s *Service) CreateUser(signupUser typeauth.SignupUser) error {
 		return common.NewUserNameAlreadyExistsConflictError()
 	}
 
-	user, err = s.Database.GetUserByEmailCommand(signupUser.Email)
+	user, err = s.Database.GetUserByEmailCommand(ctx, signupUser.Email)
 
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
@@ -114,17 +115,17 @@ func (s *Service) CreateUser(signupUser typeauth.SignupUser) error {
 		return common.NewUserEmailAlreadyExistsConflictError()
 	}
 
-	_, err = s.Database.CreateUserCommand(signupUser)
+	_, err = s.Database.CreateUserCommand(ctx, signupUser)
 
 	return err
 }
 
-func (s *Service) GetUserSessionById(sessionId string) (userSession typeauth.UserSession, err error) {
-	return s.Database.GetUserSessionByIdCommand(sessionId)
+func (s *Service) GetUserSessionById(ctx context.Context, sessionId string) (userSession typeauth.UserSession, err error) {
+	return s.Database.GetUserSessionByIdCommand(ctx, sessionId)
 }
 
-func (s *Service) CreateSession(loginUser typeauth.LoginUser) (userSession typeauth.UserSession, err error) {
-	user, err := s.Database.GetUserByLoginAndPasswordCommand(loginUser)
+func (s *Service) CreateSession(ctx context.Context, loginUser typeauth.LoginUser) (userSession typeauth.UserSession, err error) {
+	user, err := s.Database.GetUserByLoginAndPasswordCommand(ctx, loginUser)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = common.NewWrongDataUnprocessableError()
@@ -135,20 +136,20 @@ func (s *Service) CreateSession(loginUser typeauth.LoginUser) (userSession typea
 		return
 	}
 
-	userSession, err = s.Database.CreateUserSessionCommand(user.Id)
+	userSession, err = s.Database.CreateUserSessionCommand(ctx, user.Id)
 
 	return
 }
 
-func (s *Service) DeleteUserSession(userSessionId string) error {
-	return s.Database.DeleteUserSessionCommand(userSessionId)
+func (s *Service) DeleteUserSession(ctx context.Context, userSessionId string) error {
+	return s.Database.DeleteUserSessionCommand(ctx, userSessionId)
 }
 
 // IsAdmin reports whether the user is an admin of the party. Admin rights are party membership data
 // (parties.Members.IsAdmin) — a party creator becomes its first admin. A user who is not a member of
 // the party is simply not an admin.
-func (s *Service) IsAdmin(userId int, partyId int) (isAdmin bool, err error) {
-	member, err := s.PartiesDatabase.GetMemberCommand(userId, partyId)
+func (s *Service) IsAdmin(ctx context.Context, userId int, partyId int) (isAdmin bool, err error) {
+	member, err := s.PartiesDatabase.GetMemberCommand(ctx, userId, partyId)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = nil
@@ -164,8 +165,8 @@ func (s *Service) IsAdmin(userId int, partyId int) (isAdmin bool, err error) {
 	return
 }
 
-func (s *Service) GetUserIdByLogin(userLogin string) (userId int, err error) {
-	user, err := s.Database.GetUserByLoginCommand(userLogin)
+func (s *Service) GetUserIdByLogin(ctx context.Context, userLogin string) (userId int, err error) {
+	user, err := s.Database.GetUserByLoginCommand(ctx, userLogin)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		err = common.NewUserLoginNotFoundError(userLogin)
@@ -181,8 +182,8 @@ func (s *Service) GetUserIdByLogin(userLogin string) (userId int, err error) {
 }
 
 // GetLoginByUserId resolves a user id to the login the API names that user by.
-func (s *Service) GetLoginByUserId(userId int) (login string, err error) {
-	user, err := s.Database.GetUserByIdCommand(userId)
+func (s *Service) GetLoginByUserId(ctx context.Context, userId int) (login string, err error) {
+	user, err := s.Database.GetUserByIdCommand(ctx, userId)
 
 	if err != nil {
 		return

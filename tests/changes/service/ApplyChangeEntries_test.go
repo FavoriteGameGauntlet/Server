@@ -237,7 +237,7 @@ func TestSrvChanges_ApplyChangeEntries(test *testing.T) {
 			}
 
 			// Act
-			err := sut.ApplyChangeEntries(1, testCase.Entries, 9, 999)
+			err := sut.ApplyChangeEntries(test.Context(), 1, testCase.Entries, 9, 999)
 
 			// Assert
 			if testCase.ExpectedError != nil {

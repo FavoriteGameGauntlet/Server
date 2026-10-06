@@ -57,7 +57,7 @@ func TestSrvParties_RemoveMember(test *testing.T) {
 
 		sut := srvparties.Service{Database: db}
 
-		err := sut.RemoveMember(1, 8)
+		err := sut.RemoveMember(test.Context(), 1, 8)
 
 		require.NoError(test, err)
 		require.Equal(test, []string{"promote", "remove"}, calls)
@@ -78,7 +78,7 @@ func TestSrvParties_RemoveMember(test *testing.T) {
 
 		sut := srvparties.Service{Database: db}
 
-		err := sut.RemoveMember(1, 8)
+		err := sut.RemoveMember(test.Context(), 1, 8)
 
 		require.NoError(test, err)
 		db.AssertExpectations(test)
@@ -98,7 +98,7 @@ func TestSrvParties_RemoveMember(test *testing.T) {
 
 		sut := srvparties.Service{Database: db}
 
-		err := sut.RemoveMember(1, 8)
+		err := sut.RemoveMember(test.Context(), 1, 8)
 
 		require.NoError(test, err)
 		db.AssertExpectations(test)
@@ -118,7 +118,7 @@ func TestSrvParties_RemoveMember(test *testing.T) {
 
 		sut := srvparties.Service{Database: db}
 
-		err := sut.RemoveMember(1, 8)
+		err := sut.RemoveMember(test.Context(), 1, 8)
 
 		require.NoError(test, err)
 		db.AssertNotCalled(test, "ChangeMemberAdminStatusCommand", mock.Anything, mock.Anything, mock.Anything)
@@ -137,7 +137,7 @@ func TestSrvParties_RemoveMember(test *testing.T) {
 
 		sut := srvparties.Service{Database: db}
 
-		err := sut.RemoveMember(2, 8)
+		err := sut.RemoveMember(test.Context(), 2, 8)
 
 		require.NoError(test, err)
 		db.AssertNotCalled(test, "ChangeMemberAdminStatusCommand", mock.Anything, mock.Anything, mock.Anything)
@@ -156,7 +156,7 @@ func TestSrvParties_RemoveMember(test *testing.T) {
 
 		sut := srvparties.Service{Database: db}
 
-		err := sut.RemoveMember(1, 8)
+		err := sut.RemoveMember(test.Context(), 1, 8)
 
 		require.NoError(test, err)
 		db.AssertNotCalled(test, "ChangeMemberAdminStatusCommand", mock.Anything, mock.Anything, mock.Anything)
@@ -170,7 +170,7 @@ func TestSrvParties_RemoveMember(test *testing.T) {
 
 		sut := srvparties.Service{Database: db}
 
-		err := sut.RemoveMember(1, 8)
+		err := sut.RemoveMember(test.Context(), 1, 8)
 
 		var notFound *common.NotFoundError
 		require.ErrorAs(test, err, &notFound)
@@ -186,7 +186,7 @@ func TestSrvParties_RemoveMember(test *testing.T) {
 
 		sut := srvparties.Service{Database: db}
 
-		err := sut.RemoveMember(1, 8)
+		err := sut.RemoveMember(test.Context(), 1, 8)
 
 		require.ErrorIs(test, err, removeMemberDbError)
 		db.AssertNotCalled(test, "ChangeMemberAdminStatusCommand", mock.Anything, mock.Anything, mock.Anything)
@@ -205,7 +205,7 @@ func TestSrvParties_RemoveMember(test *testing.T) {
 
 		sut := srvparties.Service{Database: db}
 
-		err := sut.RemoveMember(1, 8)
+		err := sut.RemoveMember(test.Context(), 1, 8)
 
 		require.ErrorIs(test, err, removeMemberDbError)
 		db.AssertNotCalled(test, "RemoveMemberCommand", mock.Anything, mock.Anything)
@@ -223,7 +223,7 @@ func TestSrvParties_RemoveMember(test *testing.T) {
 
 		sut := srvparties.Service{Database: db}
 
-		err := sut.RemoveMember(2, 8)
+		err := sut.RemoveMember(test.Context(), 2, 8)
 
 		require.ErrorIs(test, err, removeMemberDbError)
 	})

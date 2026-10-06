@@ -4,16 +4,17 @@ import (
 	"FGG-Service/src/changes/types"
 	"FGG-Service/src/common"
 	"FGG-Service/src/validator"
+	"context"
 )
 
 // ResolveChangeEntries turns the names an API caller uses into the ids a change entry stores. It
 // lives here because it is the one place that already reaches every domain an entry can target.
-func (s *Service) ResolveChangeEntries(partyId int, inputs []typechanges.ChangeEntryInput) (entries []typechanges.ChangeEntry, err error) {
+func (s *Service) ResolveChangeEntries(ctx context.Context, partyId int, inputs []typechanges.ChangeEntryInput) (entries []typechanges.ChangeEntry, err error) {
 	entries = make([]typechanges.ChangeEntry, 0, len(inputs))
 
 	for _, input := range inputs {
 		var entry typechanges.ChangeEntry
-		entry, err = s.resolveChangeEntry(partyId, input)
+		entry, err = s.resolveChangeEntry(ctx, partyId, input)
 
 		if err != nil {
 			return nil, err
@@ -25,7 +26,7 @@ func (s *Service) ResolveChangeEntries(partyId int, inputs []typechanges.ChangeE
 	return
 }
 
-func (s *Service) resolveChangeEntry(partyId int, input typechanges.ChangeEntryInput) (entry typechanges.ChangeEntry, err error) {
+func (s *Service) resolveChangeEntry(ctx context.Context, partyId int, input typechanges.ChangeEntryInput) (entry typechanges.ChangeEntry, err error) {
 	err = validator.ValidateChangeAmount(input.Amount)
 
 	if err != nil {
@@ -37,19 +38,19 @@ func (s *Service) resolveChangeEntry(partyId int, input typechanges.ChangeEntryI
 	switch {
 	case input.PointTypeName != nil:
 		var pointTypeId int
-		pointTypeId, err = s.pointTypeIdByName(partyId, *input.PointTypeName)
+		pointTypeId, err = s.pointTypeIdByName(ctx, partyId, *input.PointTypeName)
 		entry.PointTypeId = &pointTypeId
 	case input.ItemName != nil:
 		var itemId int
-		itemId, err = s.itemIdByName(partyId, *input.ItemName)
+		itemId, err = s.itemIdByName(ctx, partyId, *input.ItemName)
 		entry.ItemId = &itemId
 	case input.PerkName != nil:
 		var perkId int
-		perkId, err = s.perkIdByName(partyId, *input.PerkName)
+		perkId, err = s.perkIdByName(ctx, partyId, *input.PerkName)
 		entry.PerkId = &perkId
 	case input.EffectName != nil:
 		var effectId int
-		effectId, err = s.effectIdByName(partyId, *input.EffectName)
+		effectId, err = s.effectIdByName(ctx, partyId, *input.EffectName)
 		entry.EffectId = &effectId
 	default:
 		err = common.NewChangeEntryUnprocessableError()
@@ -58,8 +59,8 @@ func (s *Service) resolveChangeEntry(partyId int, input typechanges.ChangeEntryI
 	return
 }
 
-func (s *Service) pointTypeIdByName(partyId int, name string) (id int, err error) {
-	pointType, err := s.PointsService.GetPointTypeByName(partyId, name)
+func (s *Service) pointTypeIdByName(ctx context.Context, partyId int, name string) (id int, err error) {
+	pointType, err := s.PointsService.GetPointTypeByName(ctx, partyId, name)
 
 	if err != nil {
 		return
@@ -68,8 +69,8 @@ func (s *Service) pointTypeIdByName(partyId int, name string) (id int, err error
 	return pointType.Id, nil
 }
 
-func (s *Service) itemIdByName(partyId int, name string) (id int, err error) {
-	items, err := s.ItemsDatabase.GetActualItemsCommand(partyId)
+func (s *Service) itemIdByName(ctx context.Context, partyId int, name string) (id int, err error) {
+	items, err := s.ItemsDatabase.GetActualItemsCommand(ctx, partyId)
 
 	if err != nil {
 		return
@@ -84,8 +85,8 @@ func (s *Service) itemIdByName(partyId int, name string) (id int, err error) {
 	return 0, common.NewItemNotFoundError(name)
 }
 
-func (s *Service) perkIdByName(partyId int, name string) (id int, err error) {
-	perks, err := s.PerksDatabase.GetActualPerksCommand(partyId)
+func (s *Service) perkIdByName(ctx context.Context, partyId int, name string) (id int, err error) {
+	perks, err := s.PerksDatabase.GetActualPerksCommand(ctx, partyId)
 
 	if err != nil {
 		return
@@ -100,8 +101,8 @@ func (s *Service) perkIdByName(partyId int, name string) (id int, err error) {
 	return 0, common.NewPerkNotFoundError(name)
 }
 
-func (s *Service) effectIdByName(partyId int, name string) (id int, err error) {
-	effects, err := s.EffectsDatabase.GetActualEffectsCommand(partyId)
+func (s *Service) effectIdByName(ctx context.Context, partyId int, name string) (id int, err error) {
+	effects, err := s.EffectsDatabase.GetActualEffectsCommand(ctx, partyId)
 
 	if err != nil {
 		return

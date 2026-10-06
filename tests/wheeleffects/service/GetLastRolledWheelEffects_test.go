@@ -79,7 +79,7 @@ func TestSrvWheelEffects_GetLastRolledWheelEffects(test *testing.T) {
 			sut := srvwheeleffects.Service{Database: databaseMock}
 
 			// Act
-			rows, err := sut.GetLastRolledWheelEffects(testCase.UserId, 1)
+			rows, err := sut.GetLastRolledWheelEffects(test.Context(), testCase.UserId, 1)
 
 			// Assert
 			if testCase.ExpectedErrorCode != "" {

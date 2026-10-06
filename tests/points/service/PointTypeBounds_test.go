@@ -49,7 +49,7 @@ func TestSrvPoints_CreatePointType_InvalidBounds(test *testing.T) {
 			sut := srvpoints.Service{Database: databaseMock}
 
 			// Act
-			_, err := sut.CreatePointType(1, typepoints.PointType{
+			_, err := sut.CreatePointType(test.Context(), 1, typepoints.PointType{
 				Name:       "Rolls",
 				StartValue: testCase.StartValue,
 				Minimum:    testCase.Minimum,
@@ -87,7 +87,7 @@ func TestSrvPoints_CreatePointType_ValidBounds_Created(test *testing.T) {
 			sut := srvpoints.Service{Database: databaseMock}
 
 			// Act
-			_, err := sut.CreatePointType(1, typepoints.PointType{
+			_, err := sut.CreatePointType(test.Context(), 1, typepoints.PointType{
 				Name:       "Rolls",
 				StartValue: testCase.StartValue,
 				IsPublic:   true,
@@ -115,7 +115,7 @@ func TestSrvPoints_ChangePointType_BoundsExcludeStartValue_Unprocessable(test *t
 	sut := srvpoints.Service{Database: databaseMock}
 
 	// Act
-	err := sut.ChangePointType(1, "Rolls", typepoints.PointType{Name: "Rolls", StartValue: 0, Minimum: ptrInt(1), Maximum: ptrInt(10)})
+	err := sut.ChangePointType(test.Context(), 1, "Rolls", typepoints.PointType{Name: "Rolls", StartValue: 0, Minimum: ptrInt(1), Maximum: ptrInt(10)})
 
 	// Assert
 	var unprocessable *common.UnprocessableError
@@ -135,7 +135,7 @@ func TestSrvPoints_ChangePointType_RemoveMaximum_Changed(test *testing.T) {
 	sut := srvpoints.Service{Database: databaseMock}
 
 	// Act
-	err := sut.ChangePointType(1, "Rolls", typepoints.PointType{Name: "Rolls", StartValue: 3, Minimum: ptrInt(3)})
+	err := sut.ChangePointType(test.Context(), 1, "Rolls", typepoints.PointType{Name: "Rolls", StartValue: 3, Minimum: ptrInt(3)})
 
 	// Assert
 	require.NoError(test, err)
@@ -154,7 +154,7 @@ func TestSrvPoints_ChangePointType_NewStartValue_Changed(test *testing.T) {
 	sut := srvpoints.Service{Database: databaseMock}
 
 	// Act
-	err := sut.ChangePointType(1, "Rolls", typepoints.PointType{Name: "Rolls", StartValue: 1, Minimum: ptrInt(1)})
+	err := sut.ChangePointType(test.Context(), 1, "Rolls", typepoints.PointType{Name: "Rolls", StartValue: 1, Minimum: ptrInt(1)})
 
 	// Assert
 	require.NoError(test, err)
@@ -174,7 +174,7 @@ func TestSrvPoints_ChangePointType_Rename_Changed(test *testing.T) {
 	sut := srvpoints.Service{Database: databaseMock}
 
 	// Act
-	err := sut.ChangePointType(1, "Rolls", typepoints.PointType{Name: "Spins"})
+	err := sut.ChangePointType(test.Context(), 1, "Rolls", typepoints.PointType{Name: "Spins"})
 
 	// Assert
 	require.NoError(test, err)
@@ -195,7 +195,7 @@ func TestSrvPoints_ChangePointType_RenameToTakenName_Conflict(test *testing.T) {
 	sut := srvpoints.Service{Database: databaseMock}
 
 	// Act
-	err := sut.ChangePointType(1, "Rolls", typepoints.PointType{Name: "Spins"})
+	err := sut.ChangePointType(test.Context(), 1, "Rolls", typepoints.PointType{Name: "Spins"})
 
 	// Assert
 	var conflict *common.ConflictError

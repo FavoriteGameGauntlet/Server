@@ -38,13 +38,13 @@ func (c *Controller) GetPerks(ctx echo.Context, partyId genperks.PartyId) error 
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.PartyService.RequireMember(userId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	perks, err := c.Service.GetPerks(partyId)
+	perks, err := c.Service.GetPerks(ctx.Request().Context(), partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -61,7 +61,7 @@ func (c *Controller) GetRemovedPerks(ctx echo.Context, partyId genperks.PartyId)
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	perks, err := c.Service.GetRemovedPerks(partyId)
+	perks, err := c.Service.GetRemovedPerks(ctx.Request().Context(), partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -86,7 +86,7 @@ func (c *Controller) CreatePerk(ctx echo.Context, partyId genperks.PartyId) erro
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	perk, err := c.Service.CreatePerk(partyId, perkDto.Name, perkDto.Description, perkDto.EffectName)
+	perk, err := c.Service.CreatePerk(ctx.Request().Context(), partyId, perkDto.Name, perkDto.Description, perkDto.EffectName)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -103,7 +103,7 @@ func (c *Controller) RemovePerk(ctx echo.Context, partyId genperks.PartyId, name
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.RemovePerk(partyId, name)
+	err = c.Service.RemovePerk(ctx.Request().Context(), partyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -120,7 +120,7 @@ func (c *Controller) GetUserPerks(ctx echo.Context, partyId genperks.PartyId, lo
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	views, err := c.Service.GetUserPerks(userId, partyId)
+	views, err := c.Service.GetUserPerks(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -152,13 +152,13 @@ func (c *Controller) RevokeUserPerk(ctx echo.Context, partyId genperks.PartyId, 
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	userId, err := c.AuthService.GetUserIdByLogin(login)
+	userId, err := c.AuthService.GetUserIdByLogin(ctx.Request().Context(), login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.RevokeUserPerk(actorUserId, userId, partyId, name)
+	err = c.Service.RevokeUserPerk(ctx.Request().Context(), actorUserId, userId, partyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -175,7 +175,7 @@ func (c *Controller) GetUserPerkHistory(ctx echo.Context, partyId genperks.Party
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	history, err := c.Service.GetPerkHistory(userId, partyId)
+	history, err := c.Service.GetPerkHistory(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -186,7 +186,7 @@ func (c *Controller) GetUserPerkHistory(ctx echo.Context, partyId genperks.Party
 		actorUserIds[i] = entry.ActorUserId
 	}
 
-	loginsByUserId, err := common.GetLoginsByUserIds(c.AuthService, actorUserIds)
+	loginsByUserId, err := common.GetLoginsByUserIds(ctx.Request().Context(), c.AuthService, actorUserIds)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -214,13 +214,13 @@ func (c *Controller) userIdFromLogin(ctx echo.Context, partyId genperks.PartyId,
 		return
 	}
 
-	err = c.PartyService.RequireMember(actorUserId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), actorUserId, partyId)
 
 	if err != nil {
 		return
 	}
 
-	return c.AuthService.GetUserIdByLogin(login)
+	return c.AuthService.GetUserIdByLogin(ctx.Request().Context(), login)
 }
 
 func convertPerkToDto(perk typeperks.Perk) genperks.Perk {

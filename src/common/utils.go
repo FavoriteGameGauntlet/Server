@@ -2,6 +2,7 @@ package common
 
 import (
 	"FGG-Service/api/generated/auth"
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -98,7 +99,7 @@ func ConvertIntSliceToString(intSlice []int) string {
 // declared here instead of imported so that common keeps no dependency on the auth service.
 type AdminChecker interface {
 	GetUserId(ctx echo.Context) (userId int, err error)
-	IsAdmin(userId int, partyId int) (isAdmin bool, err error)
+	IsAdmin(ctx context.Context, userId int, partyId int) (isAdmin bool, err error)
 }
 
 // RequireAdmin returns an error unless the request comes from an admin of the party.
@@ -109,7 +110,7 @@ func RequireAdmin(ctx echo.Context, authService AdminChecker, partyId int) error
 		return err
 	}
 
-	isAdmin, err := authService.IsAdmin(userId, partyId)
+	isAdmin, err := authService.IsAdmin(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return err
@@ -125,12 +126,12 @@ func RequireAdmin(ctx echo.Context, authService AdminChecker, partyId int) error
 // LoginResolver is the part of the auth service needed to name users by login. It is declared here
 // instead of imported so that common keeps no dependency on the auth service.
 type LoginResolver interface {
-	GetLoginByUserId(userId int) (login string, err error)
+	GetLoginByUserId(ctx context.Context, userId int) (login string, err error)
 }
 
 // GetLoginsByUserIds names each of the given users by login. A user that repeats in the ids is
 // looked up once, since a history usually names the same few users many times.
-func GetLoginsByUserIds(resolver LoginResolver, userIds []int) (loginsByUserId map[int]string, err error) {
+func GetLoginsByUserIds(ctx context.Context, resolver LoginResolver, userIds []int) (loginsByUserId map[int]string, err error) {
 	loginsByUserId = make(map[int]string, len(userIds))
 
 	for _, userId := range userIds {
@@ -141,7 +142,7 @@ func GetLoginsByUserIds(resolver LoginResolver, userIds []int) (loginsByUserId m
 		}
 
 		var login string
-		login, err = resolver.GetLoginByUserId(userId)
+		login, err = resolver.GetLoginByUserId(ctx, userId)
 
 		if err != nil {
 			return nil, err

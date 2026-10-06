@@ -40,13 +40,13 @@ func (c *Controller) GetEffects(ctx echo.Context, partyId geneffects.PartyId) er
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.PartyService.RequireMember(userId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	effects, err := c.Service.GetEffects(partyId)
+	effects, err := c.Service.GetEffects(ctx.Request().Context(), partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -63,7 +63,7 @@ func (c *Controller) GetRemovedEffects(ctx echo.Context, partyId geneffects.Part
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	effects, err := c.Service.GetRemovedEffects(partyId)
+	effects, err := c.Service.GetRemovedEffects(ctx.Request().Context(), partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -95,6 +95,7 @@ func (c *Controller) CreateEffect(ctx echo.Context, partyId geneffects.PartyId) 
 	}
 
 	effect, err := c.Service.CreateEffect(
+		ctx.Request().Context(),
 		partyId,
 		effectDto.Name,
 		effectDto.Description,
@@ -117,7 +118,7 @@ func (c *Controller) RemoveEffect(ctx echo.Context, partyId geneffects.PartyId, 
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.RemoveEffect(partyId, name)
+	err = c.Service.RemoveEffect(ctx.Request().Context(), partyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -134,7 +135,7 @@ func (c *Controller) GetUserEffects(ctx echo.Context, partyId geneffects.PartyId
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	views, err := c.Service.GetUserEffectViews(userId, partyId)
+	views, err := c.Service.GetUserEffectViews(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -173,7 +174,7 @@ func (c *Controller) UseUserEffect(ctx echo.Context, partyId geneffects.PartyId,
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.UseEffect(actorUserId, userId, partyId, name)
+	err = c.Service.UseEffect(ctx.Request().Context(), actorUserId, userId, partyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -190,7 +191,7 @@ func (c *Controller) EndUserEffect(ctx echo.Context, partyId geneffects.PartyId,
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.EndUserEffect(actorUserId, userId, partyId, name)
+	err = c.Service.EndUserEffect(ctx.Request().Context(), actorUserId, userId, partyId, name)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -207,7 +208,7 @@ func (c *Controller) GetUserEffectHistory(ctx echo.Context, partyId geneffects.P
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	history, err := c.Service.GetEffectHistory(userId, partyId)
+	history, err := c.Service.GetEffectHistory(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -218,7 +219,7 @@ func (c *Controller) GetUserEffectHistory(ctx echo.Context, partyId geneffects.P
 		actorUserIds[i] = entry.ActorUserId
 	}
 
-	loginsByUserId, err := common.GetLoginsByUserIds(c.AuthService, actorUserIds)
+	loginsByUserId, err := common.GetLoginsByUserIds(ctx.Request().Context(), c.AuthService, actorUserIds)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -250,13 +251,13 @@ func (c *Controller) userIdFromLogin(ctx echo.Context, partyId geneffects.PartyI
 		return
 	}
 
-	err = c.PartyService.RequireMember(actorUserId, partyId)
+	err = c.PartyService.RequireMember(ctx.Request().Context(), actorUserId, partyId)
 
 	if err != nil {
 		return
 	}
 
-	userId, err = c.AuthService.GetUserIdByLogin(login)
+	userId, err = c.AuthService.GetUserIdByLogin(ctx.Request().Context(), login)
 
 	return
 }

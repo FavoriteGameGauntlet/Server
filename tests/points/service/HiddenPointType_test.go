@@ -44,7 +44,7 @@ func TestSrvPoints_GetVisiblePointTypes(test *testing.T) {
 
 		sut := srvpoints.Service{Database: databaseMock, PartiesDatabase: partiesMockWithMember(false)}
 
-		pointTypes, err := sut.GetVisiblePointTypes(9, 1)
+		pointTypes, err := sut.GetVisiblePointTypes(test.Context(), 9, 1)
 
 		require.NoError(test, err)
 		require.Equal(test, []typepoints.PointTypeInfo{publicPointType}, pointTypes)
@@ -56,7 +56,7 @@ func TestSrvPoints_GetVisiblePointTypes(test *testing.T) {
 
 		sut := srvpoints.Service{Database: databaseMock, PartiesDatabase: partiesMockWithoutMember()}
 
-		pointTypes, err := sut.GetVisiblePointTypes(9, 1)
+		pointTypes, err := sut.GetVisiblePointTypes(test.Context(), 9, 1)
 
 		require.NoError(test, err)
 		require.Equal(test, []typepoints.PointTypeInfo{publicPointType}, pointTypes)
@@ -68,7 +68,7 @@ func TestSrvPoints_GetVisiblePointTypes(test *testing.T) {
 
 		sut := srvpoints.Service{Database: databaseMock, PartiesDatabase: partiesMockWithMember(true)}
 
-		pointTypes, err := sut.GetVisiblePointTypes(9, 1)
+		pointTypes, err := sut.GetVisiblePointTypes(test.Context(), 9, 1)
 
 		require.NoError(test, err)
 		require.Equal(test, allTypes, pointTypes)
@@ -84,7 +84,7 @@ func TestSrvPoints_PointLists_NotAdmin_LeaveHiddenTypesOut(test *testing.T) {
 
 		sut := srvpoints.Service{Database: databaseMock, PartiesDatabase: partiesMockWithMember(false)}
 
-		values, err := sut.GetUserPoints(9, 2, 1)
+		values, err := sut.GetUserPoints(test.Context(), 9, 2, 1)
 
 		require.NoError(test, err)
 		require.Equal(test, []typepoints.PointValue{{PointType: publicPointType, Value: publicPointType.StartValue}}, values)
@@ -100,7 +100,7 @@ func TestSrvPoints_PointLists_NotAdmin_LeaveHiddenTypesOut(test *testing.T) {
 
 		sut := srvpoints.Service{Database: databaseMock, PartiesDatabase: partiesMock}
 
-		byLogin, err := sut.GetAllUserPoints(9, 1)
+		byLogin, err := sut.GetAllUserPoints(test.Context(), 9, 1)
 
 		require.NoError(test, err)
 		require.Equal(test, []typepoints.UserPointValuesByLogin{
@@ -117,7 +117,7 @@ func TestSrvPoints_PointLists_NotAdmin_LeaveHiddenTypesOut(test *testing.T) {
 
 		sut := srvpoints.Service{Database: databaseMock, PartiesDatabase: partiesMockWithMember(false)}
 
-		values, err := sut.GetAllPartyPoints(9, 1)
+		values, err := sut.GetAllPartyPoints(test.Context(), 9, 1)
 
 		require.NoError(test, err)
 		require.Equal(test, []typepoints.PointValue{{PointType: publicSharedType, Value: 9}}, values)
@@ -130,19 +130,19 @@ func TestSrvPoints_PointLists_NotAdmin_LeaveHiddenTypesOut(test *testing.T) {
 func TestSrvPoints_ReadByTypeName_NotAdmin_HiddenType_NotFound(test *testing.T) {
 	read := map[string]func(sut *srvpoints.Service, name string) error{
 		"GetUserPointValueByTypeName": func(sut *srvpoints.Service, name string) error {
-			_, err := sut.GetUserPointValueByTypeName(9, 2, 1, name)
+			_, err := sut.GetUserPointValueByTypeName(test.Context(), 9, 2, 1, name)
 			return err
 		},
 		"GetUserPointHistoryByTypeName": func(sut *srvpoints.Service, name string) error {
-			_, err := sut.GetUserPointHistoryByTypeName(9, 2, 1, name)
+			_, err := sut.GetUserPointHistoryByTypeName(test.Context(), 9, 2, 1, name)
 			return err
 		},
 		"GetPartyPointValueByTypeName": func(sut *srvpoints.Service, name string) error {
-			_, err := sut.GetPartyPointValueByTypeName(9, 1, name)
+			_, err := sut.GetPartyPointValueByTypeName(test.Context(), 9, 1, name)
 			return err
 		},
 		"GetPartyPointHistoryByTypeName": func(sut *srvpoints.Service, name string) error {
-			_, err := sut.GetPartyPointHistoryByTypeName(9, 1, name)
+			_, err := sut.GetPartyPointHistoryByTypeName(test.Context(), 9, 1, name)
 			return err
 		},
 	}
@@ -176,7 +176,7 @@ func TestSrvPoints_GetUserPointValueByTypeName_Admin_HiddenType_ReadsValue(test 
 	sut := srvpoints.Service{Database: databaseMock, PartiesDatabase: partiesMockWithMember(true)}
 
 	// Act
-	value, err := sut.GetUserPointValueByTypeName(9, 2, 1, hiddenPointType.Name)
+	value, err := sut.GetUserPointValueByTypeName(test.Context(), 9, 2, 1, hiddenPointType.Name)
 
 	// Assert
 	require.NoError(test, err)
@@ -196,7 +196,7 @@ func TestSrvPoints_ChangePointValueByTypeName_HiddenType_Changes(test *testing.T
 	sut := srvpoints.Service{Database: databaseMock}
 
 	// Act
-	err := sut.ChangePointValueByTypeName(2, 1, hiddenPointType.Name, 4, 50)
+	err := sut.ChangePointValueByTypeName(test.Context(), 2, 1, hiddenPointType.Name, 4, 50)
 
 	// Assert
 	require.NoError(test, err)

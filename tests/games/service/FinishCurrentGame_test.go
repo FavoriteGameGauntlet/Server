@@ -109,7 +109,7 @@ func TestSrvGames_FinishCurrentGame(test *testing.T) {
 			}
 
 			// Act
-			game, err := sut.FinishCurrentGame(testCase.UserId, 1)
+			game, err := sut.FinishCurrentGame(test.Context(), testCase.UserId, 1)
 
 			// Assert
 			if testCase.ExpectedErrorAs != nil {
