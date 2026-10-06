@@ -114,7 +114,8 @@ func (c *Controller) CreateEffect(ctx echo.Context, partyId geneffects.PartyId) 
 		effectDto.Description,
 		effectDto.UseCount,
 		duration,
-		convertDtoToChangeEntryInputs(effectDto.Entries))
+		convertDtoToChangeEntryInputs(effectDto.Entries),
+		convertDtoToNamedModifiers(effectDto.Modifiers))
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -148,35 +149,26 @@ func (c *Controller) GetUserEffects(ctx echo.Context, partyId geneffects.PartyId
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	views, err := c.Service.GetUserEffectViews(ctx.Request().Context(), userId, partyId)
+	userEffects, err := c.Service.GetNamedUserEffects(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	viewsDto := make(geneffects.UserEffects, len(views))
-	for i, view := range views {
-		modifiersDto := make([]geneffects.PointModifier, len(view.Modifiers))
-
-		for j, modifier := range view.Modifiers {
-			modifiersDto[j] = geneffects.PointModifier{
-				PointTypeName: modifier.PointTypeName,
-				Amount:        modifier.Amount,
-			}
-		}
-
-		viewsDto[i] = geneffects.UserEffect{
-			Name:        view.Name,
-			Description: view.Description,
-			UseCount:    view.UseCount,
-			UsesLeft:    view.UsesLeft,
-			Duration:    convertDurationToDto(view.Duration),
-			StartedDate: view.StartedDate,
-			Modifiers:   modifiersDto,
+	userEffectsDto := make(geneffects.UserEffects, len(userEffects))
+	for i, userEffect := range userEffects {
+		userEffectsDto[i] = geneffects.UserEffect{
+			Name:        userEffect.Name,
+			Description: userEffect.Description,
+			UseCount:    userEffect.UseCount,
+			UsesLeft:    userEffect.UsesLeft,
+			Duration:    convertDurationToDto(userEffect.Duration),
+			StartedDate: userEffect.StartedDate,
+			Modifiers:   convertNamedModifiersToDto(userEffect.Modifiers),
 		}
 	}
 
-	return ctx.JSON(http.StatusOK, viewsDto)
+	return ctx.JSON(http.StatusOK, userEffectsDto)
 }
 
 // UseUserEffect (POST /parties/{partyId}/effects/{login}/{name}/use)
@@ -285,16 +277,47 @@ func convertDurationToDto(duration *time.Duration) *geneffects.Duration {
 	return &converted
 }
 
-func convertEffectToDto(effect typeeffects.Effect) geneffects.Effect {
+func convertEffectToDto(effect typeeffects.NamedEffect) geneffects.Effect {
 	return geneffects.Effect{
 		Name:        effect.Name,
 		Description: effect.Description,
 		UseCount:    effect.UseCount,
 		Duration:    convertDurationToDto(effect.Duration),
+		Modifiers:   convertNamedModifiersToDto(effect.Modifiers),
 	}
 }
 
-func convertEffectsToDto(effects []typeeffects.Effect) geneffects.Effects {
+func convertNamedModifiersToDto(modifiers []typeeffects.NamedPointModifier) []geneffects.PointModifier {
+	modifiersDto := make([]geneffects.PointModifier, len(modifiers))
+
+	for i, modifier := range modifiers {
+		modifiersDto[i] = geneffects.PointModifier{
+			PointTypeName: modifier.PointTypeName,
+			Amount:        modifier.Amount,
+		}
+	}
+
+	return modifiersDto
+}
+
+func convertDtoToNamedModifiers(modifiersDto *[]geneffects.PointModifier) []typeeffects.NamedPointModifier {
+	if modifiersDto == nil {
+		return nil
+	}
+
+	modifiers := make([]typeeffects.NamedPointModifier, len(*modifiersDto))
+
+	for i, modifierDto := range *modifiersDto {
+		modifiers[i] = typeeffects.NamedPointModifier{
+			PointTypeName: modifierDto.PointTypeName,
+			Amount:        modifierDto.Amount,
+		}
+	}
+
+	return modifiers
+}
+
+func convertEffectsToDto(effects []typeeffects.NamedEffect) geneffects.Effects {
 	effectsDto := make(geneffects.Effects, len(effects))
 
 	for i, effect := range effects {

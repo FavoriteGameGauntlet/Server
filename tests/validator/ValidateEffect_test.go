@@ -72,3 +72,34 @@ func TestValidator_ValidateEffectDurationInSeconds(test *testing.T) {
 		})
 	}
 }
+
+func TestValidator_ValidateEffectModifierAmount(test *testing.T) {
+	tests := []struct {
+		name      string
+		amount    int
+		wantError bool
+	}{
+		{name: "Positive", amount: 3},
+		{name: "Negative", amount: -3},
+		{name: "IntegerMaximum", amount: math.MaxInt32},
+		{name: "IntegerMinimum", amount: math.MinInt32},
+		{name: "Zero_Rejected", amount: 0, wantError: true},
+		{name: "AboveInteger_Rejected", amount: math.MaxInt32 + 1, wantError: true},
+		{name: "BelowInteger_Rejected", amount: math.MinInt32 - 1, wantError: true},
+	}
+
+	for _, tt := range tests {
+		test.Run(tt.name, func(test *testing.T) {
+			err := validator.ValidateEffectModifierAmount(tt.amount)
+
+			if !tt.wantError {
+				require.NoError(test, err)
+				return
+			}
+
+			var unprocessable *common.UnprocessableError
+			require.ErrorAs(test, err, &unprocessable)
+			require.Equal(test, "INCORRECT_EFFECT_MODIFIER_AMOUNT", unprocessable.Code)
+		})
+	}
+}

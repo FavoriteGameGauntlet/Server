@@ -11,7 +11,7 @@ import (
 )
 
 type IDatabase interface {
-	CreateEffectCommand(ctx context.Context, partyId int, name string, description string, useCount *int, duration *time.Duration, change typechanges.Change) (effect typeeffects.EffectWithChange, err error)
+	CreateEffectCommand(ctx context.Context, partyId int, name string, description string, useCount *int, duration *time.Duration, change typechanges.Change, modifiers []typeeffects.PointModifier) (effect typeeffects.EffectWithChange, err error)
 	GetEffectCommand(ctx context.Context, partyId int, effectId int) (effect typeeffects.EffectWithChange, err error)
 	GetActualEffectsCommand(ctx context.Context, partyId int) (effects []typeeffects.Effect, err error)
 	GetRemovedEffectsCommand(ctx context.Context, partyId int) (effects []typeeffects.Effect, err error)
@@ -49,15 +49,20 @@ func durationArg(duration *time.Duration) any {
 	return *duration
 }
 
-var createEffectQuery = dbaccess.Query{Name: "CreateEffectQuery", SQL: `SELECT * FROM create_effect($1::integer, $2::text, $3::text, $4::integer, $5::interval, $6::jsonb)`}
+var createEffectQuery = dbaccess.Query{Name: "CreateEffectQuery", SQL: `SELECT * FROM create_effect($1::integer, $2::text, $3::text, $4::integer, $5::interval, $6::jsonb, $7::jsonb)`}
 
-func (db *Database) CreateEffectCommand(ctx context.Context, partyId int, name string, description string, useCount *int, duration *time.Duration, change typechanges.Change) (effect typeeffects.EffectWithChange, err error) {
+func (db *Database) CreateEffectCommand(ctx context.Context, partyId int, name string, description string, useCount *int, duration *time.Duration, change typechanges.Change, modifiers []typeeffects.PointModifier) (effect typeeffects.EffectWithChange, err error) {
 	changeJson, err := json.Marshal(change)
 	if err != nil {
 		return
 	}
 
-	row := dbaccess.QueryRow(ctx, createEffectQuery, partyId, name, description, useCount, durationArg(duration), changeJson)
+	modifiersJson, err := json.Marshal(modifiers)
+	if err != nil {
+		return
+	}
+
+	row := dbaccess.QueryRow(ctx, createEffectQuery, partyId, name, description, useCount, durationArg(duration), changeJson, modifiersJson)
 
 	var durationRaw sql.NullString
 	var changeRaw []byte
@@ -106,10 +111,14 @@ func scanEffects(ctx context.Context, q dbaccess.Query, partyId int) (effects []
 	for rows.Next() {
 		effect := typeeffects.Effect{}
 		var durationRaw sql.NullString
-		err = rows.Scan(&effect.Id, &effect.PartyId, &effect.Name, &effect.Description, &effect.UseCount, &durationRaw)
+		var modifiersRaw []byte
+		err = rows.Scan(&effect.Id, &effect.PartyId, &effect.Name, &effect.Description, &effect.UseCount, &durationRaw, &modifiersRaw)
 
 		if err == nil {
 			effect.Duration, err = scanNullableInterval(durationRaw)
+		}
+		if err == nil {
+			err = json.Unmarshal(modifiersRaw, &effect.Modifiers)
 		}
 
 		if err != nil {
@@ -140,7 +149,7 @@ func (db *Database) GetRemovedEffectsCommand(ctx context.Context, partyId int) (
 	return scanEffects(ctx, getRemovedEffectsQuery, partyId)
 }
 
-var removeEffectQuery = dbaccess.Query{Name: "RemoveEffectQuery", SQL: `SELECT remove_effect($1::integer, $2::integer)`}
+var removeEffectQuery =dbaccess.Query{Name: "RemoveEffectQuery", SQL: `SELECT remove_effect($1::integer, $2::integer)`}
 
 func (db *Database) RemoveEffectCommand(ctx context.Context, partyId int, effectId int) error {
 	_, err := dbaccess.Exec(ctx, removeEffectQuery, partyId, effectId)

@@ -9,6 +9,7 @@ import (
 	"FGG-Service/src/effects/typeeffects"
 	"FGG-Service/src/points/srvpoints"
 	"FGG-Service/src/sysparams/srvsysparams"
+	"FGG-Service/src/validator"
 	"context"
 	"database/sql"
 	"errors"
@@ -19,12 +20,12 @@ import (
 )
 
 type IService interface {
-	GetEffects(ctx context.Context, partyId int) ([]typeeffects.Effect, error)
-	GetRemovedEffects(ctx context.Context, partyId int) ([]typeeffects.Effect, error)
-	CreateEffect(ctx context.Context, partyId int, name string, description string, useCount *int, duration *time.Duration, entries []typechanges.ChangeEntryInput) (typeeffects.Effect, error)
+	GetEffects(ctx context.Context, partyId int) ([]typeeffects.NamedEffect, error)
+	GetRemovedEffects(ctx context.Context, partyId int) ([]typeeffects.NamedEffect, error)
+	CreateEffect(ctx context.Context, partyId int, name string, description string, useCount *int, duration *time.Duration, entries []typechanges.ChangeEntryInput, modifiers []typeeffects.NamedPointModifier) (typeeffects.NamedEffect, error)
 	RemoveEffect(ctx context.Context, partyId int, name string) error
 	GetUserEffects(ctx context.Context, userId int, partyId int) ([]typeeffects.UserEffectDetail, error)
-	GetUserEffectViews(ctx context.Context, userId int, partyId int) ([]typeeffects.UserEffectView, error)
+	GetNamedUserEffects(ctx context.Context, userId int, partyId int) ([]typeeffects.NamedUserEffect, error)
 	UseEffect(ctx context.Context, actorUserId int, userId int, partyId int, effectName string) error
 	EndUserEffect(ctx context.Context, actorUserId int, userId int, partyId int, effectName string) error
 	GetEffectHistory(ctx context.Context, userId int, partyId int) ([]typeeffects.EffectHistory, error)
@@ -54,17 +55,83 @@ func NewService() *Service {
 	return s
 }
 
-func (s *Service) GetEffects(ctx context.Context, partyId int) (effects []typeeffects.Effect, err error) {
-	return s.Database.GetActualEffectsCommand(ctx, partyId)
+func (s *Service) GetEffects(ctx context.Context, partyId int) (named []typeeffects.NamedEffect, err error) {
+	effects, err := s.Database.GetActualEffectsCommand(ctx, partyId)
+
+	if err != nil {
+		return
+	}
+
+	return s.nameEffects(ctx, partyId, effects)
 }
 
-func (s *Service) GetRemovedEffects(ctx context.Context, partyId int) (effects []typeeffects.Effect, err error) {
-	return s.Database.GetRemovedEffectsCommand(ctx, partyId)
+func (s *Service) GetRemovedEffects(ctx context.Context, partyId int) (named []typeeffects.NamedEffect, err error) {
+	effects, err := s.Database.GetRemovedEffectsCommand(ctx, partyId)
+
+	if err != nil {
+		return
+	}
+
+	return s.nameEffects(ctx, partyId, effects)
+}
+
+// nameEffects names the passive point modifiers of catalogue effects, since they come back from the
+// schema as point type ids.
+func (s *Service) nameEffects(ctx context.Context, partyId int, effects []typeeffects.Effect) (named []typeeffects.NamedEffect, err error) {
+	namesByPointTypeId, err := s.fetchPointTypeNamesById(ctx, partyId)
+
+	if err != nil {
+		return
+	}
+
+	named = make([]typeeffects.NamedEffect, 0, len(effects))
+
+	for _, effect := range effects {
+		named = append(named, typeeffects.NamedEffect{
+			Name:        effect.Name,
+			Description: effect.Description,
+			UseCount:    effect.UseCount,
+			Duration:    effect.Duration,
+			Modifiers:   nameModifiers(effect.Modifiers, namesByPointTypeId),
+		})
+	}
+
+	return
+}
+
+// nameModifiers swaps the point type ids of modifiers for the names the API uses.
+func nameModifiers(modifiers []typeeffects.PointModifier, namesByPointTypeId map[int]string) []typeeffects.NamedPointModifier {
+	named := make([]typeeffects.NamedPointModifier, 0, len(modifiers))
+
+	for _, modifier := range modifiers {
+		named = append(named, typeeffects.NamedPointModifier{
+			PointTypeName: namesByPointTypeId[modifier.PointTypeId],
+			Amount:        modifier.Amount,
+		})
+	}
+
+	return named
+}
+
+// fetchPointTypeNamesById maps the party's point type ids to the names the API uses.
+func (s *Service) fetchPointTypeNamesById(ctx context.Context, partyId int) (namesByPointTypeId map[int]string, err error) {
+	pointTypes, err := s.PointsService.GetPointTypes(ctx, partyId)
+
+	if err != nil {
+		return
+	}
+
+	namesByPointTypeId = make(map[int]string, len(pointTypes))
+	for _, pointType := range pointTypes {
+		namesByPointTypeId[pointType.Id] = pointType.Name
+	}
+
+	return
 }
 
 // CreateEffect adds an effect to the party catalogue. The entries describe what using it grants,
-// separately from the point modifiers it applies passively while it is active. A nil useCount makes
-// an effect that can be used without limit.
+// separately from the modifiers, the point changes it applies passively while it is active. A nil
+// useCount makes an effect that can be used without limit.
 func (s *Service) CreateEffect(
 	ctx context.Context,
 	partyId int,
@@ -72,29 +139,66 @@ func (s *Service) CreateEffect(
 	description string,
 	useCount *int,
 	duration *time.Duration,
-	entries []typechanges.ChangeEntryInput) (effect typeeffects.Effect, err error) {
+	entries []typechanges.ChangeEntryInput,
+	modifiers []typeeffects.NamedPointModifier) (effect typeeffects.NamedEffect, err error) {
 	resolved, err := s.ChangesService.ResolveChangeEntries(ctx, partyId, entries)
 
 	if err != nil {
 		return
 	}
 
-	created, err := s.Database.CreateEffectCommand(ctx, partyId, name, description, useCount, duration, typechanges.Change{Entries: resolved})
+	resolvedModifiers, err := s.resolveModifiers(ctx, partyId, modifiers)
 
 	if err != nil {
 		return
 	}
 
-	effect = typeeffects.Effect{
-		Id:          created.Id,
-		PartyId:     created.PartyId,
+	created, err := s.Database.CreateEffectCommand(ctx, partyId, name, description, useCount, duration, typechanges.Change{Entries: resolved}, resolvedModifiers)
+
+	if err != nil {
+		return
+	}
+
+	effect = typeeffects.NamedEffect{
 		Name:        created.Name,
 		Description: created.Description,
 		UseCount:    created.UseCount,
 		Duration:    created.Duration,
+		Modifiers:   modifiers,
 	}
 
 	return
+}
+
+// resolveModifiers turns the point type names of the modifiers into the ids the schema stores. A point
+// type can carry only one modifier per effect.
+func (s *Service) resolveModifiers(ctx context.Context, partyId int, modifiers []typeeffects.NamedPointModifier) ([]typeeffects.PointModifier, error) {
+	resolved := make([]typeeffects.PointModifier, 0, len(modifiers))
+	seenPointTypeIds := make(map[int]bool, len(modifiers))
+
+	for _, modifier := range modifiers {
+		err := validator.ValidateEffectModifierAmount(modifier.Amount)
+
+		if err != nil {
+			return nil, err
+		}
+
+		pointType, err := s.PointsService.GetPointTypeByName(ctx, partyId, modifier.PointTypeName)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if seenPointTypeIds[pointType.Id] {
+			return nil, common.NewEffectModifierDuplicateUnprocessableError(modifier.PointTypeName)
+		}
+
+		seenPointTypeIds[pointType.Id] = true
+
+		resolved = append(resolved, typeeffects.PointModifier{PointTypeId: pointType.Id, Amount: modifier.Amount})
+	}
+
+	return resolved, nil
 }
 
 func (s *Service) RemoveEffect(ctx context.Context, partyId int, name string) (err error) {
@@ -277,46 +381,32 @@ func (s *Service) StartEndedEffectsScheduler() {
 	scheduler.Start()
 }
 
-// GetUserEffectViews lists a user's active effects with their passive point modifiers named, since
+// GetNamedUserEffects lists a user's active effects with their passive point modifiers named, since
 // the modifiers come back from the schema as point type ids.
-func (s *Service) GetUserEffectViews(ctx context.Context, userId int, partyId int) (views []typeeffects.UserEffectView, err error) {
+func (s *Service) GetNamedUserEffects(ctx context.Context, userId int, partyId int) (named []typeeffects.NamedUserEffect, err error) {
 	details, err := s.Database.GetUserEffectsCommand(ctx, userId, partyId)
 
 	if err != nil {
 		return
 	}
 
-	pointTypes, err := s.PointsService.GetPointTypes(ctx, partyId)
+	namesByPointTypeId, err := s.fetchPointTypeNamesById(ctx, partyId)
 
 	if err != nil {
 		return
 	}
 
-	namesByPointTypeId := make(map[int]string, len(pointTypes))
-	for _, pointType := range pointTypes {
-		namesByPointTypeId[pointType.Id] = pointType.Name
-	}
-
-	views = make([]typeeffects.UserEffectView, 0, len(details))
+	named = make([]typeeffects.NamedUserEffect, 0, len(details))
 
 	for _, detail := range details {
-		modifiers := make([]typeeffects.PointModifierView, 0, len(detail.Modifiers))
-
-		for _, modifier := range detail.Modifiers {
-			modifiers = append(modifiers, typeeffects.PointModifierView{
-				PointTypeName: namesByPointTypeId[modifier.PointTypeId],
-				Amount:        modifier.Amount,
-			})
-		}
-
-		views = append(views, typeeffects.UserEffectView{
+		named = append(named, typeeffects.NamedUserEffect{
 			Name:        detail.Name,
 			Description: detail.Description,
 			UseCount:    detail.UseCount,
 			UsesLeft:    detail.UsesLeft,
 			Duration:    detail.Duration,
 			StartedDate: detail.StartedDate,
-			Modifiers:   modifiers,
+			Modifiers:   nameModifiers(detail.Modifiers, namesByPointTypeId),
 		})
 	}
 

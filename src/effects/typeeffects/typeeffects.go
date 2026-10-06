@@ -13,6 +13,7 @@ type Effect struct {
 	Description string
 	UseCount    *int
 	Duration    *time.Duration
+	Modifiers   []PointModifier
 }
 
 type EffectWithChange struct {
@@ -79,19 +80,29 @@ type EndedUserEffect struct {
 	UsesLeft *int
 }
 
-// PointModifierView is a passive point modifier named the way the API returns it.
-type PointModifierView struct {
+// NamedPointModifier is a passive point modifier that names its point type the way the API does,
+// instead of carrying its id.
+type NamedPointModifier struct {
 	PointTypeName string
 	Amount        int
 }
 
-// UserEffectView is an active effect of a user, with its passive modifiers named.
-type UserEffectView struct {
+// NamedEffect is a catalogue effect, with its passive modifiers named.
+type NamedEffect struct {
+	Name        string
+	Description string
+	UseCount    *int
+	Duration    *time.Duration
+	Modifiers   []NamedPointModifier
+}
+
+// NamedUserEffect is an active effect of a user, with its passive modifiers named.
+type NamedUserEffect struct {
 	Name        string
 	Description string
 	UseCount    *int
 	UsesLeft    *int
 	Duration    *time.Duration
 	StartedDate time.Time
-	Modifiers   []PointModifierView
+	Modifiers   []NamedPointModifier
 }

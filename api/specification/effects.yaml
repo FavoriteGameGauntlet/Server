@@ -175,6 +175,18 @@ components:
       format: duration
       example: PT2h10m5s
       description: The duration notation as defined by ISO 8601
+    PointModifier:
+      type: object
+      description: A point change the effect applies passively while it is active.
+      properties:
+        pointTypeName:
+          $ref: '#/components/schemas/Name'
+        amount:
+          type: integer
+          format: int
+      required:
+        - pointTypeName
+        - amount
     Effect:
       type: object
       properties:
@@ -189,10 +201,15 @@ components:
           description: How many times the effect can be used, or null for no limit.
         duration:
           $ref: '#/components/schemas/Duration'
+        modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/PointModifier'
       required:
         - name
         - description
         - useCount
+        - modifiers
     Effects:
       type: array
       items:
@@ -254,6 +271,11 @@ components:
           format: int
         entries:
           $ref: '#/components/schemas/ChangeEntryInputs'
+        modifiers:
+          type: array
+          description: Point changes the effect applies passively while it is active. Left out for an effect without any.
+          items:
+            $ref: '#/components/schemas/PointModifier'
       required:
         - name
         - description
@@ -263,18 +285,6 @@ components:
       pattern: ^\w+$
       minLength: 3
       maxLength: 35
-    PointModifier:
-      type: object
-      description: A point change the effect applies passively while it is active.
-      properties:
-        pointTypeName:
-          $ref: '#/components/schemas/Name'
-        amount:
-          type: integer
-          format: int
-      required:
-        - pointTypeName
-        - amount
     UserEffect:
       type: object
       properties:

@@ -13,8 +13,8 @@ type DatabaseMock struct {
 	mock.Mock
 }
 
-func (m *DatabaseMock) CreateEffectCommand(_ context.Context, partyId int, name string, description string, useCount *int, duration *time.Duration, change typechanges.Change) (effect typeeffects.EffectWithChange, err error) {
-	args := m.Called(partyId, name, description, useCount, duration, change)
+func (m *DatabaseMock) CreateEffectCommand(_ context.Context, partyId int, name string, description string, useCount *int, duration *time.Duration, change typechanges.Change, modifiers []typeeffects.PointModifier) (effect typeeffects.EffectWithChange, err error) {
+	args := m.Called(partyId, name, description, useCount, duration, change, modifiers)
 	effect = args.Get(0).(typeeffects.EffectWithChange)
 	err = args.Error(1)
 	return

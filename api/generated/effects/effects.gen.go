@@ -32,8 +32,9 @@ type Effect struct {
 	Description string `json:"description"`
 
 	// Duration The duration notation as defined by ISO 8601
-	Duration *Duration `json:"duration,omitempty"`
-	Name     Name      `json:"name"`
+	Duration  *Duration       `json:"duration,omitempty"`
+	Modifiers []PointModifier `json:"modifiers"`
+	Name      Name            `json:"name"`
 
 	// UseCount How many times the effect can be used, or null for no limit.
 	UseCount *int `json:"useCount"`
@@ -44,7 +45,10 @@ type EffectCreate struct {
 	Description       string            `json:"description"`
 	DurationInSeconds *int              `json:"durationInSeconds,omitempty"`
 	Entries           ChangeEntryInputs `json:"entries"`
-	Name              Name              `json:"name"`
+
+	// Modifiers Point changes the effect applies passively while it is active. Left out for an effect without any.
+	Modifiers *[]PointModifier `json:"modifiers,omitempty"`
+	Name      Name             `json:"name"`
 
 	// UseCount How many times the effect can be used, or null for no limit.
 	UseCount *int `json:"useCount"`

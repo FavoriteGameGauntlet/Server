@@ -146,6 +146,16 @@ func ValidateEffectDurationInSeconds(seconds *int) error {
 	return nil
 }
 
+// ValidateEffectModifierAmount checks what the schema requires of a passive point modifier: a
+// nonzero amount that fits the INTEGER column.
+func ValidateEffectModifierAmount(amount int) error {
+	if amount == 0 || !fitsInteger(amount) {
+		return common.NewEffectModifierAmountUnprocessableError(amount, math.MinInt32, math.MaxInt32)
+	}
+
+	return nil
+}
+
 // fitsInteger reports whether a value fits a Postgres INTEGER column.
 func fitsInteger(value int) bool {
 	return value >= math.MinInt32 && value <= math.MaxInt32

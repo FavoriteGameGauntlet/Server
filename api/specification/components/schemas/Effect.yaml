@@ -11,4 +11,8 @@ properties:
     description: How many times the effect can be used, or null for no limit.
   duration:
     $ref: "./Duration.yaml"
-required: [ name, description, useCount ]
+  modifiers:
+    type: array
+    items:
+      $ref: "./PointModifier.yaml"
+required: [ name, description, useCount, modifiers ]

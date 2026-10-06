@@ -648,6 +648,34 @@ func NewEffectUseCountUnprocessableError(useCount int, minimum int, maximum int)
 	}
 }
 
+func NewEffectModifierAmountUnprocessableError(amount int, minimum int, maximum int) error {
+	message := fmt.Sprintf(
+		"The effect modifier amount (%d) should be between %d and %d and not zero.",
+		amount,
+		minimum,
+		maximum)
+
+	return &UnprocessableError{
+		&BaseError{
+			Code:    "INCORRECT_EFFECT_MODIFIER_AMOUNT",
+			Message: message,
+		},
+	}
+}
+
+func NewEffectModifierDuplicateUnprocessableError(pointTypeName string) error {
+	message := fmt.Sprintf(
+		"The effect has more than one modifier for the point type \"%s\".",
+		pointTypeName)
+
+	return &UnprocessableError{
+		&BaseError{
+			Code:    "DUPLICATE_EFFECT_MODIFIER",
+			Message: message,
+		},
+	}
+}
+
 func NewEffectDurationUnprocessableError(seconds int, minimum int, maximum int64) error {
 	message := fmt.Sprintf(
 		"The effect duration (%d seconds) should be between %d and %d seconds.",
