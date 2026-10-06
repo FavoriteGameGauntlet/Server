@@ -63,6 +63,8 @@ func scanPerks(q dbaccess.Query, partyId int) (perks []typeperks.Perk, err error
 		perks = append(perks, perk)
 	}
 
+	err = rows.Err()
+
 	dbaccess.LogDbResult(q, perks, err)
 
 	_ = rows.Close()
@@ -136,6 +138,8 @@ func (db *Database) GetUserPerksCommand(userId int, partyId int) (userPerks []ty
 		userPerks = append(userPerks, userPerk)
 	}
 
+	err = rows.Err()
+
 	dbaccess.LogDbResult(getUserPerksQuery, userPerks, err)
 
 	_ = rows.Close()
@@ -172,6 +176,8 @@ func (db *Database) GetPerkHistoryCommand(userId int, partyId int) (history []ty
 
 		history = append(history, entry)
 	}
+
+	err = rows.Err()
 
 	dbaccess.LogDbResult(getPerkHistoryQuery, history, err)
 

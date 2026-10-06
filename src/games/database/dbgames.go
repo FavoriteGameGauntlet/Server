@@ -119,6 +119,8 @@ func (db *Database) GetWishlistGamesCommand(userId int, partyId int) (games type
 		games = append(games, game)
 	}
 
+	err = rows.Err()
+
 	dbaccess.LogDbResult(getWishlistGamesQuery, games, err)
 
 	_ = rows.Close()
@@ -275,6 +277,8 @@ func (db *Database) GetGameHistoryCommand(userId int, partyId int) (games []type
 		games = append(games, entry)
 	}
 
+	err = rows.Err()
+
 	dbaccess.LogDbResult(getGameHistoryQuery, games, err)
 
 	_ = rows.Close()
@@ -306,6 +310,8 @@ func (db *Database) GetAllCurrentGamesCommand(partyId int) (games []typegames.Us
 
 		games = append(games, game)
 	}
+
+	err = rows.Err()
 
 	dbaccess.LogDbResult(getAllCurrentGamesQuery, games, err)
 

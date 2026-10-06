@@ -65,6 +65,8 @@ func (db *Database) GetUserPartiesCommand(userId int) (parties []typeparties.Par
 		parties = append(parties, party)
 	}
 
+	err = rows.Err()
+
 	dbaccess.LogDbResult(getUserPartiesQuery, parties, err)
 
 	_ = rows.Close()
@@ -148,6 +150,8 @@ func (db *Database) GetMembersCommand(partyId int) (members []typeparties.Member
 
 		members = append(members, member)
 	}
+
+	err = rows.Err()
 
 	dbaccess.LogDbResult(getMembersQuery, members, err)
 

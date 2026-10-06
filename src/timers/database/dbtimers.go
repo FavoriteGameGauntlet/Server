@@ -116,6 +116,8 @@ func (db *Database) GetCompletedTimerUsersCommand() (timers []typetimers.EndedTi
 		timers = append(timers, timer)
 	}
 
+	err = rows.Err()
+
 	dbaccess.LogDbResult(getCompletedTimerUsersQuery, timers, err)
 
 	_ = rows.Close()
@@ -214,6 +216,8 @@ func (db *Database) GetTimerRewardEntriesCommand(partyId int) (entries []typecha
 
 		entries = append(entries, entry)
 	}
+
+	err = rows.Err()
 
 	dbaccess.LogDbResult(getTimerRewardEntriesQuery, entries, err)
 

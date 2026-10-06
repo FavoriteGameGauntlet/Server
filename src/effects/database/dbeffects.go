@@ -119,6 +119,8 @@ func scanEffects(q dbaccess.Query, partyId int) (effects []typeeffects.Effect, e
 		effects = append(effects, effect)
 	}
 
+	err = rows.Err()
+
 	dbaccess.LogDbResult(q, effects, err)
 
 	_ = rows.Close()
@@ -238,6 +240,8 @@ func (db *Database) GetUserEffectsCommand(userId int, partyId int) (userEffects 
 		userEffects = append(userEffects, userEffect)
 	}
 
+	err = rows.Err()
+
 	dbaccess.LogDbResult(getUserEffectsQuery, userEffects, err)
 
 	_ = rows.Close()
@@ -287,6 +291,8 @@ func (db *Database) DeleteEndedUserEffectsCommand() (deleted []typeeffects.Ended
 		deleted = append(deleted, entry)
 	}
 
+	err = rows.Err()
+
 	dbaccess.LogDbResult(deleteEndedUserEffectsQuery, deleted, err)
 
 	_ = rows.Close()
@@ -331,6 +337,8 @@ func (db *Database) GetEffectHistoryCommand(userId int, partyId int) (history []
 
 		history = append(history, entry)
 	}
+
+	err = rows.Err()
 
 	dbaccess.LogDbResult(getEffectHistoryQuery, history, err)
 

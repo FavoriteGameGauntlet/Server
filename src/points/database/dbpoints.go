@@ -143,6 +143,8 @@ func (db *Database) GetPointTypesCommand(partyId int) (pointTypes []typepoints.P
 		pointTypes = append(pointTypes, pointType)
 	}
 
+	err = rows.Err()
+
 	dbaccess.LogDbResult(getPointTypesQuery, pointTypes, err)
 
 	_ = rows.Close()
@@ -218,6 +220,8 @@ func (db *Database) GetUserPointsCommand(userId int, partyId int) (points []type
 		points = append(points, point)
 	}
 
+	err = rows.Err()
+
 	dbaccess.LogDbResult(getUserPointsQuery, points, err)
 
 	_ = rows.Close()
@@ -244,6 +248,8 @@ func (db *Database) GetPartyPointsCommand(partyId int) (points []typepoints.Part
 
 		points = append(points, point)
 	}
+
+	err = rows.Err()
 
 	dbaccess.LogDbResult(getPartyPointsQuery, points, err)
 
@@ -345,6 +351,8 @@ func (db *Database) GetUserPointHistoryCommand(userId int, partyId int) (history
 		history = append(history, entry)
 	}
 
+	err = rows.Err()
+
 	dbaccess.LogDbResult(getUserPointHistoryQuery, history, err)
 
 	_ = rows.Close()
@@ -380,6 +388,8 @@ func (db *Database) GetPartyPointHistoryCommand(partyId int) (history []typepoin
 
 		history = append(history, entry)
 	}
+
+	err = rows.Err()
 
 	dbaccess.LogDbResult(getPartyPointHistoryQuery, history, err)
 

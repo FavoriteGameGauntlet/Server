@@ -79,6 +79,8 @@ func scanItems(q dbaccess.Query, partyId int) (items []typeitems.Item, err error
 		items = append(items, item)
 	}
 
+	err = rows.Err()
+
 	dbaccess.LogDbResult(q, items, err)
 
 	_ = rows.Close()
@@ -152,6 +154,8 @@ func (db *Database) GetUserItemsCommand(userId int, partyId int) (userItems []ty
 		userItems = append(userItems, userItem)
 	}
 
+	err = rows.Err()
+
 	dbaccess.LogDbResult(getUserItemsQuery, userItems, err)
 
 	_ = rows.Close()
@@ -190,6 +194,8 @@ func (db *Database) GetItemHistoryCommand(userId int, partyId int) (history []ty
 
 		history = append(history, entry)
 	}
+
+	err = rows.Err()
 
 	dbaccess.LogDbResult(getItemHistoryQuery, history, err)
 

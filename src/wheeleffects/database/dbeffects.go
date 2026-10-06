@@ -46,6 +46,8 @@ func (db *Database) GetAvailableWheelRowsCommand(userId int, partyId int, collec
 		rows = append(rows, row)
 	}
 
+	err = rs.Err()
+
 	dbaccess.LogDbResult(getAvailableWheelRowsQuery, rows, err)
 
 	_ = rs.Close()
@@ -74,6 +76,8 @@ func (db *Database) GetEffectHistoryCommand(userId int, partyId int) (history []
 
 		history = append(history, entry)
 	}
+
+	err = rows.Err()
 
 	dbaccess.LogDbResult(getEffectHistoryQuery, history, err)
 
@@ -139,6 +143,8 @@ func (db *Database) AddLastRolledWheelEffectsCommand(userId int, partyId int, ro
 		created = append(created, row)
 	}
 
+	err = rs.Err()
+
 	dbaccess.LogDbResult(addLastRolledWheelEffectsQuery, created, err)
 
 	_ = rs.Close()
@@ -168,6 +174,8 @@ func (db *Database) GetLastRolledWheelEffectsCommand(userId int, partyId int) (r
 
 		rows = append(rows, row)
 	}
+
+	err = rs.Err()
 
 	dbaccess.LogDbResult(getLastRolledWheelEffectsQuery, rows, err)
 
@@ -220,6 +228,8 @@ func (db *Database) GetWheelCollectionsCommand(partyId int) (collections []typew
 		collections = append(collections, collection)
 	}
 
+	err = rows.Err()
+
 	dbaccess.LogDbResult(getWheelCollectionsQuery, collections, err)
 
 	_ = rows.Close()
@@ -270,6 +280,8 @@ func (db *Database) GetWheelRowsCommand(partyId int) (rows []typewheeleffects.Wh
 
 		rows = append(rows, row)
 	}
+
+	err = rs.Err()
 
 	dbaccess.LogDbResult(getWheelRowsQuery, rows, err)
 

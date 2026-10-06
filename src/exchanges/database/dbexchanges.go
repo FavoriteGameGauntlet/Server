@@ -88,6 +88,8 @@ func scanExchanges(q dbaccess.Query, partyId int) (exchanges []typeexchanges.Exc
 		exchanges = append(exchanges, exchange)
 	}
 
+	err = rows.Err()
+
 	dbaccess.LogDbResult(q, exchanges, err)
 
 	_ = rows.Close()
@@ -148,6 +150,8 @@ func (db *Database) GetExchangeHistoryCommand(userId int, partyId int) (history 
 
 		history = append(history, entry)
 	}
+
+	err = rows.Err()
 
 	dbaccess.LogDbResult(getExchangeHistoryQuery, history, err)
 

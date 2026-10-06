@@ -37,6 +37,8 @@ func (db *Database) GetAllSystemParametersCommand(partyId int) (parameters []typ
 		parameters = append(parameters, parameter)
 	}
 
+	err = rows.Err()
+
 	dbaccess.LogDbResult(getAllSystemParametersQuery, parameters, err)
 
 	_ = rows.Close()
@@ -89,6 +91,8 @@ func (db *Database) GetDefaultSystemParametersCommand() (parameters []typesyspar
 
 		parameters = append(parameters, parameter)
 	}
+
+	err = rows.Err()
 
 	dbaccess.LogDbResult(getDefaultSystemParametersQuery, parameters, err)
 
