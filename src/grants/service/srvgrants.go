@@ -37,8 +37,6 @@ func (s *Service) GrantToUsers(actorUserId int, partyId int, targetUserIds []int
 	}
 
 	for _, targetUserId := range targetUserIds {
-		targetUserId := targetUserId
-
 		targetedEntries := make([]typechanges.ChangeEntry, 0, len(resolved))
 
 		for _, entry := range resolved {

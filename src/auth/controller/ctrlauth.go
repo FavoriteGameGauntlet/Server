@@ -20,7 +20,7 @@ func NewController() *Controller {
 	s := srvauth.NewService()
 
 	return &Controller{
-		*s,
+		Service: *s,
 	}
 }
 

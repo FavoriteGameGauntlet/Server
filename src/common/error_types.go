@@ -227,6 +227,7 @@ func NewNotSharedPointTypeConflictError(name string) error {
 		},
 	}
 }
+
 func NewItemNotFoundError(name string) error {
 	message := fmt.Sprintf(
 		"The item \"%s\" wasn't found.",
@@ -287,6 +288,7 @@ func NewChangeEntryUnprocessableError() error {
 		},
 	}
 }
+
 func NewItemNotOwnedConflictError(name string) error {
 	message := fmt.Sprintf(
 		"The item \"%s\" isn't owned.",
@@ -338,6 +340,7 @@ func NewEffectUsedUpConflictError(name string) error {
 		},
 	}
 }
+
 func NewPerkNotOwnedConflictError(name string) error {
 	message := fmt.Sprintf(
 		"The perk \"%s\" isn't owned.",
@@ -350,6 +353,7 @@ func NewPerkNotOwnedConflictError(name string) error {
 		},
 	}
 }
+
 func NewExchangeNotFoundError(name string) error {
 	message := fmt.Sprintf(
 		"The exchange \"%s\" wasn't found.",
@@ -376,6 +380,7 @@ func NewNotEnoughPointsConflictError(pointTypeName string, requiredPoints int) e
 		},
 	}
 }
+
 func NewPartyNotFoundError(partyId int) error {
 	message := fmt.Sprintf(
 		"The party %d wasn't found.",
@@ -415,6 +420,7 @@ func NewOwnAdminRightsRevokeConflictError() error {
 		},
 	}
 }
+
 func NewWheelEffectNameNotFoundError() error {
 	return &NotFoundError{
 		&BaseError{

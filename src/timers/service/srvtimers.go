@@ -12,6 +12,7 @@ import (
 	"database/sql"
 	"errors"
 	"log/slog"
+	"slices"
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
@@ -24,11 +25,7 @@ type IService interface {
 
 // toTimer computes the derived Timer view (with RemainingTime) from a raw CurrentTimer DB row.
 func toTimer(currentTimer typetimers.CurrentTimer) typetimers.Timer {
-	remainingTime := currentTimer.Duration - currentTimer.TimeSpent
-
-	if remainingTime < 0 {
-		remainingTime = 0
-	}
+	remainingTime := max(currentTimer.Duration-currentTimer.TimeSpent, 0)
 
 	return typetimers.Timer{
 		Id:             currentTimer.Id,
@@ -242,11 +239,9 @@ func (s *Service) actCurrentTimer(
 
 	timer = toTimer(currentTimer)
 
-	for _, state := range incorrectStates {
-		if timer.State == state {
-			err = common.NewCurrentTimerIncorrectStateConflictError(timer.State)
-			return
-		}
+	if slices.Contains(incorrectStates, timer.State) {
+		err = common.NewCurrentTimerIncorrectStateConflictError(timer.State)
+		return
 	}
 
 	// get_timer already includes the elapsed running time in TimeSpent.

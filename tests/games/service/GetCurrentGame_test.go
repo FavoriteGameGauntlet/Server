@@ -17,7 +17,7 @@ type GetCurrentGameTestCase struct {
 	UserId          int
 	SetupMock       func() *dbgamesmock.DatabaseMock
 	ExpectedGame    *typegames.CurrentGame
-	ExpectedErrorAs interface{}
+	ExpectedErrorAs any
 	ExpectedErrorIs error
 }
 

@@ -11,7 +11,7 @@ import (
 	"FGG-Service/src/wheeleffects/types"
 	"database/sql"
 	"errors"
-	"math/rand"
+	"math/rand/v2"
 )
 
 // defaultCollectionId is a stopgap until wheel-collection selection exists (see project plan) — every
@@ -143,7 +143,6 @@ func (s *Service) ApplyWheelEffectRoll(userId int, partyId int, wheelRowName str
 
 	targetedEntries := make([]typechanges.ChangeEntry, 0, len(templateEntries)*len(targetUserIds))
 	for _, targetUserId := range targetUserIds {
-		targetUserId := targetUserId
 		for _, entry := range templateEntries {
 			entry.EntryId = nil
 			entry.UserId = &targetUserId

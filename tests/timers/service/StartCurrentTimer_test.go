@@ -18,7 +18,7 @@ type StartCurrentTimerTestCase struct {
 	UserId          int
 	SetupMocks      func() (*dbtimermock.DatabaseMock, *dbgamesmock.DatabaseMock)
 	ExpectedTimer   *typetimers.Timer
-	ExpectedErrorAs interface{}
+	ExpectedErrorAs any
 	ExpectedErrorIs error
 }
 

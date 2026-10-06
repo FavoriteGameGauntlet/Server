@@ -97,7 +97,7 @@ func (s *Service) GetIntSlice(partyId int, name string) (values []int, err error
 		return
 	}
 
-	for _, part := range strings.Split(strings.Trim(str, "[]"), ",") {
+	for part := range strings.SplitSeq(strings.Trim(str, "[]"), ",") {
 		var v int
 		v, err = strconv.Atoi(strings.TrimSpace(part))
 

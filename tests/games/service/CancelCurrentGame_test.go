@@ -19,7 +19,7 @@ type CancelCurrentGameTestCase struct {
 	UserId          int
 	SetupMock       func() (*dbgamesmock.DatabaseMock, *srvtimersmock.ServiceMock, *srvgamesmock.GettingServiceMock)
 	ExpectedGame    typegames.CurrentGame
-	ExpectedErrorAs interface{}
+	ExpectedErrorAs any
 	ExpectedErrorIs error
 }
 

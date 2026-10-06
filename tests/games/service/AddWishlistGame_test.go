@@ -18,7 +18,7 @@ type AddWishlistGameTestCase struct {
 	UserId          int
 	WishlistGame    typegames.WishlistGame
 	SetupMock       func() *dbgamesmock.DatabaseMock
-	ExpectedErrorAs interface{}
+	ExpectedErrorAs any
 	ExpectedErrorIs error
 }
 

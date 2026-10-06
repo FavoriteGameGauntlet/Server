@@ -27,7 +27,7 @@ var rolledResult = []typewheeleffects.LastWheelRow{
 
 // matchRolledRows matches an AddLastRolledWheelEffectsCommand call whose rows carry exactly
 // expectedIds (order-agnostic, since MakeEffectRoll shuffles candidates) at positions 1..N.
-func matchRolledRows(expectedIds ...int) interface{} {
+func matchRolledRows(expectedIds ...int) any {
 	return mock.MatchedBy(func(rows []typewheeleffects.RolledWheelRowInput) bool {
 		if len(rows) != len(expectedIds) {
 			return false

@@ -120,9 +120,7 @@ func (s *Service) CreateUser(signupUser typeauth.SignupUser) error {
 }
 
 func (s *Service) GetUserSessionById(sessionId string) (userSession typeauth.UserSession, err error) {
-	userSession, err = s.Database.GetUserSessionByIdCommand(sessionId)
-
-	return
+	return s.Database.GetUserSessionByIdCommand(sessionId)
 }
 
 func (s *Service) CreateSession(loginUser typeauth.LoginUser) (userSession typeauth.UserSession, err error) {
@@ -143,9 +141,7 @@ func (s *Service) CreateSession(loginUser typeauth.LoginUser) (userSession typea
 }
 
 func (s *Service) DeleteUserSession(userSessionId string) error {
-	err := s.Database.DeleteUserSessionCommand(userSessionId)
-
-	return err
+	return s.Database.DeleteUserSessionCommand(userSessionId)
 }
 
 // IsAdmin reports whether the user is an admin of the party. Admin rights are party membership data

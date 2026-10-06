@@ -9,7 +9,7 @@ import (
 	"FGG-Service/src/timers/service"
 	"database/sql"
 	"errors"
-	"math/rand"
+	"math/rand/v2"
 )
 
 type IService interface {
@@ -246,7 +246,7 @@ func (s *Service) StartCurrentGame(userId int, partyId int) (game typegames.Curr
 		return
 	}
 
-	randomNumber := rand.Intn(len(wishlistGames))
+	randomNumber := rand.IntN(len(wishlistGames))
 	randomWishlistGame := wishlistGames[randomNumber]
 
 	createdGame, err := s.Database.CreateCurrentGameCommand(userId, partyId, randomWishlistGame.GameId, userId, nil)

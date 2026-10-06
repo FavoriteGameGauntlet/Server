@@ -90,7 +90,7 @@ func registerHandlers(e *echo.Echo) {
 func createFileAndStartLogger() *os.File {
 	logsDir := getLogsDir()
 	filename := filepath.Join(logsDir, time.Now().Format("2006-01-02")+".txt")
-	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o666)
 
 	if err != nil {
 		panic(err)
@@ -111,7 +111,7 @@ func getLogsDir() string {
 		return filepath.Join(root, "logs")
 	}
 
-	return filepath.Join("logs")
+	return "logs"
 }
 
 func startLogScheduler() {

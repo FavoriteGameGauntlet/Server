@@ -204,8 +204,6 @@ func (s *Service) applyEntriesTo(partyId int, targetUserIds []int, templateEntri
 	targetedEntries := make([]typechanges.ChangeEntry, 0, len(templateEntries)*len(targetUserIds))
 
 	for _, targetUserId := range targetUserIds {
-		targetUserId := targetUserId
-
 		for _, entry := range templateEntries {
 			entry.EntryId = nil
 			entry.UserId = &targetUserId
