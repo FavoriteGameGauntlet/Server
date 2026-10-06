@@ -5,12 +5,13 @@ import (
 	"time"
 )
 
+// Effect is a catalogue entry. A nil UseCount stands for an effect that can be used without limit.
 type Effect struct {
 	Id          int
 	PartyId     int
 	Name        string
 	Description string
-	UseCount    int
+	UseCount    *int
 	Duration    *time.Duration
 }
 
@@ -19,7 +20,7 @@ type EffectWithChange struct {
 	PartyId     int
 	Name        string
 	Description string
-	UseCount    int
+	UseCount    *int
 	Duration    *time.Duration
 	Change      typechanges.Change
 }
@@ -30,12 +31,13 @@ type PointModifier struct {
 	Amount      int `json:"amount"`
 }
 
+// UserEffect is an effect held by a user. A nil UsesLeft stands for an effect without a use limit.
 type UserEffect struct {
 	Id              int
 	UserId          int
 	PartyId         int
 	EffectId        int
-	UsesLeft        int
+	UsesLeft        *int
 	EffectHistoryId int
 }
 
@@ -46,8 +48,8 @@ type UserEffectDetail struct {
 	EffectId    int
 	Name        string
 	Description string
-	UseCount    int
-	UsesLeft    int
+	UseCount    *int
+	UsesLeft    *int
 	Duration    *time.Duration
 	StartedDate time.Time
 	Modifiers   []PointModifier
@@ -61,7 +63,7 @@ type EffectHistory struct {
 	EffectId      int
 	Name          string
 	Description   string
-	UseCount      int
+	UseCount      *int
 	Duration      *time.Duration
 	Action        string
 	UsesLeft      *int
@@ -74,7 +76,7 @@ type EndedUserEffect struct {
 	UserId   int
 	PartyId  int
 	EffectId int
-	UsesLeft int
+	UsesLeft *int
 }
 
 // PointModifierView is a passive point modifier named the way the API returns it.
@@ -87,8 +89,8 @@ type PointModifierView struct {
 type UserEffectView struct {
 	Name        string
 	Description string
-	UseCount    int
-	UsesLeft    int
+	UseCount    *int
+	UsesLeft    *int
 	Duration    *time.Duration
 	StartedDate time.Time
 	Modifiers   []PointModifierView

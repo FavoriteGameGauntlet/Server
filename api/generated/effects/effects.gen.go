@@ -34,7 +34,9 @@ type Effect struct {
 	// Duration The duration notation as defined by ISO 8601
 	Duration *Duration `json:"duration,omitempty"`
 	Name     Name      `json:"name"`
-	UseCount int       `json:"useCount"`
+
+	// UseCount How many times the effect can be used, or null for no limit.
+	UseCount *int `json:"useCount"`
 }
 
 // EffectCreate Creates an effect. durationInSeconds is left out for an effect that does not run out on its own.
@@ -43,7 +45,9 @@ type EffectCreate struct {
 	DurationInSeconds *int              `json:"durationInSeconds,omitempty"`
 	Entries           ChangeEntryInputs `json:"entries"`
 	Name              Name              `json:"name"`
-	UseCount          int               `json:"useCount"`
+
+	// UseCount How many times the effect can be used, or null for no limit.
+	UseCount *int `json:"useCount"`
 }
 
 // EffectHistoryEntries defines model for EffectHistoryEntries.
@@ -56,7 +60,7 @@ type EffectHistoryEntry struct {
 	CreatedDate time.Time `json:"createdDate"`
 	Description string    `json:"description"`
 	Name        Name      `json:"name"`
-	UseCount    int       `json:"useCount"`
+	UseCount    *int      `json:"useCount"`
 	UsesLeft    *int      `json:"usesLeft"`
 }
 
@@ -93,8 +97,12 @@ type UserEffect struct {
 	Modifiers   []PointModifier `json:"modifiers"`
 	Name        Name            `json:"name"`
 	StartedDate time.Time       `json:"startedDate"`
-	UseCount    int             `json:"useCount"`
-	UsesLeft    int             `json:"usesLeft"`
+
+	// UseCount How many times the effect can be used, or null for no limit.
+	UseCount *int `json:"useCount"`
+
+	// UsesLeft How many uses are left, or null for an effect without a limit.
+	UsesLeft *int `json:"usesLeft"`
 }
 
 // UserEffects defines model for UserEffects.

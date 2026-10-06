@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var haste = typeeffects.Effect{Id: 3, PartyId: 1, Name: "haste", Description: "faster", UseCount: 2}
+var haste = typeeffects.Effect{Id: 3, PartyId: 1, Name: "haste", Description: "faster", UseCount: ptr(2)}
 
 func ptr[T any](value T) *T {
 	return &value
@@ -33,10 +33,10 @@ func TestSrvEffects_UseEffect(test *testing.T) {
 
 		effectsDb.On("GetActualEffectsCommand", 1).Return([]typeeffects.Effect{haste}, nil)
 		effectsDb.On("GetUserEffectCommand", 7, 1, haste.Id).
-			Return(typeeffects.UserEffectDetail{Id: 21, UserId: 7, PartyId: 1, EffectId: haste.Id, UsesLeft: 2}, nil)
+			Return(typeeffects.UserEffectDetail{Id: 21, UserId: 7, PartyId: 1, EffectId: haste.Id, UsesLeft: ptr(2)}, nil)
 		effectsDb.On("GetEffectCommand", 1, haste.Id).
 			Return(typeeffects.EffectWithChange{Id: haste.Id, Change: typechanges.Change{Entries: []typechanges.ChangeEntry{templateEntry}}}, nil)
-		effectsDb.On("ChangeUserEffectUsesLeftCommand", 7, 1, haste.Id, 1, 9, (*int)(nil)).Return(60, nil)
+		effectsDb.On("ChangeUserEffectUsesLeftCommand", 7, 1, haste.Id, ptr(1), 9, (*int)(nil)).Return(60, nil)
 		changesDb.On("CreateUserChangeFromJsonbCommand", 1, []typechanges.ChangeEntry{targetedEntry}).
 			Return(typechanges.UserChange{Entries: []typechanges.ChangeEntry{targetedEntry}}, nil)
 		changesSvc.On("ApplyChangeEntries", 1, []typechanges.ChangeEntry{targetedEntry}, 9, 60).Return(nil)
@@ -57,9 +57,9 @@ func TestSrvEffects_UseEffect(test *testing.T) {
 
 		effectsDb.On("GetActualEffectsCommand", 1).Return([]typeeffects.Effect{haste}, nil)
 		effectsDb.On("GetUserEffectCommand", 7, 1, haste.Id).
-			Return(typeeffects.UserEffectDetail{Id: 21, UserId: 7, PartyId: 1, EffectId: haste.Id, UsesLeft: 1}, nil)
+			Return(typeeffects.UserEffectDetail{Id: 21, UserId: 7, PartyId: 1, EffectId: haste.Id, UsesLeft: ptr(1)}, nil)
 		effectsDb.On("GetEffectCommand", 1, haste.Id).Return(typeeffects.EffectWithChange{Id: haste.Id}, nil)
-		effectsDb.On("ChangeUserEffectUsesLeftCommand", 7, 1, haste.Id, 0, 9, (*int)(nil)).Return(60, nil)
+		effectsDb.On("ChangeUserEffectUsesLeftCommand", 7, 1, haste.Id, ptr(0), 9, (*int)(nil)).Return(60, nil)
 		effectsDb.On("DeleteUserEffectCommand", 7, 1, haste.Id, 9, ptr(60)).Return(nil)
 
 		sut := srveffects.Service{Database: effectsDb}
@@ -70,10 +70,29 @@ func TestSrvEffects_UseEffect(test *testing.T) {
 		effectsDb.AssertExpectations(test)
 	})
 
+	test.Run("Unlimited_RecordsUseAndKeepsEffect", func(test *testing.T) {
+		effectsDb := new(dbeffectsmock.DatabaseMock)
+		unlimited := typeeffects.Effect{Id: 4, PartyId: 1, Name: "aura", Description: "always on"}
+
+		effectsDb.On("GetActualEffectsCommand", 1).Return([]typeeffects.Effect{unlimited}, nil)
+		effectsDb.On("GetUserEffectCommand", 7, 1, unlimited.Id).
+			Return(typeeffects.UserEffectDetail{Id: 22, UserId: 7, PartyId: 1, EffectId: unlimited.Id}, nil)
+		effectsDb.On("GetEffectCommand", 1, unlimited.Id).Return(typeeffects.EffectWithChange{Id: unlimited.Id}, nil)
+		effectsDb.On("ChangeUserEffectUsesLeftCommand", 7, 1, unlimited.Id, (*int)(nil), 9, (*int)(nil)).Return(61, nil)
+
+		sut := srveffects.Service{Database: effectsDb}
+
+		err := sut.UseEffect(test.Context(), 9, 7, 1, unlimited.Name)
+
+		require.NoError(test, err)
+		effectsDb.AssertExpectations(test)
+		effectsDb.AssertNotCalled(test, "DeleteUserEffectCommand")
+	})
+
 	test.Run("NoUsesLeft_Rejected", func(test *testing.T) {
 		effectsDb := new(dbeffectsmock.DatabaseMock)
 		effectsDb.On("GetActualEffectsCommand", 1).Return([]typeeffects.Effect{haste}, nil)
-		effectsDb.On("GetUserEffectCommand", 7, 1, haste.Id).Return(typeeffects.UserEffectDetail{UsesLeft: 0}, nil)
+		effectsDb.On("GetUserEffectCommand", 7, 1, haste.Id).Return(typeeffects.UserEffectDetail{UsesLeft: ptr(0)}, nil)
 
 		sut := srveffects.Service{Database: effectsDb}
 
@@ -104,7 +123,7 @@ func TestSrvEffects_EndUserEffect(test *testing.T) {
 
 		effectsDb.On("GetActualEffectsCommand", 1).Return([]typeeffects.Effect{haste}, nil)
 		effectsDb.On("GetUserEffectCommand", 7, 1, haste.Id).
-			Return(typeeffects.UserEffectDetail{Id: 21, UserId: 7, PartyId: 1, EffectId: haste.Id, UsesLeft: 2}, nil)
+			Return(typeeffects.UserEffectDetail{Id: 21, UserId: 7, PartyId: 1, EffectId: haste.Id, UsesLeft: ptr(2)}, nil)
 		effectsDb.On("DeleteUserEffectCommand", 7, 1, haste.Id, 9, (*int)(nil)).Return(nil)
 
 		sut := srveffects.Service{Database: effectsDb}

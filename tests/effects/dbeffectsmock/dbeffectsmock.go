@@ -13,7 +13,7 @@ type DatabaseMock struct {
 	mock.Mock
 }
 
-func (m *DatabaseMock) CreateEffectCommand(_ context.Context, partyId int, name string, description string, useCount int, duration *time.Duration, change typechanges.Change) (effect typeeffects.EffectWithChange, err error) {
+func (m *DatabaseMock) CreateEffectCommand(_ context.Context, partyId int, name string, description string, useCount *int, duration *time.Duration, change typechanges.Change) (effect typeeffects.EffectWithChange, err error) {
 	args := m.Called(partyId, name, description, useCount, duration, change)
 	effect = args.Get(0).(typeeffects.EffectWithChange)
 	err = args.Error(1)
@@ -67,7 +67,7 @@ func (m *DatabaseMock) GetUserEffectsCommand(_ context.Context, userId int, part
 	return
 }
 
-func (m *DatabaseMock) ChangeUserEffectUsesLeftCommand(_ context.Context, userId int, partyId int, effectId int, usesLeft int, actorUserId int, sourceEventId *int) (historyEventId int, err error) {
+func (m *DatabaseMock) ChangeUserEffectUsesLeftCommand(_ context.Context, userId int, partyId int, effectId int, usesLeft *int, actorUserId int, sourceEventId *int) (historyEventId int, err error) {
 	args := m.Called(userId, partyId, effectId, usesLeft, actorUserId, sourceEventId)
 	historyEventId = args.Int(0)
 	err = args.Error(1)

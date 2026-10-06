@@ -11,7 +11,7 @@ import (
 )
 
 type IDatabase interface {
-	CreateEffectCommand(ctx context.Context, partyId int, name string, description string, useCount int, duration *time.Duration, change typechanges.Change) (effect typeeffects.EffectWithChange, err error)
+	CreateEffectCommand(ctx context.Context, partyId int, name string, description string, useCount *int, duration *time.Duration, change typechanges.Change) (effect typeeffects.EffectWithChange, err error)
 	GetEffectCommand(ctx context.Context, partyId int, effectId int) (effect typeeffects.EffectWithChange, err error)
 	GetActualEffectsCommand(ctx context.Context, partyId int) (effects []typeeffects.Effect, err error)
 	GetRemovedEffectsCommand(ctx context.Context, partyId int) (effects []typeeffects.Effect, err error)
@@ -19,7 +19,7 @@ type IDatabase interface {
 	CreateUserEffectCommand(ctx context.Context, userId int, partyId int, effectId int, actorUserId int, sourceEventId int) (userEffect typeeffects.UserEffect, err error)
 	GetUserEffectCommand(ctx context.Context, userId int, partyId int, effectId int) (userEffect typeeffects.UserEffectDetail, err error)
 	GetUserEffectsCommand(ctx context.Context, userId int, partyId int) (userEffects []typeeffects.UserEffectDetail, err error)
-	ChangeUserEffectUsesLeftCommand(ctx context.Context, userId int, partyId int, effectId int, usesLeft int, actorUserId int, sourceEventId *int) (historyEventId int, err error)
+	ChangeUserEffectUsesLeftCommand(ctx context.Context, userId int, partyId int, effectId int, usesLeft *int, actorUserId int, sourceEventId *int) (historyEventId int, err error)
 	DeleteUserEffectCommand(ctx context.Context, userId int, partyId int, effectId int, actorUserId int, sourceEventId *int) error
 	DeleteEndedUserEffectsCommand(ctx context.Context) (deleted []typeeffects.EndedUserEffect, err error)
 	GetEffectHistoryCommand(ctx context.Context, userId int, partyId int) (history []typeeffects.EffectHistory, err error)
@@ -51,7 +51,7 @@ func durationArg(duration *time.Duration) any {
 
 var createEffectQuery = dbaccess.Query{Name: "CreateEffectQuery", SQL: `SELECT * FROM create_effect($1::integer, $2::text, $3::text, $4::integer, $5::interval, $6::jsonb)`}
 
-func (db *Database) CreateEffectCommand(ctx context.Context, partyId int, name string, description string, useCount int, duration *time.Duration, change typechanges.Change) (effect typeeffects.EffectWithChange, err error) {
+func (db *Database) CreateEffectCommand(ctx context.Context, partyId int, name string, description string, useCount *int, duration *time.Duration, change typechanges.Change) (effect typeeffects.EffectWithChange, err error) {
 	changeJson, err := json.Marshal(change)
 	if err != nil {
 		return
@@ -251,7 +251,7 @@ func (db *Database) GetUserEffectsCommand(ctx context.Context, userId int, party
 
 var changeUserEffectUsesLeftQuery = dbaccess.Query{Name: "ChangeUserEffectUsesLeftQuery", SQL: `SELECT change_user_effect_uses_left($1::integer, $2::integer, $3::integer, $4::integer, $5::integer, $6::integer)`}
 
-func (db *Database) ChangeUserEffectUsesLeftCommand(ctx context.Context, userId int, partyId int, effectId int, usesLeft int, actorUserId int, sourceEventId *int) (historyEventId int, err error) {
+func (db *Database) ChangeUserEffectUsesLeftCommand(ctx context.Context, userId int, partyId int, effectId int, usesLeft *int, actorUserId int, sourceEventId *int) (historyEventId int, err error) {
 	row := dbaccess.QueryRow(ctx, changeUserEffectUsesLeftQuery, userId, partyId, effectId, usesLeft, actorUserId, sourceEventId)
 
 	err = row.Scan(&historyEventId)

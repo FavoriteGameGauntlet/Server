@@ -7,6 +7,8 @@ properties:
   useCount:
     type: integer
     format: int
+    nullable: true
+    description: How many times the effect can be used, or null for no limit.
   duration:
     $ref: "./Duration.yaml"
 required: [ name, description, useCount ]

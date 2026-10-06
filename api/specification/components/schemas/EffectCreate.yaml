@@ -9,9 +9,12 @@ properties:
   useCount:
     type: integer
     format: int
+    nullable: true
+    default: null
+    description: How many times the effect can be used, or null for no limit.
   durationInSeconds:
     type: integer
     format: int
   entries:
     $ref: "./ChangeEntryInputs.yaml"
-required: [ name, description, useCount, entries ]
+required: [ name, description, entries ]

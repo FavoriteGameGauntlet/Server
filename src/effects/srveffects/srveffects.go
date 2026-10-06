@@ -20,7 +20,7 @@ import (
 type IService interface {
 	GetEffects(ctx context.Context, partyId int) ([]typeeffects.Effect, error)
 	GetRemovedEffects(ctx context.Context, partyId int) ([]typeeffects.Effect, error)
-	CreateEffect(ctx context.Context, partyId int, name string, description string, useCount int, duration *time.Duration, entries []typechanges.ChangeEntryInput) (typeeffects.Effect, error)
+	CreateEffect(ctx context.Context, partyId int, name string, description string, useCount *int, duration *time.Duration, entries []typechanges.ChangeEntryInput) (typeeffects.Effect, error)
 	RemoveEffect(ctx context.Context, partyId int, name string) error
 	GetUserEffects(ctx context.Context, userId int, partyId int) ([]typeeffects.UserEffectDetail, error)
 	GetUserEffectViews(ctx context.Context, userId int, partyId int) ([]typeeffects.UserEffectView, error)
@@ -62,13 +62,14 @@ func (s *Service) GetRemovedEffects(ctx context.Context, partyId int) (effects [
 }
 
 // CreateEffect adds an effect to the party catalogue. The entries describe what using it grants,
-// separately from the point modifiers it applies passively while it is active.
+// separately from the point modifiers it applies passively while it is active. A nil useCount makes
+// an effect that can be used without limit.
 func (s *Service) CreateEffect(
 	ctx context.Context,
 	partyId int,
 	name string,
 	description string,
-	useCount int,
+	useCount *int,
 	duration *time.Duration,
 	entries []typechanges.ChangeEntryInput) (effect typeeffects.Effect, err error) {
 	resolved, err := s.ChangesService.ResolveChangeEntries(ctx, partyId, entries)
@@ -134,7 +135,8 @@ func (s *Service) GetEffectHistory(ctx context.Context, userId int, partyId int)
 
 // UseEffect spends one use of an active effect and grants what it carries to its holder. The effect
 // history row it produces is the source event of the resulting grants. Another member may use the
-// effect, so everything recorded names the actor, not the holder.
+// effect, so everything recorded names the actor, not the holder. An effect without a use limit has
+// nothing to spend: its history row carries no count and it never runs out.
 func (s *Service) UseEffect(ctx context.Context, actorUserId int, userId int, partyId int, effectName string) (err error) {
 	effect, err := s.effectByName(ctx, partyId, effectName)
 
@@ -152,7 +154,7 @@ func (s *Service) UseEffect(ctx context.Context, actorUserId int, userId int, pa
 		return
 	}
 
-	if userEffect.UsesLeft < 1 {
+	if userEffect.UsesLeft != nil && *userEffect.UsesLeft < 1 {
 		return common.NewEffectUsedUpConflictError(effectName)
 	}
 
@@ -162,7 +164,11 @@ func (s *Service) UseEffect(ctx context.Context, actorUserId int, userId int, pa
 		return
 	}
 
-	usesLeft := userEffect.UsesLeft - 1
+	var usesLeft *int
+	if userEffect.UsesLeft != nil {
+		spent := *userEffect.UsesLeft - 1
+		usesLeft = &spent
+	}
 
 	historyEventId, err := s.Database.ChangeUserEffectUsesLeftCommand(ctx, userId, partyId, effect.Id, usesLeft, actorUserId, nil)
 
@@ -170,7 +176,7 @@ func (s *Service) UseEffect(ctx context.Context, actorUserId int, userId int, pa
 		return
 	}
 
-	if usesLeft == 0 {
+	if usesLeft != nil && *usesLeft == 0 {
 		err = s.Database.DeleteUserEffectCommand(ctx, userId, partyId, effect.Id, actorUserId, &historyEventId)
 
 		if err != nil {
