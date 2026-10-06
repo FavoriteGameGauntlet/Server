@@ -120,22 +120,22 @@ func (c *Controller) GetUserPerks(ctx echo.Context, partyId genperks.PartyId, lo
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	views, err := c.Service.GetUserPerks(ctx.Request().Context(), userId, partyId)
+	userPerks, err := c.Service.GetUserPerks(ctx.Request().Context(), userId, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	viewsDto := make(genperks.UserPerks, len(views))
-	for i, view := range views {
-		viewsDto[i] = genperks.UserPerk{
-			Name:         view.Name,
-			Description:  view.Description,
-			ReceivedDate: view.ReceivedDate,
+	userPerksDto := make(genperks.UserPerks, len(userPerks))
+	for i, userPerk := range userPerks {
+		userPerksDto[i] = genperks.UserPerk{
+			Name:         userPerk.Name,
+			Description:  userPerk.Description,
+			ReceivedDate: userPerk.ReceivedDate,
 		}
 	}
 
-	return ctx.JSON(http.StatusOK, viewsDto)
+	return ctx.JSON(http.StatusOK, userPerksDto)
 }
 
 // RevokeUserPerk (DELETE /parties/{partyId}/perks/{login}/{name})

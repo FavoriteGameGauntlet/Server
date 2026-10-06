@@ -15,9 +15,9 @@ type IService interface {
 	GetRemovedPerks(ctx context.Context, partyId int) ([]typeperks.Perk, error)
 	CreatePerk(ctx context.Context, partyId int, name string, description string, effectName string) (typeperks.Perk, error)
 	RemovePerk(ctx context.Context, partyId int, name string) error
-	GetUserPerks(ctx context.Context, userId int, partyId int) ([]typeperks.UserPerkView, error)
+	GetUserPerks(ctx context.Context, userId int, partyId int) ([]typeperks.UserPerkDetail, error)
 	RevokeUserPerk(ctx context.Context, actorUserId int, userId int, partyId int, perkName string) error
-	GetPerkHistory(ctx context.Context, userId int, partyId int) ([]typeperks.PerkHistoryView, error)
+	GetPerkHistory(ctx context.Context, userId int, partyId int) ([]typeperks.PerkHistoryEntry, error)
 }
 
 type Service struct {
@@ -109,7 +109,7 @@ func (s *Service) perkByName(ctx context.Context, partyId int, name string) (per
 }
 
 // GetUserPerks lists the perks a user holds, named from the party catalogue.
-func (s *Service) GetUserPerks(ctx context.Context, userId int, partyId int) (views []typeperks.UserPerkView, err error) {
+func (s *Service) GetUserPerks(ctx context.Context, userId int, partyId int) (details []typeperks.UserPerkDetail, err error) {
 	userPerks, err := s.Database.GetUserPerksCommand(ctx, userId, partyId)
 
 	if err != nil {
@@ -122,12 +122,12 @@ func (s *Service) GetUserPerks(ctx context.Context, userId int, partyId int) (vi
 		return
 	}
 
-	views = make([]typeperks.UserPerkView, 0, len(userPerks))
+	details = make([]typeperks.UserPerkDetail, 0, len(userPerks))
 
 	for _, userPerk := range userPerks {
 		perk := perksById[userPerk.PerkId]
 
-		views = append(views, typeperks.UserPerkView{
+		details = append(details, typeperks.UserPerkDetail{
 			Name:         perk.Name,
 			Description:  perk.Description,
 			ReceivedDate: userPerk.ReceivedDate,
@@ -160,7 +160,7 @@ func (s *Service) RevokeUserPerk(ctx context.Context, actorUserId int, userId in
 }
 
 // GetPerkHistory lists the recorded perk events of a user, named from the party catalogue.
-func (s *Service) GetPerkHistory(ctx context.Context, userId int, partyId int) (views []typeperks.PerkHistoryView, err error) {
+func (s *Service) GetPerkHistory(ctx context.Context, userId int, partyId int) (history []typeperks.PerkHistoryEntry, err error) {
 	entries, err := s.Database.GetPerkHistoryCommand(ctx, userId, partyId)
 
 	if err != nil {
@@ -173,10 +173,10 @@ func (s *Service) GetPerkHistory(ctx context.Context, userId int, partyId int) (
 		return
 	}
 
-	views = make([]typeperks.PerkHistoryView, 0, len(entries))
+	history = make([]typeperks.PerkHistoryEntry, 0, len(entries))
 
 	for _, entry := range entries {
-		views = append(views, typeperks.PerkHistoryView{
+		history = append(history, typeperks.PerkHistoryEntry{
 			Name:        perksById[entry.PerkId].Name,
 			Action:      entry.Action,
 			ActorUserId: entry.ActorUserId,

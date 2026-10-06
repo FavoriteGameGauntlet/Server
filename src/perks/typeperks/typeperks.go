@@ -39,15 +39,15 @@ type PerkHistory struct {
 	CreatedDate   time.Time
 }
 
-// UserPerkView is a perk a user holds, carrying the catalogue details the API returns with it.
-type UserPerkView struct {
+// UserPerkDetail is a perk a user holds, carrying the catalogue details the API returns with it.
+type UserPerkDetail struct {
 	Name         string
 	Description  string
 	ReceivedDate time.Time
 }
 
-// PerkHistoryView is one recorded perk event, named by the perk it concerns.
-type PerkHistoryView struct {
+// PerkHistoryEntry is one recorded perk event, named by the perk it concerns.
+type PerkHistoryEntry struct {
 	Name        string
 	Action      string
 	ActorUserId int
