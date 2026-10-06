@@ -59,7 +59,7 @@ func main() {
 		_ = f.Close()
 	}(f)
 
-	startLogScheduler()
+	startLogScheduler(f)
 
 	defer func(e *echo.Echo) {
 		_ = e.Close()
@@ -114,23 +114,22 @@ func getLogsDir() string {
 	return "logs"
 }
 
-func startLogScheduler() {
+// startLogScheduler rotates the log file every midnight. The file the logger already writes to is
+// passed in so that the first rotation closes it too.
+func startLogScheduler(currentFile *os.File) {
 	scheduler, err := gocron.NewScheduler()
 
 	if err != nil {
 		panic(err)
 	}
 
-	var currentFile *os.File
-
 	_, err = scheduler.NewJob(
 		gocron.DailyJob(1, gocron.NewAtTimes(gocron.NewAtTime(0, 0, 0))),
 		gocron.NewTask(func() {
-			if currentFile != nil {
-				_ = currentFile.Close()
-			}
-
+			previousFile := currentFile
 			currentFile = createFileAndStartLogger()
+
+			_ = previousFile.Close()
 		}),
 	)
 
