@@ -16,7 +16,7 @@ properties:
     type: integer
     format: int
   entries:
-    $ref: "./ChangeEntryInputs.yaml"
+    $ref: "./NamedChangeEntries.yaml"
   modifiers:
     type: array
     description: Point changes the effect applies passively while it is active. Left out for an effect without any.

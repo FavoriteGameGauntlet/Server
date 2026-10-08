@@ -23,6 +23,12 @@ type ItemWithChange struct {
 	Change      typechanges.Change
 }
 
+// ItemWithEntries is a catalogue item along with what using it grants.
+type ItemWithEntries struct {
+	Item
+	Entries []typechanges.NamedChangeEntry
+}
+
 type UserItem struct {
 	Id           int
 	UserId       int
@@ -47,9 +53,12 @@ type ItemHistory struct {
 }
 
 // UserItemDetail is an item a user holds, carrying the catalog details the API returns with it.
+// ChangeId points at what using the item grants, which the service reads into Entries.
 type UserItemDetail struct {
 	Name         string
 	Description  string
 	UsesLeft     int
 	ReceivedDate time.Time
+	ChangeId     int
+	Entries      []typechanges.NamedChangeEntry
 }

@@ -20,18 +20,6 @@ const (
 	Running  TimerState = "running"
 )
 
-// ChangeEntryInput Names one thing a change grants. Exactly one of pointTypeName, itemName, perkName or effectName has to be set. The amount carries the sign it is applied with, so a cost is negative.
-type ChangeEntryInput struct {
-	Amount        int           `json:"amount"`
-	EffectName    *NullableName `json:"effectName"`
-	ItemName      *NullableName `json:"itemName"`
-	PerkName      *NullableName `json:"perkName"`
-	PointTypeName *NullableName `json:"pointTypeName"`
-}
-
-// ChangeEntryInputs defines model for ChangeEntryInputs.
-type ChangeEntryInputs = []ChangeEntryInput
-
 // Duration The duration notation as defined by ISO 8601
 type Duration = string
 
@@ -43,6 +31,18 @@ type Error struct {
 
 // Name defines model for Name.
 type Name = string
+
+// NamedChangeEntries defines model for NamedChangeEntries.
+type NamedChangeEntries = []NamedChangeEntry
+
+// NamedChangeEntry Names one thing a change grants. Exactly one of pointTypeName, itemName, perkName or effectName has to be set. The amount carries the sign it is applied with, so a cost is negative.
+type NamedChangeEntry struct {
+	Amount        int           `json:"amount"`
+	EffectName    *NullableName `json:"effectName"`
+	ItemName      *NullableName `json:"itemName"`
+	PerkName      *NullableName `json:"perkName"`
+	PointTypeName *NullableName `json:"pointTypeName"`
+}
 
 // NullableName defines model for NullableName.
 type NullableName = Name
@@ -63,7 +63,7 @@ type TimerState string
 
 // TimerReward What the party grants for every completed timer. Without a reward set, entries is empty.
 type TimerReward struct {
-	Entries ChangeEntryInputs `json:"entries"`
+	Entries NamedChangeEntries `json:"entries"`
 }
 
 // PartyId defines model for PartyId.

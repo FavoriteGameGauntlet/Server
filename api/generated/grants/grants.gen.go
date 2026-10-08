@@ -11,18 +11,6 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
-// ChangeEntryInput Names one thing a change grants. Exactly one of pointTypeName, itemName, perkName or effectName has to be set. The amount carries the sign it is applied with, so a cost is negative.
-type ChangeEntryInput struct {
-	Amount        int           `json:"amount"`
-	EffectName    *NullableName `json:"effectName"`
-	ItemName      *NullableName `json:"itemName"`
-	PerkName      *NullableName `json:"perkName"`
-	PointTypeName *NullableName `json:"pointTypeName"`
-}
-
-// ChangeEntryInputs defines model for ChangeEntryInputs.
-type ChangeEntryInputs = []ChangeEntryInput
-
 // Error defines model for Error.
 type Error struct {
 	Code    string `json:"code"`
@@ -34,12 +22,24 @@ type Login = string
 
 // ManualGrant Gives each named user what the entries describe, on an administrator's say-so rather than as the outcome of a game action. Entries carry the sign they are applied with, so taking something away is negative.
 type ManualGrant struct {
-	Entries      ChangeEntryInputs `json:"entries"`
-	TargetLogins []Login           `json:"targetLogins"`
+	Entries      NamedChangeEntries `json:"entries"`
+	TargetLogins []Login            `json:"targetLogins"`
 }
 
 // Name defines model for Name.
 type Name = string
+
+// NamedChangeEntries defines model for NamedChangeEntries.
+type NamedChangeEntries = []NamedChangeEntry
+
+// NamedChangeEntry Names one thing a change grants. Exactly one of pointTypeName, itemName, perkName or effectName has to be set. The amount carries the sign it is applied with, so a cost is negative.
+type NamedChangeEntry struct {
+	Amount        int           `json:"amount"`
+	EffectName    *NullableName `json:"effectName"`
+	ItemName      *NullableName `json:"itemName"`
+	PerkName      *NullableName `json:"perkName"`
+	PointTypeName *NullableName `json:"pointTypeName"`
+}
 
 // NullableName defines model for NullableName.
 type NullableName = Name

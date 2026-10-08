@@ -65,9 +65,9 @@ func (m *DatabaseMock) GetTimerRewardCommand(_ context.Context, partyId int) (re
 	return
 }
 
-func (m *DatabaseMock) GetTimerRewardEntriesCommand(_ context.Context, partyId int) (entries []typechanges.ChangeEntryInput, err error) {
+func (m *DatabaseMock) GetTimerRewardEntriesCommand(_ context.Context, partyId int) (entries []typechanges.NamedChangeEntry, err error) {
 	args := m.Called(partyId)
-	entries = args.Get(0).([]typechanges.ChangeEntryInput)
+	entries = args.Get(0).([]typechanges.NamedChangeEntry)
 	err = args.Error(1)
 	return
 }

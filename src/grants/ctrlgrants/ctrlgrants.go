@@ -57,7 +57,7 @@ func (c *Controller) GrantToUsers(ctx echo.Context, partyId gengrants.PartyId) e
 		}
 	}
 
-	err = c.Service.GrantToUsers(ctx.Request().Context(), actorUserId, partyId, targetUserIds, convertDtoToChangeEntryInputs(grantDto.Entries))
+	err = c.Service.GrantToUsers(ctx.Request().Context(), actorUserId, partyId, targetUserIds, convertDtoToNamedChangeEntries(grantDto.Entries))
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -66,11 +66,11 @@ func (c *Controller) GrantToUsers(ctx echo.Context, partyId gengrants.PartyId) e
 	return ctx.NoContent(http.StatusNoContent)
 }
 
-func convertDtoToChangeEntryInputs(entriesDto gengrants.ChangeEntryInputs) []typechanges.ChangeEntryInput {
-	inputs := make([]typechanges.ChangeEntryInput, len(entriesDto))
+func convertDtoToNamedChangeEntries(entriesDto gengrants.NamedChangeEntries) []typechanges.NamedChangeEntry {
+	inputs := make([]typechanges.NamedChangeEntry, len(entriesDto))
 
 	for i, entryDto := range entriesDto {
-		inputs[i] = typechanges.ChangeEntryInput{
+		inputs[i] = typechanges.NamedChangeEntry{
 			PointTypeName: entryDto.PointTypeName,
 			ItemName:      entryDto.ItemName,
 			PerkName:      entryDto.PerkName,

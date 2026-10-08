@@ -172,40 +172,12 @@ components:
       pattern: ^.+$
       minLength: 1
       maxLength: 70
-    Item:
-      type: object
-      properties:
-        name:
-          $ref: '#/components/schemas/Name'
-        description:
-          type: string
-        useCount:
-          type: integer
-          format: int
-      required:
-        - name
-        - description
-        - useCount
-    Items:
-      type: array
-      items:
-        $ref: '#/components/schemas/Item'
-    Error:
-      type: object
-      properties:
-        code:
-          type: string
-        message:
-          type: string
-      required:
-        - code
-        - message
     NullableName:
       allOf:
         - $ref: '#/components/schemas/Name'
       nullable: true
       default: null
-    ChangeEntryInput:
+    NamedChangeEntry:
       type: object
       description: |
         Names one thing a change grants. Exactly one of pointTypeName, itemName, perkName or effectName has to be set. The amount carries the sign it is applied with, so a cost is negative.
@@ -223,10 +195,41 @@ components:
           format: int
       required:
         - amount
-    ChangeEntryInputs:
+    NamedChangeEntries:
       type: array
       items:
-        $ref: '#/components/schemas/ChangeEntryInput'
+        $ref: '#/components/schemas/NamedChangeEntry'
+    Item:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/Name'
+        description:
+          type: string
+        useCount:
+          type: integer
+          format: int
+        entries:
+          $ref: '#/components/schemas/NamedChangeEntries'
+      required:
+        - name
+        - description
+        - useCount
+        - entries
+    Items:
+      type: array
+      items:
+        $ref: '#/components/schemas/Item'
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
     ItemCreate:
       type: object
       properties:
@@ -238,7 +241,7 @@ components:
           type: integer
           format: int
         entries:
-          $ref: '#/components/schemas/ChangeEntryInputs'
+          $ref: '#/components/schemas/NamedChangeEntries'
       required:
         - name
         - description
@@ -262,11 +265,14 @@ components:
         receivedDate:
           type: string
           format: date-time
+        entries:
+          $ref: '#/components/schemas/NamedChangeEntries'
       required:
         - name
         - description
         - usesLeft
         - receivedDate
+        - entries
     UserItems:
       type: array
       items:

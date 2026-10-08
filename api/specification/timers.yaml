@@ -177,7 +177,7 @@ components:
         - $ref: '#/components/schemas/Name'
       nullable: true
       default: null
-    ChangeEntryInput:
+    NamedChangeEntry:
       type: object
       description: |
         Names one thing a change grants. Exactly one of pointTypeName, itemName, perkName or effectName has to be set. The amount carries the sign it is applied with, so a cost is negative.
@@ -195,17 +195,17 @@ components:
           format: int
       required:
         - amount
-    ChangeEntryInputs:
+    NamedChangeEntries:
       type: array
       items:
-        $ref: '#/components/schemas/ChangeEntryInput'
+        $ref: '#/components/schemas/NamedChangeEntry'
     TimerReward:
       type: object
       description: |
         What the party grants for every completed timer. Without a reward set, entries is empty.
       properties:
         entries:
-          $ref: '#/components/schemas/ChangeEntryInputs'
+          $ref: '#/components/schemas/NamedChangeEntries'
       required:
         - entries
   responses:

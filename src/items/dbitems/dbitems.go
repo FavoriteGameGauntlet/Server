@@ -145,7 +145,7 @@ func (db *Database) GetUserItemsCommand(ctx context.Context, userId int, partyId
 
 	for rows.Next() {
 		userItem := typeitems.UserItemDetail{}
-		err = rows.Scan(&userItem.Name, &userItem.Description, &userItem.UsesLeft, &userItem.ReceivedDate)
+		err = rows.Scan(&userItem.Name, &userItem.Description, &userItem.UsesLeft, &userItem.ReceivedDate, &userItem.ChangeId)
 
 		if err != nil {
 			_ = rows.Close()

@@ -18,7 +18,7 @@ func TestSrvTimers_SetTimerReward_StoresResolvedEntries(test *testing.T) {
 
 	pointTypeName := "Rolls"
 	pointTypeId := 4
-	inputs := []typechanges.ChangeEntryInput{{PointTypeName: &pointTypeName, Amount: 2}}
+	inputs := []typechanges.NamedChangeEntry{{PointTypeName: &pointTypeName, Amount: 2}}
 	resolved := []typechanges.ChangeEntry{{PointTypeId: &pointTypeId, Amount: 2}}
 
 	changes.On("ResolveChangeEntries", 1, inputs).Return(resolved, nil)
@@ -43,7 +43,7 @@ func TestSrvTimers_SetTimerReward_UnresolvableEntry_KeepsCurrentReward(test *tes
 	changes := new(srvchangesmock.ServiceMock)
 
 	itemName := "Missing"
-	inputs := []typechanges.ChangeEntryInput{{ItemName: &itemName, Amount: 1}}
+	inputs := []typechanges.NamedChangeEntry{{ItemName: &itemName, Amount: 1}}
 
 	changes.On("ResolveChangeEntries", 1, inputs).Return([]typechanges.ChangeEntry(nil), dbError)
 

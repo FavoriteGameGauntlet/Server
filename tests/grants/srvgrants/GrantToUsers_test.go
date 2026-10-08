@@ -24,13 +24,13 @@ func TestSrvGrants_GrantToUsers(test *testing.T) {
 		changesDb := new(dbchangesmock.DatabaseMock)
 		changesSvc := new(srvchangesmock.ServiceMock)
 
-		input := typechanges.ChangeEntryInput{PointTypeName: ptr("grantedPoints"), Amount: 5}
+		input := typechanges.NamedChangeEntry{PointTypeName: ptr("grantedPoints"), Amount: 5}
 		resolved := typechanges.ChangeEntry{Amount: 5, PointTypeId: ptr(2)}
 
 		forFirst := typechanges.ChangeEntry{Amount: 5, PointTypeId: ptr(2), UserId: ptr(3)}
 		forSecond := typechanges.ChangeEntry{Amount: 5, PointTypeId: ptr(2), UserId: ptr(4)}
 
-		changesSvc.On("ResolveChangeEntries", 1, []typechanges.ChangeEntryInput{input}).
+		changesSvc.On("ResolveChangeEntries", 1, []typechanges.NamedChangeEntry{input}).
 			Return([]typechanges.ChangeEntry{resolved}, nil)
 
 		createdForFirst := typechanges.ChangeEntry{EntryId: ptr(31), Amount: 5, PointTypeId: ptr(2), UserId: ptr(3)}
@@ -51,7 +51,7 @@ func TestSrvGrants_GrantToUsers(test *testing.T) {
 
 		sut := srvgrants.Service{Database: grantsDb, ChangesDatabase: changesDb, ChangesService: changesSvc}
 
-		err := sut.GrantToUsers(test.Context(), 9, 1, []int{3, 4}, []typechanges.ChangeEntryInput{input})
+		err := sut.GrantToUsers(test.Context(), 9, 1, []int{3, 4}, []typechanges.NamedChangeEntry{input})
 
 		require.NoError(test, err)
 		grantsDb.AssertExpectations(test)
@@ -63,14 +63,14 @@ func TestSrvGrants_GrantToUsers(test *testing.T) {
 		grantsDb := new(dbgrantsmock.DatabaseMock)
 		changesSvc := new(srvchangesmock.ServiceMock)
 
-		input := typechanges.ChangeEntryInput{ItemName: ptr("missing"), Amount: 1}
+		input := typechanges.NamedChangeEntry{ItemName: ptr("missing"), Amount: 1}
 
-		changesSvc.On("ResolveChangeEntries", 1, []typechanges.ChangeEntryInput{input}).
+		changesSvc.On("ResolveChangeEntries", 1, []typechanges.NamedChangeEntry{input}).
 			Return([]typechanges.ChangeEntry{}, assertError)
 
 		sut := srvgrants.Service{Database: grantsDb, ChangesService: changesSvc}
 
-		err := sut.GrantToUsers(test.Context(), 9, 1, []int{3}, []typechanges.ChangeEntryInput{input})
+		err := sut.GrantToUsers(test.Context(), 9, 1, []int{3}, []typechanges.NamedChangeEntry{input})
 
 		require.Error(test, err)
 		grantsDb.AssertNotCalled(test, "CreateManualHistoryCommand")

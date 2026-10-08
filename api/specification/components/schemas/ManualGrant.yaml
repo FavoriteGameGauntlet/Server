@@ -9,5 +9,5 @@ properties:
     items:
       $ref: "./Login.yaml"
   entries:
-    $ref: "./ChangeEntryInputs.yaml"
+    $ref: "./NamedChangeEntries.yaml"
 required: [ targetLogins, entries ]

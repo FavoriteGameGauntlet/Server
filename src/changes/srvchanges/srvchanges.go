@@ -17,7 +17,7 @@ import (
 // is record-only, so it happens here.
 type IService interface {
 	ApplyChangeEntries(ctx context.Context, partyId int, entries []typechanges.ChangeEntry, actorUserId int, sourceEventId int) error
-	ResolveChangeEntries(ctx context.Context, partyId int, inputs []typechanges.ChangeEntryInput) ([]typechanges.ChangeEntry, error)
+	ResolveChangeEntries(ctx context.Context, partyId int, inputs []typechanges.NamedChangeEntry) ([]typechanges.ChangeEntry, error)
 }
 
 type Service struct {

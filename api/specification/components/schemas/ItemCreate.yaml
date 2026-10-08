@@ -8,5 +8,5 @@ properties:
     type: integer
     format: int
   entries:
-    $ref: "./ChangeEntryInputs.yaml"
+    $ref: "./NamedChangeEntries.yaml"
 required: [ name, description, useCount, entries ]

@@ -92,8 +92,8 @@ func (c *Controller) CreateExchange(ctx echo.Context, partyId genexchanges.Party
 		partyId,
 		exchangeDto.Name,
 		exchangeDto.Description,
-		convertDtoToChangeEntryInputs(exchangeDto.SourceEntries),
-		convertDtoToChangeEntryInputs(exchangeDto.TargetEntries))
+		convertDtoToNamedChangeEntries(exchangeDto.SourceEntries),
+		convertDtoToNamedChangeEntries(exchangeDto.TargetEntries))
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -218,11 +218,11 @@ func convertExchangesToDto(exchanges []typeexchanges.Exchange) genexchanges.Exch
 	return exchangesDto
 }
 
-func convertDtoToChangeEntryInputs(entriesDto genexchanges.ChangeEntryInputs) []typechanges.ChangeEntryInput {
-	inputs := make([]typechanges.ChangeEntryInput, len(entriesDto))
+func convertDtoToNamedChangeEntries(entriesDto genexchanges.NamedChangeEntries) []typechanges.NamedChangeEntry {
+	inputs := make([]typechanges.NamedChangeEntry, len(entriesDto))
 
 	for i, entryDto := range entriesDto {
-		inputs[i] = typechanges.ChangeEntryInput{
+		inputs[i] = typechanges.NamedChangeEntry{
 			PointTypeName: entryDto.PointTypeName,
 			ItemName:      entryDto.ItemName,
 			PerkName:      entryDto.PerkName,

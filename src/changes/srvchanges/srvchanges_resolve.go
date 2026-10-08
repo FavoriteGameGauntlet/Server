@@ -9,7 +9,7 @@ import (
 
 // ResolveChangeEntries turns the names an API caller uses into the ids a change entry stores. It
 // lives here because it is the one place that already reaches every domain an entry can target.
-func (s *Service) ResolveChangeEntries(ctx context.Context, partyId int, inputs []typechanges.ChangeEntryInput) (entries []typechanges.ChangeEntry, err error) {
+func (s *Service) ResolveChangeEntries(ctx context.Context, partyId int, inputs []typechanges.NamedChangeEntry) (entries []typechanges.ChangeEntry, err error) {
 	entries = make([]typechanges.ChangeEntry, 0, len(inputs))
 
 	for _, input := range inputs {
@@ -26,7 +26,7 @@ func (s *Service) ResolveChangeEntries(ctx context.Context, partyId int, inputs 
 	return
 }
 
-func (s *Service) resolveChangeEntry(ctx context.Context, partyId int, input typechanges.ChangeEntryInput) (entry typechanges.ChangeEntry, err error) {
+func (s *Service) resolveChangeEntry(ctx context.Context, partyId int, input typechanges.NamedChangeEntry) (entry typechanges.ChangeEntry, err error) {
 	err = validator.ValidateChangeAmount(input.Amount)
 
 	if err != nil {

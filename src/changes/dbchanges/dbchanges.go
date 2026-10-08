@@ -13,6 +13,7 @@ type IDatabase interface {
 	CreateChangeFromJsonbCommand(ctx context.Context, partyId int, change typechanges.Change) (created typechanges.Change, err error)
 	CreateUserChangeFromJsonbCommand(ctx context.Context, partyId int, entries []typechanges.ChangeEntry) (created typechanges.UserChange, err error)
 	GetChangeEntriesJsonbCommand(ctx context.Context, partyId int, changeId int) (entries []typechanges.ChangeEntry, err error)
+	GetNamedChangeEntriesCommand(ctx context.Context, partyId int, changeId int) (entries []typechanges.NamedChangeEntry, err error)
 }
 
 type Database struct{}
@@ -124,5 +125,36 @@ func (db *Database) GetChangeEntriesJsonbCommand(ctx context.Context, partyId in
 
 	dbaccess.LogDbResult(getChangeEntriesJsonbQuery, entries, err)
 
+	return
+}
+
+var getNamedChangeEntriesQuery = dbaccess.Query{Name: "GetNamedChangeEntriesQuery", SQL: `SELECT * FROM get_named_change_entries($1::integer, $2::integer)`}
+
+// GetNamedChangeEntriesCommand reads the entries of a change with the targets named instead of
+// identified. Targets removed from the catalogue keep their names.
+func (db *Database) GetNamedChangeEntriesCommand(ctx context.Context, partyId int, changeId int) (entries []typechanges.NamedChangeEntry, err error) {
+	rows, err := dbaccess.QueryRows(ctx, getNamedChangeEntriesQuery, partyId, changeId)
+
+	if err != nil {
+		return
+	}
+
+	for rows.Next() {
+		entry := typechanges.NamedChangeEntry{}
+		err = rows.Scan(&entry.PointTypeName, &entry.ItemName, &entry.PerkName, &entry.EffectName, &entry.Amount)
+
+		if err != nil {
+			_ = rows.Close()
+			return
+		}
+
+		entries = append(entries, entry)
+	}
+
+	err = rows.Err()
+
+	dbaccess.LogDbResult(getNamedChangeEntriesQuery, entries, err)
+
+	_ = rows.Close()
 	return
 }

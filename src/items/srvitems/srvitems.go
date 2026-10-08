@@ -13,9 +13,9 @@ import (
 )
 
 type IService interface {
-	GetItems(ctx context.Context, partyId int) ([]typeitems.Item, error)
-	GetRemovedItems(ctx context.Context, partyId int) ([]typeitems.Item, error)
-	CreateItem(ctx context.Context, partyId int, name string, description string, useCount int, entries []typechanges.ChangeEntryInput) (typeitems.Item, error)
+	GetItems(ctx context.Context, partyId int) ([]typeitems.ItemWithEntries, error)
+	GetRemovedItems(ctx context.Context, partyId int) ([]typeitems.ItemWithEntries, error)
+	CreateItem(ctx context.Context, partyId int, name string, description string, useCount int, entries []typechanges.NamedChangeEntry) (typeitems.ItemWithEntries, error)
 	RemoveItem(ctx context.Context, partyId int, name string) error
 	GetUserItems(ctx context.Context, userId int, partyId int) ([]typeitems.UserItemDetail, error)
 	UseItem(ctx context.Context, actorUserId int, userId int, partyId int, itemName string) error
@@ -37,12 +37,40 @@ func NewService() *Service {
 	}
 }
 
-func (s *Service) GetItems(ctx context.Context, partyId int) (items []typeitems.Item, err error) {
-	return s.Database.GetActualItemsCommand(ctx, partyId)
+func (s *Service) GetItems(ctx context.Context, partyId int) (items []typeitems.ItemWithEntries, err error) {
+	actual, err := s.Database.GetActualItemsCommand(ctx, partyId)
+
+	if err != nil {
+		return
+	}
+
+	return s.withEntries(ctx, partyId, actual)
 }
 
-func (s *Service) GetRemovedItems(ctx context.Context, partyId int) (items []typeitems.Item, err error) {
-	return s.Database.GetRemovedItemsCommand(ctx, partyId)
+func (s *Service) GetRemovedItems(ctx context.Context, partyId int) (items []typeitems.ItemWithEntries, err error) {
+	removed, err := s.Database.GetRemovedItemsCommand(ctx, partyId)
+
+	if err != nil {
+		return
+	}
+
+	return s.withEntries(ctx, partyId, removed)
+}
+
+// withEntries attaches to each item what using it grants.
+func (s *Service) withEntries(ctx context.Context, partyId int, items []typeitems.Item) (detailed []typeitems.ItemWithEntries, err error) {
+	detailed = make([]typeitems.ItemWithEntries, len(items))
+
+	for i, item := range items {
+		detailed[i].Item = item
+		detailed[i].Entries, err = s.ChangesDatabase.GetNamedChangeEntriesCommand(ctx, partyId, item.ChangeId)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return
 }
 
 // CreateItem adds an item to the party catalogue. The entries describe what using it grants. Names
@@ -53,7 +81,7 @@ func (s *Service) CreateItem(
 	name string,
 	description string,
 	useCount int,
-	entries []typechanges.ChangeEntryInput) (item typeitems.Item, err error) {
+	entries []typechanges.NamedChangeEntry) (item typeitems.ItemWithEntries, err error) {
 	actual, err := s.Database.GetActualItemsCommand(ctx, partyId)
 
 	if err != nil {
@@ -79,13 +107,16 @@ func (s *Service) CreateItem(
 		return
 	}
 
-	item = typeitems.Item{
+	item.Item = typeitems.Item{
 		Id:          created.Id,
 		PartyId:     created.PartyId,
 		Name:        created.Name,
 		Description: created.Description,
 		UseCount:    created.UseCount,
+		ChangeId:    *created.Change.ChangeId,
 	}
+
+	item.Entries, err = s.ChangesDatabase.GetNamedChangeEntriesCommand(ctx, partyId, item.ChangeId)
 
 	return
 }
@@ -119,9 +150,23 @@ func (s *Service) itemByName(ctx context.Context, partyId int, name string) (ite
 	return
 }
 
-// GetUserItems lists what the user holds.
+// GetUserItems lists what the user holds, each item along with what using it grants.
 func (s *Service) GetUserItems(ctx context.Context, userId int, partyId int) (details []typeitems.UserItemDetail, err error) {
-	return s.Database.GetUserItemsCommand(ctx, userId, partyId)
+	details, err = s.Database.GetUserItemsCommand(ctx, userId, partyId)
+
+	if err != nil {
+		return
+	}
+
+	for i := range details {
+		details[i].Entries, err = s.ChangesDatabase.GetNamedChangeEntriesCommand(ctx, partyId, details[i].ChangeId)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return
 }
 
 // UseItem spends one use of an item the user holds and grants what it carries to that user. The

@@ -176,7 +176,7 @@ func (c *Controller) SetTimerReward(ctx echo.Context, partyId gentimers.PartyId)
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	reward, err := c.Service.SetTimerReward(ctx.Request().Context(), partyId, convertDtoToChangeEntryInputs(rewardDto.Entries))
+	reward, err := c.Service.SetTimerReward(ctx.Request().Context(), partyId, convertDtoToNamedChangeEntries(rewardDto.Entries))
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -202,11 +202,11 @@ func (c *Controller) RemoveTimerReward(ctx echo.Context, partyId gentimers.Party
 	return ctx.NoContent(http.StatusNoContent)
 }
 
-func convertTimerRewardToDto(entries []typechanges.ChangeEntryInput) gentimers.TimerReward {
-	entriesDto := make(gentimers.ChangeEntryInputs, len(entries))
+func convertTimerRewardToDto(entries []typechanges.NamedChangeEntry) gentimers.TimerReward {
+	entriesDto := make(gentimers.NamedChangeEntries, len(entries))
 
 	for i, entry := range entries {
-		entriesDto[i] = gentimers.ChangeEntryInput{
+		entriesDto[i] = gentimers.NamedChangeEntry{
 			PointTypeName: entry.PointTypeName,
 			ItemName:      entry.ItemName,
 			PerkName:      entry.PerkName,
@@ -218,11 +218,11 @@ func convertTimerRewardToDto(entries []typechanges.ChangeEntryInput) gentimers.T
 	return gentimers.TimerReward{Entries: entriesDto}
 }
 
-func convertDtoToChangeEntryInputs(entriesDto gentimers.ChangeEntryInputs) []typechanges.ChangeEntryInput {
-	inputs := make([]typechanges.ChangeEntryInput, len(entriesDto))
+func convertDtoToNamedChangeEntries(entriesDto gentimers.NamedChangeEntries) []typechanges.NamedChangeEntry {
+	inputs := make([]typechanges.NamedChangeEntry, len(entriesDto))
 
 	for i, entryDto := range entriesDto {
-		inputs[i] = typechanges.ChangeEntryInput{
+		inputs[i] = typechanges.NamedChangeEntry{
 			PointTypeName: entryDto.PointTypeName,
 			ItemName:      entryDto.ItemName,
 			PerkName:      entryDto.PerkName,

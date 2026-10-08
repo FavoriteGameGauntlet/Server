@@ -114,7 +114,7 @@ func (c *Controller) CreateEffect(ctx echo.Context, partyId geneffects.PartyId) 
 		effectDto.Description,
 		effectDto.UseCount,
 		duration,
-		convertDtoToChangeEntryInputs(effectDto.Entries),
+		convertDtoToNamedChangeEntries(effectDto.Entries),
 		convertDtoToNamedModifiers(effectDto.Modifiers))
 
 	if err != nil {
@@ -327,11 +327,11 @@ func convertEffectsToDto(effects []typeeffects.NamedEffect) geneffects.Effects {
 	return effectsDto
 }
 
-func convertDtoToChangeEntryInputs(entriesDto geneffects.ChangeEntryInputs) []typechanges.ChangeEntryInput {
-	inputs := make([]typechanges.ChangeEntryInput, len(entriesDto))
+func convertDtoToNamedChangeEntries(entriesDto geneffects.NamedChangeEntries) []typechanges.NamedChangeEntry {
+	inputs := make([]typechanges.NamedChangeEntry, len(entriesDto))
 
 	for i, entryDto := range entriesDto {
-		inputs[i] = typechanges.ChangeEntryInput{
+		inputs[i] = typechanges.NamedChangeEntry{
 			PointTypeName: entryDto.PointTypeName,
 			ItemName:      entryDto.ItemName,
 			PerkName:      entryDto.PerkName,

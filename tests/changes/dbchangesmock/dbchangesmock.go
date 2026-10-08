@@ -45,3 +45,10 @@ func (m *DatabaseMock) GetChangeEntriesJsonbCommand(_ context.Context, partyId i
 	err = args.Error(1)
 	return
 }
+
+func (m *DatabaseMock) GetNamedChangeEntriesCommand(_ context.Context, partyId int, changeId int) (entries []typechanges.NamedChangeEntry, err error) {
+	args := m.Called(partyId, changeId)
+	entries = args.Get(0).([]typechanges.NamedChangeEntry)
+	err = args.Error(1)
+	return
+}

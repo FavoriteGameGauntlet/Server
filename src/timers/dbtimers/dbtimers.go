@@ -18,7 +18,7 @@ type IDatabase interface {
 	SetTimerRewardCommand(ctx context.Context, partyId int, change typechanges.Change) (timerRewardId int, err error)
 	RemoveTimerRewardCommand(ctx context.Context, partyId int) error
 	GetTimerRewardCommand(ctx context.Context, partyId int) (reward typetimers.TimerReward, err error)
-	GetTimerRewardEntriesCommand(ctx context.Context, partyId int) (entries []typechanges.ChangeEntryInput, err error)
+	GetTimerRewardEntriesCommand(ctx context.Context, partyId int) (entries []typechanges.NamedChangeEntry, err error)
 	CreateTimerHistoryCommand(ctx context.Context, userId int, partyId int, timerRewardId *int, actorUserId int) (entry typetimers.TimerHistoryEntry, err error)
 }
 
@@ -201,7 +201,7 @@ func (db *Database) GetTimerRewardCommand(ctx context.Context, partyId int) (rew
 
 var getTimerRewardEntriesQuery = dbaccess.Query{Name: "GetTimerRewardEntriesQuery", SQL: `SELECT * FROM get_timer_reward_entries($1::integer)`}
 
-func (db *Database) GetTimerRewardEntriesCommand(ctx context.Context, partyId int) (entries []typechanges.ChangeEntryInput, err error) {
+func (db *Database) GetTimerRewardEntriesCommand(ctx context.Context, partyId int) (entries []typechanges.NamedChangeEntry, err error) {
 	rows, err := dbaccess.QueryRows(ctx, getTimerRewardEntriesQuery, partyId)
 
 	if err != nil {
@@ -209,7 +209,7 @@ func (db *Database) GetTimerRewardEntriesCommand(ctx context.Context, partyId in
 	}
 
 	for rows.Next() {
-		entry := typechanges.ChangeEntryInput{}
+		entry := typechanges.NamedChangeEntry{}
 		err = rows.Scan(&entry.Amount, &entry.PointTypeName, &entry.ItemName, &entry.PerkName, &entry.EffectName)
 
 		if err != nil {

@@ -7,4 +7,6 @@ properties:
   useCount:
     type: integer
     format: int
-required: [ name, description, useCount ]
+  entries:
+    $ref: "./NamedChangeEntries.yaml"
+required: [ name, description, useCount, entries ]

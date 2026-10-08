@@ -326,13 +326,13 @@ func (s *Service) completeTimer(ctx context.Context, timer typetimers.EndedTimer
 	return s.ChangesService.ApplyChangeEntries(ctx, timer.PartyId, rewardEntries, timer.UserId, history.Id)
 }
 
-func (s *Service) GetTimerReward(ctx context.Context, partyId int) ([]typechanges.ChangeEntryInput, error) {
+func (s *Service) GetTimerReward(ctx context.Context, partyId int) ([]typechanges.NamedChangeEntry, error) {
 	return s.Database.GetTimerRewardEntriesCommand(ctx, partyId)
 }
 
 // SetTimerReward replaces the party's timer reward. The previous one is kept as removed, so the
 // history of timers completed under it still points at what they granted.
-func (s *Service) SetTimerReward(ctx context.Context, partyId int, entries []typechanges.ChangeEntryInput) (reward []typechanges.ChangeEntryInput, err error) {
+func (s *Service) SetTimerReward(ctx context.Context, partyId int, entries []typechanges.NamedChangeEntry) (reward []typechanges.NamedChangeEntry, err error) {
 	resolved, err := s.ChangesService.ResolveChangeEntries(ctx, partyId, entries)
 
 	if err != nil {

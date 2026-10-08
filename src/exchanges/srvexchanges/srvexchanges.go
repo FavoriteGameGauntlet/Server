@@ -15,7 +15,7 @@ import (
 type IService interface {
 	GetExchanges(ctx context.Context, partyId int) ([]typeexchanges.Exchange, error)
 	GetRemovedExchanges(ctx context.Context, partyId int) ([]typeexchanges.Exchange, error)
-	CreateExchange(ctx context.Context, partyId int, name string, description string, sourceEntries []typechanges.ChangeEntryInput, targetEntries []typechanges.ChangeEntryInput) (typeexchanges.Exchange, error)
+	CreateExchange(ctx context.Context, partyId int, name string, description string, sourceEntries []typechanges.NamedChangeEntry, targetEntries []typechanges.NamedChangeEntry) (typeexchanges.Exchange, error)
 	RemoveExchange(ctx context.Context, partyId int, name string) error
 	UseExchange(ctx context.Context, userId int, partyId int, exchangeName string, targetUserIds []int) error
 	GetExchangeHistory(ctx context.Context, userId int, partyId int) ([]typeexchanges.ExchangeHistory, error)
@@ -57,8 +57,8 @@ func (s *Service) CreateExchange(
 	partyId int,
 	name string,
 	description string,
-	sourceEntries []typechanges.ChangeEntryInput,
-	targetEntries []typechanges.ChangeEntryInput) (exchange typeexchanges.Exchange, err error) {
+	sourceEntries []typechanges.NamedChangeEntry,
+	targetEntries []typechanges.NamedChangeEntry) (exchange typeexchanges.Exchange, err error) {
 	resolvedSource, err := s.ChangesService.ResolveChangeEntries(ctx, partyId, sourceEntries)
 
 	if err != nil {

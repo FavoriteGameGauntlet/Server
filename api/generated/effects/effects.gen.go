@@ -12,18 +12,6 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
-// ChangeEntryInput Names one thing a change grants. Exactly one of pointTypeName, itemName, perkName or effectName has to be set. The amount carries the sign it is applied with, so a cost is negative.
-type ChangeEntryInput struct {
-	Amount        int           `json:"amount"`
-	EffectName    *NullableName `json:"effectName"`
-	ItemName      *NullableName `json:"itemName"`
-	PerkName      *NullableName `json:"perkName"`
-	PointTypeName *NullableName `json:"pointTypeName"`
-}
-
-// ChangeEntryInputs defines model for ChangeEntryInputs.
-type ChangeEntryInputs = []ChangeEntryInput
-
 // Duration The duration notation as defined by ISO 8601
 type Duration = string
 
@@ -42,9 +30,9 @@ type Effect struct {
 
 // EffectCreate Creates an effect. durationInSeconds is left out for an effect that does not run out on its own.
 type EffectCreate struct {
-	Description       string            `json:"description"`
-	DurationInSeconds *int              `json:"durationInSeconds,omitempty"`
-	Entries           ChangeEntryInputs `json:"entries"`
+	Description       string             `json:"description"`
+	DurationInSeconds *int               `json:"durationInSeconds,omitempty"`
+	Entries           NamedChangeEntries `json:"entries"`
 
 	// Modifiers Point changes the effect applies passively while it is active. Left out for an effect without any.
 	Modifiers *[]PointModifier `json:"modifiers,omitempty"`
@@ -82,6 +70,18 @@ type Login = string
 
 // Name defines model for Name.
 type Name = string
+
+// NamedChangeEntries defines model for NamedChangeEntries.
+type NamedChangeEntries = []NamedChangeEntry
+
+// NamedChangeEntry Names one thing a change grants. Exactly one of pointTypeName, itemName, perkName or effectName has to be set. The amount carries the sign it is applied with, so a cost is negative.
+type NamedChangeEntry struct {
+	Amount        int           `json:"amount"`
+	EffectName    *NullableName `json:"effectName"`
+	ItemName      *NullableName `json:"itemName"`
+	PerkName      *NullableName `json:"perkName"`
+	PointTypeName *NullableName `json:"pointTypeName"`
+}
 
 // NullableName defines model for NullableName.
 type NullableName = Name

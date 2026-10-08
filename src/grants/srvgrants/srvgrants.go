@@ -9,7 +9,7 @@ import (
 )
 
 type IService interface {
-	GrantToUsers(ctx context.Context, actorUserId int, partyId int, targetUserIds []int, inputs []typechanges.ChangeEntryInput) error
+	GrantToUsers(ctx context.Context, actorUserId int, partyId int, targetUserIds []int, inputs []typechanges.NamedChangeEntry) error
 }
 
 type Service struct {
@@ -30,7 +30,7 @@ func NewService() *Service {
 // than as the outcome of a game action. Each user gets their own manual history entry, whose id is
 // the source event their grants are recorded against, so a grant can be traced back to the
 // administrator who made it.
-func (s *Service) GrantToUsers(ctx context.Context, actorUserId int, partyId int, targetUserIds []int, inputs []typechanges.ChangeEntryInput) (err error) {
+func (s *Service) GrantToUsers(ctx context.Context, actorUserId int, partyId int, targetUserIds []int, inputs []typechanges.NamedChangeEntry) (err error) {
 	resolved, err := s.ChangesService.ResolveChangeEntries(ctx, partyId, inputs)
 
 	if err != nil {

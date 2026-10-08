@@ -22,7 +22,7 @@ import (
 type IService interface {
 	GetEffects(ctx context.Context, partyId int) ([]typeeffects.NamedEffect, error)
 	GetRemovedEffects(ctx context.Context, partyId int) ([]typeeffects.NamedEffect, error)
-	CreateEffect(ctx context.Context, partyId int, name string, description string, useCount *int, duration *time.Duration, entries []typechanges.ChangeEntryInput, modifiers []typeeffects.NamedPointModifier) (typeeffects.NamedEffect, error)
+	CreateEffect(ctx context.Context, partyId int, name string, description string, useCount *int, duration *time.Duration, entries []typechanges.NamedChangeEntry, modifiers []typeeffects.NamedPointModifier) (typeeffects.NamedEffect, error)
 	RemoveEffect(ctx context.Context, partyId int, name string) error
 	GetUserEffects(ctx context.Context, userId int, partyId int) ([]typeeffects.UserEffectDetail, error)
 	GetNamedUserEffects(ctx context.Context, userId int, partyId int) ([]typeeffects.NamedUserEffect, error)
@@ -139,7 +139,7 @@ func (s *Service) CreateEffect(
 	description string,
 	useCount *int,
 	duration *time.Duration,
-	entries []typechanges.ChangeEntryInput,
+	entries []typechanges.NamedChangeEntry,
 	modifiers []typeeffects.NamedPointModifier) (effect typeeffects.NamedEffect, err error) {
 	resolved, err := s.ChangesService.ResolveChangeEntries(ctx, partyId, entries)
 

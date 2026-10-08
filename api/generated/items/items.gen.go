@@ -12,18 +12,6 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
-// ChangeEntryInput Names one thing a change grants. Exactly one of pointTypeName, itemName, perkName or effectName has to be set. The amount carries the sign it is applied with, so a cost is negative.
-type ChangeEntryInput struct {
-	Amount        int           `json:"amount"`
-	EffectName    *NullableName `json:"effectName"`
-	ItemName      *NullableName `json:"itemName"`
-	PerkName      *NullableName `json:"perkName"`
-	PointTypeName *NullableName `json:"pointTypeName"`
-}
-
-// ChangeEntryInputs defines model for ChangeEntryInputs.
-type ChangeEntryInputs = []ChangeEntryInput
-
 // Error defines model for Error.
 type Error struct {
 	Code    string `json:"code"`
@@ -32,17 +20,18 @@ type Error struct {
 
 // Item defines model for Item.
 type Item struct {
-	Description string `json:"description"`
-	Name        Name   `json:"name"`
-	UseCount    int    `json:"useCount"`
+	Description string             `json:"description"`
+	Entries     NamedChangeEntries `json:"entries"`
+	Name        Name               `json:"name"`
+	UseCount    int                `json:"useCount"`
 }
 
 // ItemCreate defines model for ItemCreate.
 type ItemCreate struct {
-	Description string            `json:"description"`
-	Entries     ChangeEntryInputs `json:"entries"`
-	Name        Name              `json:"name"`
-	UseCount    int               `json:"useCount"`
+	Description string             `json:"description"`
+	Entries     NamedChangeEntries `json:"entries"`
+	Name        Name               `json:"name"`
+	UseCount    int                `json:"useCount"`
 }
 
 // ItemHistoryEntries defines model for ItemHistoryEntries.
@@ -67,15 +56,28 @@ type Login = string
 // Name defines model for Name.
 type Name = string
 
+// NamedChangeEntries defines model for NamedChangeEntries.
+type NamedChangeEntries = []NamedChangeEntry
+
+// NamedChangeEntry Names one thing a change grants. Exactly one of pointTypeName, itemName, perkName or effectName has to be set. The amount carries the sign it is applied with, so a cost is negative.
+type NamedChangeEntry struct {
+	Amount        int           `json:"amount"`
+	EffectName    *NullableName `json:"effectName"`
+	ItemName      *NullableName `json:"itemName"`
+	PerkName      *NullableName `json:"perkName"`
+	PointTypeName *NullableName `json:"pointTypeName"`
+}
+
 // NullableName defines model for NullableName.
 type NullableName = Name
 
 // UserItem defines model for UserItem.
 type UserItem struct {
-	Description  string    `json:"description"`
-	Name         Name      `json:"name"`
-	ReceivedDate time.Time `json:"receivedDate"`
-	UsesLeft     int       `json:"usesLeft"`
+	Description  string             `json:"description"`
+	Entries      NamedChangeEntries `json:"entries"`
+	Name         Name               `json:"name"`
+	ReceivedDate time.Time          `json:"receivedDate"`
+	UsesLeft     int                `json:"usesLeft"`
 }
 
 // UserItems defines model for UserItems.

@@ -10,4 +10,6 @@ properties:
   receivedDate:
     type: string
     format: date-time
-required: [ name, description, usesLeft, receivedDate ]
+  entries:
+    $ref: "./NamedChangeEntries.yaml"
+required: [ name, description, usesLeft, receivedDate, entries ]

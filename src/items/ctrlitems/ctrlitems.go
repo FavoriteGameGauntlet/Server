@@ -93,7 +93,7 @@ func (c *Controller) CreateItem(ctx echo.Context, partyId genitems.PartyId) erro
 		itemDto.Name,
 		itemDto.Description,
 		itemDto.UseCount,
-		convertDtoToChangeEntryInputs(itemDto.Entries))
+		convertDtoToNamedChangeEntries(itemDto.Entries))
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -140,6 +140,7 @@ func (c *Controller) GetUserItems(ctx echo.Context, partyId genitems.PartyId, lo
 			Description:  userItem.Description,
 			UsesLeft:     userItem.UsesLeft,
 			ReceivedDate: userItem.ReceivedDate,
+			Entries:      convertNamedChangeEntriesToDto(userItem.Entries),
 		}
 	}
 
@@ -241,15 +242,16 @@ func (c *Controller) userIdFromLogin(ctx echo.Context, partyId genitems.PartyId,
 	return
 }
 
-func convertItemToDto(item typeitems.Item) genitems.Item {
+func convertItemToDto(item typeitems.ItemWithEntries) genitems.Item {
 	return genitems.Item{
 		Name:        item.Name,
 		Description: item.Description,
 		UseCount:    item.UseCount,
+		Entries:     convertNamedChangeEntriesToDto(item.Entries),
 	}
 }
 
-func convertItemsToDto(items []typeitems.Item) genitems.Items {
+func convertItemsToDto(items []typeitems.ItemWithEntries) genitems.Items {
 	itemsDto := make(genitems.Items, len(items))
 
 	for i, item := range items {
@@ -259,11 +261,27 @@ func convertItemsToDto(items []typeitems.Item) genitems.Items {
 	return itemsDto
 }
 
-func convertDtoToChangeEntryInputs(entriesDto genitems.ChangeEntryInputs) []typechanges.ChangeEntryInput {
-	inputs := make([]typechanges.ChangeEntryInput, len(entriesDto))
+func convertNamedChangeEntriesToDto(inputs []typechanges.NamedChangeEntry) genitems.NamedChangeEntries {
+	entriesDto := make(genitems.NamedChangeEntries, len(inputs))
+
+	for i, input := range inputs {
+		entriesDto[i] = genitems.NamedChangeEntry{
+			PointTypeName: input.PointTypeName,
+			ItemName:      input.ItemName,
+			PerkName:      input.PerkName,
+			EffectName:    input.EffectName,
+			Amount:        input.Amount,
+		}
+	}
+
+	return entriesDto
+}
+
+func convertDtoToNamedChangeEntries(entriesDto genitems.NamedChangeEntries) []typechanges.NamedChangeEntry {
+	inputs := make([]typechanges.NamedChangeEntry, len(entriesDto))
 
 	for i, entryDto := range entriesDto {
-		inputs[i] = typechanges.ChangeEntryInput{
+		inputs[i] = typechanges.NamedChangeEntry{
 			PointTypeName: entryDto.PointTypeName,
 			ItemName:      entryDto.ItemName,
 			PerkName:      entryDto.PerkName,
