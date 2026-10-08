@@ -1,25 +1,22 @@
 openapi: 3.0.4
 info:
   title: Favorite Game Gauntlet
-  version: 0.13.0
+  version: 0.14.0
 paths:
-  /wheel-effects/{login}/history:
+  /parties/{partyId}/wheel-effects/{login}/history:
     $ref: "../paths/wheel-effects/login/history.yaml"
 
-  /wheel-effects/available:
+  /parties/{partyId}/wheel-effects/available:
     $ref: "../paths/wheel-effects/available.yaml"
 
-  /wheel-effects/available/roll:
+  /parties/{partyId}/wheel-effects/available/roll:
     $ref: "../paths/wheel-effects/available/roll.yaml"
 
-  /wheel-effects/available/roll/count:
-    $ref: "../paths/wheel-effects/available/roll/count.yaml"
-
-  /wheel-effects/available/roll/last:
+  /parties/{partyId}/wheel-effects/available/roll/last:
     $ref: "../paths/wheel-effects/available/roll/last.yaml"
 
-  /wheel-effects/available/roll/last/clear:
+  /parties/{partyId}/wheel-effects/available/roll/last/clear:
     $ref: "../paths/wheel-effects/available/roll/last/clear.yaml"
 
-  /wheel-effects/available/roll/apply:
+  /parties/{partyId}/wheel-effects/available/roll/apply:
     $ref: "../paths/wheel-effects/available/roll/apply.yaml"

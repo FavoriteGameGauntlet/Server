@@ -1,0 +1,7 @@
+openapi: 3.0.4
+info:
+  title: Favorite Game Gauntlet
+  version: 0.1.0
+paths:
+  /parties/{partyId}/grants:
+    $ref: "../paths/grants.yaml"

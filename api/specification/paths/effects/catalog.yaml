@@ -1,0 +1,32 @@
+get:
+  operationId: getEffects
+  tags: [ Effects ]
+  parameters:
+    - $ref: "../../components/parameters/PartyId.yaml"
+  responses:
+    "200":
+      $ref: "../../components/responses/EffectsResponse.yaml"
+    "401":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+post:
+  operationId: createEffect
+  tags: [ Effects ]
+  parameters:
+    - $ref: "../../components/parameters/PartyId.yaml"
+  requestBody:
+    $ref: "../../components/requests/EffectCreateRequest.yaml"
+  responses:
+    "201":
+      $ref: "../../components/responses/EffectResponse.yaml"
+    "400":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "401":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "404":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "422":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../components/responses/ErrorResponse.yaml"

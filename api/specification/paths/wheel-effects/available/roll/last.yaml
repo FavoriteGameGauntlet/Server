@@ -1,9 +1,11 @@
 get:
   operationId: getLastRolledWheelEffects
   tags: [ WheelEffects ]
+  parameters:
+    - $ref: "../../../../components/parameters/PartyId.yaml"
   responses:
     "200":
-      $ref: "../../../../components/responses/RolledWheelEffectsResponse.yaml"
+      $ref: "../../../../components/responses/RolledWheelRowsResponse.yaml"
     "401":
       $ref: "../../../../components/responses/ErrorResponse.yaml"
     "404":

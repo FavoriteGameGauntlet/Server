@@ -1,0 +1,7 @@
+type: object
+properties:
+  pointType:
+    $ref: "./PointType.yaml"
+  value:
+    $ref: "./Points.yaml"
+required: [ pointType, value ]

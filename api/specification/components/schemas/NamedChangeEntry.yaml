@@ -1,0 +1,17 @@
+type: object
+description: >
+  Names one thing a change grants. Exactly one of pointTypeName, itemName, perkName or effectName
+  has to be set. The amount carries the sign it is applied with, so a cost is negative.
+properties:
+  pointTypeName:
+    $ref: "./NullableName.yaml"
+  itemName:
+    $ref: "./NullableName.yaml"
+  perkName:
+    $ref: "./NullableName.yaml"
+  effectName:
+    $ref: "./NullableName.yaml"
+  amount:
+    type: integer
+    format: int
+required: [ amount ]

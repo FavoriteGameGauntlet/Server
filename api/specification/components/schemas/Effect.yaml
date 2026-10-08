@@ -1,0 +1,18 @@
+type: object
+properties:
+  name:
+    $ref: "./Name.yaml"
+  description:
+    type: string
+  useCount:
+    type: integer
+    format: int
+    nullable: true
+    description: How many times the effect can be used, or null for no limit.
+  duration:
+    $ref: "./Duration.yaml"
+  modifiers:
+    type: array
+    items:
+      $ref: "./PointModifier.yaml"
+required: [ name, description, useCount, modifiers ]

@@ -1,8 +1,0 @@
-allOf:
-  - $ref: "./WheelEffect.yaml"
-  - type: object
-    properties:
-      rollDate:
-        type: string
-        format: date-time
-    required: [ rollDate ]

@@ -1,8 +1,0 @@
-get:
-  operationId: getAllAppSystemParameters
-  tags: [ SystemParameters ]
-  responses:
-    "200":
-      $ref: "../../../components/responses/SystemParametersResponse.yaml"
-    "500":
-      $ref: "../../../components/responses/ErrorResponse.yaml"

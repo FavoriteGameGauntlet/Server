@@ -1,0 +1,12 @@
+type: object
+properties:
+  login:
+    $ref: "./Login.yaml"
+  displayName:
+    allOf:
+      - $ref: "./MemberDisplayName.yaml"
+    nullable: true
+    default: null
+  isAdmin:
+    type: boolean
+required: [ login, isAdmin ]

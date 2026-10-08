@@ -24,132 +24,94 @@ type Login = string
 // Name defines model for Name.
 type Name = string
 
-// PointChange defines model for PointChange.
-type PointChange struct {
-	ChangeSource       string `json:"changeSource"`
-	DesiredChangeValue int    `json:"desiredChangeValue"`
-}
-
-// PointChangeByLogins defines model for PointChangeByLogins.
-type PointChangeByLogins = []struct {
-	AvailableRollChange *PointChange `json:"availableRollChange,omitempty"`
-	FreePointChange     *PointChange `json:"freePointChange,omitempty"`
-	Login               Login        `json:"login"`
-}
-
-// PointChangeResult defines model for PointChangeResult.
-type PointChangeResult struct {
-	ActualChangeValue int    `json:"actualChangeValue"`
-	FinalValue        Points `json:"finalValue"`
-}
-
-// PointChangeResultByLogins defines model for PointChangeResultByLogins.
-type PointChangeResultByLogins = []struct {
-	ChangeResults PointChangeResultByTypes `json:"changeResults"`
-	Login         Login                    `json:"login"`
-}
-
-// PointChangeResultByTypes defines model for PointChangeResultByTypes.
-type PointChangeResultByTypes map[string]PointChangeResult
-
-// Points defines model for Points.
-type Points = int
-
-// RolledWheelEffect defines model for RolledWheelEffect.
-type RolledWheelEffect struct {
+// RolledWheelRow defines model for RolledWheelRow.
+type RolledWheelRow struct {
 	Description *string   `json:"description,omitempty"`
-	IsApplied   bool      `json:"isApplied"`
 	Name        Name      `json:"name"`
 	Position    int       `json:"position"`
-	RollDate    time.Time `json:"rollDate"`
+	RolledDate  time.Time `json:"rolledDate"`
 }
 
-// RolledWheelEffectHistories defines model for RolledWheelEffectHistories.
-type RolledWheelEffectHistories = []RolledWheelEffectHistory
-
-// RolledWheelEffectHistory defines model for RolledWheelEffectHistory.
-type RolledWheelEffectHistory struct {
-	Description *string   `json:"description,omitempty"`
-	Name        Name      `json:"name"`
-	RollDate    time.Time `json:"rollDate"`
-}
-
-// RolledWheelEffects defines model for RolledWheelEffects.
-type RolledWheelEffects = []RolledWheelEffect
-
-// WheelEffect defines model for WheelEffect.
-type WheelEffect struct {
-	Description *string `json:"description,omitempty"`
-	Name        Name    `json:"name"`
-}
+// RolledWheelRows defines model for RolledWheelRows.
+type RolledWheelRows = []RolledWheelRow
 
 // WheelEffectRoll defines model for WheelEffectRoll.
 type WheelEffectRoll struct {
 	IsReroll *bool `json:"isReroll,omitempty"`
 }
 
-// WheelEffectRollApply defines model for WheelEffectRollApply.
-type WheelEffectRollApply struct {
-	PointChanges    PointChangeByLogins `json:"pointChanges"`
-	WheelEffectName Name                `json:"wheelEffectName"`
+// WheelRow defines model for WheelRow.
+type WheelRow struct {
+	Description *string `json:"description,omitempty"`
+	Name        Name    `json:"name"`
 }
 
-// WheelEffects defines model for WheelEffects.
-type WheelEffects = []WheelEffect
+// WheelRowApply defines model for WheelRowApply.
+type WheelRowApply struct {
+	TargetLogins []Login `json:"targetLogins"`
+	WheelRowName Name    `json:"wheelRowName"`
+}
+
+// WheelRowHistories defines model for WheelRowHistories.
+type WheelRowHistories = []WheelRowHistory
+
+// WheelRowHistory defines model for WheelRowHistory.
+type WheelRowHistory struct {
+	AppliedDate time.Time `json:"appliedDate"`
+	Description *string   `json:"description,omitempty"`
+	Name        Name      `json:"name"`
+}
+
+// WheelRows defines model for WheelRows.
+type WheelRows = []WheelRow
+
+// PartyId defines model for PartyId.
+type PartyId = int
 
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse = Error
 
-// PointChangeResultByLoginsResponse defines model for PointChangeResultByLoginsResponse.
-type PointChangeResultByLoginsResponse = PointChangeResultByLogins
+// RolledWheelRowsResponse defines model for RolledWheelRowsResponse.
+type RolledWheelRowsResponse = RolledWheelRows
 
-// PointsResponse defines model for PointsResponse.
-type PointsResponse = Points
+// WheelRowHistoriesResponse defines model for WheelRowHistoriesResponse.
+type WheelRowHistoriesResponse = WheelRowHistories
 
-// RolledWheelEffectHistoriesResponse defines model for RolledWheelEffectHistoriesResponse.
-type RolledWheelEffectHistoriesResponse = RolledWheelEffectHistories
-
-// RolledWheelEffectsResponse defines model for RolledWheelEffectsResponse.
-type RolledWheelEffectsResponse = RolledWheelEffects
-
-// WheelEffectsResponse defines model for WheelEffectsResponse.
-type WheelEffectsResponse = WheelEffects
-
-// WheelEffectRollApplyRequest defines model for WheelEffectRollApplyRequest.
-type WheelEffectRollApplyRequest = WheelEffectRollApply
+// WheelRowsResponse defines model for WheelRowsResponse.
+type WheelRowsResponse = WheelRows
 
 // WheelEffectRollRequest defines model for WheelEffectRollRequest.
 type WheelEffectRollRequest = WheelEffectRoll
+
+// WheelRowApplyRequest defines model for WheelRowApplyRequest.
+type WheelRowApplyRequest = WheelRowApply
 
 // RollAvailableWheelEffectsJSONRequestBody defines body for RollAvailableWheelEffects for application/json ContentType.
 type RollAvailableWheelEffectsJSONRequestBody = WheelEffectRoll
 
 // ApplyAvailableWheelEffectRollJSONRequestBody defines body for ApplyAvailableWheelEffectRoll for application/json ContentType.
-type ApplyAvailableWheelEffectRollJSONRequestBody = WheelEffectRollApply
+type ApplyAvailableWheelEffectRollJSONRequestBody = WheelRowApply
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
-	// (GET /wheel-effects/available)
-	GetAvailableWheelEffects(ctx echo.Context) error
+	// (GET /parties/{partyId}/wheel-effects/available)
+	GetAvailableWheelEffects(ctx echo.Context, partyId PartyId) error
 
-	// (POST /wheel-effects/available/roll)
-	RollAvailableWheelEffects(ctx echo.Context) error
+	// (POST /parties/{partyId}/wheel-effects/available/roll)
+	RollAvailableWheelEffects(ctx echo.Context, partyId PartyId) error
 
-	// (POST /wheel-effects/available/roll/apply)
-	ApplyAvailableWheelEffectRoll(ctx echo.Context) error
+	// (POST /parties/{partyId}/wheel-effects/available/roll/apply)
+	ApplyAvailableWheelEffectRoll(ctx echo.Context, partyId PartyId) error
 
-	// (GET /wheel-effects/available/roll/count)
-	GetAvailableWheelEffectRollsCount(ctx echo.Context) error
+	// (GET /parties/{partyId}/wheel-effects/available/roll/last)
+	GetLastRolledWheelEffects(ctx echo.Context, partyId PartyId) error
 
-	// (GET /wheel-effects/available/roll/last)
-	GetLastRolledWheelEffects(ctx echo.Context) error
+	// (POST /parties/{partyId}/wheel-effects/available/roll/last/clear)
+	ClearLastRolledWheelEffects(ctx echo.Context, partyId PartyId) error
 
-	// (POST /wheel-effects/available/roll/last/clear)
-	ClearLastRolledWheelEffects(ctx echo.Context) error
-
-	// (GET /wheel-effects/{login}/history)
-	GetUserWheelEffectHistory(ctx echo.Context, login Login) error
+	// (GET /parties/{partyId}/wheel-effects/{login}/history)
+	GetUserWheelEffectHistory(ctx echo.Context, partyId PartyId, login Login) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -160,60 +122,94 @@ type ServerInterfaceWrapper struct {
 // GetAvailableWheelEffects converts echo context to params.
 func (w *ServerInterfaceWrapper) GetAvailableWheelEffects(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetAvailableWheelEffects(ctx)
+	err = w.Handler.GetAvailableWheelEffects(ctx, partyId)
 	return err
 }
 
 // RollAvailableWheelEffects converts echo context to params.
 func (w *ServerInterfaceWrapper) RollAvailableWheelEffects(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.RollAvailableWheelEffects(ctx)
+	err = w.Handler.RollAvailableWheelEffects(ctx, partyId)
 	return err
 }
 
 // ApplyAvailableWheelEffectRoll converts echo context to params.
 func (w *ServerInterfaceWrapper) ApplyAvailableWheelEffectRoll(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ApplyAvailableWheelEffectRoll(ctx)
-	return err
-}
-
-// GetAvailableWheelEffectRollsCount converts echo context to params.
-func (w *ServerInterfaceWrapper) GetAvailableWheelEffectRollsCount(ctx echo.Context) error {
-	var err error
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetAvailableWheelEffectRollsCount(ctx)
+	err = w.Handler.ApplyAvailableWheelEffectRoll(ctx, partyId)
 	return err
 }
 
 // GetLastRolledWheelEffects converts echo context to params.
 func (w *ServerInterfaceWrapper) GetLastRolledWheelEffects(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetLastRolledWheelEffects(ctx)
+	err = w.Handler.GetLastRolledWheelEffects(ctx, partyId)
 	return err
 }
 
 // ClearLastRolledWheelEffects converts echo context to params.
 func (w *ServerInterfaceWrapper) ClearLastRolledWheelEffects(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ClearLastRolledWheelEffects(ctx)
+	err = w.Handler.ClearLastRolledWheelEffects(ctx, partyId)
 	return err
 }
 
 // GetUserWheelEffectHistory converts echo context to params.
 func (w *ServerInterfaceWrapper) GetUserWheelEffectHistory(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "partyId" -------------
+	var partyId PartyId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partyId", ctx.Param("partyId"), &partyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
+	}
+
 	// ------------- Path parameter "login" -------------
 	var login Login
 
@@ -223,7 +219,7 @@ func (w *ServerInterfaceWrapper) GetUserWheelEffectHistory(ctx echo.Context) err
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetUserWheelEffectHistory(ctx, login)
+	err = w.Handler.GetUserWheelEffectHistory(ctx, partyId, login)
 	return err
 }
 
@@ -255,12 +251,11 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/wheel-effects/available", wrapper.GetAvailableWheelEffects)
-	router.POST(baseURL+"/wheel-effects/available/roll", wrapper.RollAvailableWheelEffects)
-	router.POST(baseURL+"/wheel-effects/available/roll/apply", wrapper.ApplyAvailableWheelEffectRoll)
-	router.GET(baseURL+"/wheel-effects/available/roll/count", wrapper.GetAvailableWheelEffectRollsCount)
-	router.GET(baseURL+"/wheel-effects/available/roll/last", wrapper.GetLastRolledWheelEffects)
-	router.POST(baseURL+"/wheel-effects/available/roll/last/clear", wrapper.ClearLastRolledWheelEffects)
-	router.GET(baseURL+"/wheel-effects/:login/history", wrapper.GetUserWheelEffectHistory)
+	router.GET(baseURL+"/parties/:partyId/wheel-effects/available", wrapper.GetAvailableWheelEffects)
+	router.POST(baseURL+"/parties/:partyId/wheel-effects/available/roll", wrapper.RollAvailableWheelEffects)
+	router.POST(baseURL+"/parties/:partyId/wheel-effects/available/roll/apply", wrapper.ApplyAvailableWheelEffectRoll)
+	router.GET(baseURL+"/parties/:partyId/wheel-effects/available/roll/last", wrapper.GetLastRolledWheelEffects)
+	router.POST(baseURL+"/parties/:partyId/wheel-effects/available/roll/last/clear", wrapper.ClearLastRolledWheelEffects)
+	router.GET(baseURL+"/parties/:partyId/wheel-effects/:login/history", wrapper.GetUserWheelEffectHistory)
 
 }

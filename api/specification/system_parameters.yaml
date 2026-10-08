@@ -1,13 +1,15 @@
 openapi: 3.0.4
 info:
   title: Favorite Game Gauntlet
-  version: 0.2.0
+  version: 0.3.0
 paths:
-  /system-parameters/admin/all:
+  /parties/{partyId}/system-parameters:
     get:
-      operationId: getAllAdminSystemParameters
+      operationId: getSystemParameters
       tags:
         - SystemParameters
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       responses:
         '200':
           $ref: '#/components/responses/SystemParametersResponse'
@@ -15,70 +17,78 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /system-parameters/app/all:
-    get:
-      operationId: getAllAppSystemParameters
-      tags:
-        - SystemParameters
-      responses:
-        '200':
-          $ref: '#/components/responses/SystemParametersResponse'
-        '500':
-          $ref: '#/components/responses/ErrorResponse'
-  /system-parameters/admin/{name}:
+  /parties/{partyId}/system-parameters/{name}:
     post:
-      operationId: changeAdminSystemParameter
+      operationId: changeSystemParameter
       tags:
         - SystemParameters
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Name'
       requestBody:
         $ref: '#/components/requestBodies/SystemParameterRequest'
       responses:
+        '201':
+          description: The party's override of the parameter was created.
+        '204':
+          description: The party's existing override of the parameter was changed.
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    get:
+      operationId: getSystemParameter
+      tags:
+        - SystemParameters
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+        - $ref: '#/components/parameters/Name'
+      responses:
+        '200':
+          $ref: '#/components/responses/SystemParameterResponse'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    delete:
+      operationId: resetSystemParameter
+      tags:
+        - SystemParameters
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+        - $ref: '#/components/parameters/Name'
+      responses:
         '204':
           description: Success.
-        '400':
-          $ref: '#/components/responses/ErrorResponse'
         '401':
-          $ref: '#/components/responses/ErrorResponse'
-        '404':
-          $ref: '#/components/responses/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/ErrorResponse'
-    get:
-      operationId: getAdminSystemParameter
-      tags:
-        - SystemParameters
-      parameters:
-        - $ref: '#/components/parameters/Name'
-      responses:
-        '200':
-          $ref: '#/components/responses/SystemParameterResponse'
-        '400':
-          $ref: '#/components/responses/ErrorResponse'
-        '401':
-          $ref: '#/components/responses/ErrorResponse'
-        '404':
-          $ref: '#/components/responses/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/ErrorResponse'
-  /system-parameters/app/{name}:
-    get:
-      operationId: getAppSystemParameter
-      tags:
-        - SystemParameters
-      parameters:
-        - $ref: '#/components/parameters/Name'
-      responses:
-        '200':
-          $ref: '#/components/responses/SystemParameterResponse'
-        '400':
           $ref: '#/components/responses/ErrorResponse'
         '404':
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
 components:
+  parameters:
+    PartyId:
+      name: partyId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int
+    Name:
+      name: name
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Name'
   schemas:
     Name:
       type: string
@@ -92,9 +102,13 @@ components:
           $ref: '#/components/schemas/Name'
         value:
           type: string
+        isDefault:
+          type: boolean
+          description: True if the party has no override of the parameter, so the value is the default one.
       required:
         - name
         - value
+        - isDefault
     SystemParameters:
       type: array
       items:
@@ -135,13 +149,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/SystemParameter'
-  parameters:
-    Name:
-      name: name
-      in: path
-      required: true
-      schema:
-        $ref: '#/components/schemas/Name'
   requestBodies:
     SystemParameterRequest:
       content:

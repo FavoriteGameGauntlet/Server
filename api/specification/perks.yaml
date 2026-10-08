@@ -1,0 +1,270 @@
+openapi: 3.0.4
+info:
+  title: Favorite Game Gauntlet
+  version: 0.1.0
+paths:
+  /parties/{partyId}/perks/catalog:
+    get:
+      operationId: getPerks
+      tags:
+        - Perks
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+      responses:
+        '200':
+          $ref: '#/components/responses/PerksResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    post:
+      operationId: createPerk
+      tags:
+        - Perks
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+      requestBody:
+        $ref: '#/components/requestBodies/PerkCreateRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/PerkResponse'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /parties/{partyId}/perks/catalog/removed:
+    get:
+      operationId: getRemovedPerks
+      tags:
+        - Perks
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+      responses:
+        '200':
+          $ref: '#/components/responses/PerksResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /parties/{partyId}/perks/catalog/{name}:
+    delete:
+      operationId: removePerk
+      tags:
+        - Perks
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+        - $ref: '#/components/parameters/Name'
+      responses:
+        '204':
+          description: Success.
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /parties/{partyId}/perks/{login}:
+    get:
+      operationId: getUserPerks
+      tags:
+        - Perks
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+        - $ref: '#/components/parameters/Login'
+      responses:
+        '200':
+          $ref: '#/components/responses/UserPerksResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /parties/{partyId}/perks/{login}/history:
+    get:
+      operationId: getUserPerkHistory
+      tags:
+        - Perks
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+        - $ref: '#/components/parameters/Login'
+      responses:
+        '200':
+          $ref: '#/components/responses/PerkHistoriesResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /parties/{partyId}/perks/{login}/{name}:
+    delete:
+      operationId: revokeUserPerk
+      tags:
+        - Perks
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+        - $ref: '#/components/parameters/Login'
+        - $ref: '#/components/parameters/Name'
+      responses:
+        '204':
+          description: Success.
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '409':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+components:
+  parameters:
+    PartyId:
+      name: partyId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int
+    Name:
+      name: name
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Name'
+    Login:
+      name: login
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Login'
+  schemas:
+    Name:
+      type: string
+      pattern: ^.+$
+      minLength: 1
+      maxLength: 70
+    Perk:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/Name'
+        description:
+          type: string
+      required:
+        - name
+        - description
+    Perks:
+      type: array
+      items:
+        $ref: '#/components/schemas/Perk'
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+    PerkCreate:
+      type: object
+      description: Creates a perk. The named effect is what a user receives when the perk is granted.
+      properties:
+        name:
+          $ref: '#/components/schemas/Name'
+        description:
+          type: string
+        effectName:
+          $ref: '#/components/schemas/Name'
+      required:
+        - name
+        - description
+        - effectName
+    Login:
+      type: string
+      pattern: ^\w+$
+      minLength: 3
+      maxLength: 35
+    UserPerk:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/Name'
+        description:
+          type: string
+        receivedDate:
+          type: string
+          format: date-time
+      required:
+        - name
+        - description
+        - receivedDate
+    UserPerks:
+      type: array
+      items:
+        $ref: '#/components/schemas/UserPerk'
+    PerkHistoryEntry:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/Name'
+        action:
+          type: string
+        actorLogin:
+          $ref: '#/components/schemas/Login'
+        createdDate:
+          type: string
+          format: date-time
+      required:
+        - name
+        - action
+        - actorLogin
+        - createdDate
+    PerkHistoryEntries:
+      type: array
+      items:
+        $ref: '#/components/schemas/PerkHistoryEntry'
+  responses:
+    PerksResponse:
+      description: Success.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Perks'
+    ErrorResponse:
+      description: Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    PerkResponse:
+      description: Success.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Perk'
+    UserPerksResponse:
+      description: Success.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UserPerks'
+    PerkHistoriesResponse:
+      description: Success.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PerkHistoryEntries'
+  requestBodies:
+    PerkCreateRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PerkCreate'

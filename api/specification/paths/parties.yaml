@@ -1,0 +1,24 @@
+get:
+  operationId: getParties
+  tags: [ Parties ]
+  responses:
+    "200":
+      $ref: "../components/responses/PartiesResponse.yaml"
+    "401":
+      $ref: "../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../components/responses/ErrorResponse.yaml"
+post:
+  operationId: createParty
+  tags: [ Parties ]
+  requestBody:
+    $ref: "../components/requests/PartyCreateRequest.yaml"
+  responses:
+    "201":
+      $ref: "../components/responses/PartyResponse.yaml"
+    "400":
+      $ref: "../components/responses/ErrorResponse.yaml"
+    "401":
+      $ref: "../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../components/responses/ErrorResponse.yaml"

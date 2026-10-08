@@ -1,46 +1,51 @@
 openapi: 3.0.4
 info:
   title: Favorite Game Gauntlet
-  version: 0.13.0
+  version: 0.14.0
 paths:
-  /wheel-effects/{login}/history:
+  /parties/{partyId}/wheel-effects/{login}/history:
     get:
       operationId: getUserWheelEffectHistory
       tags:
         - WheelEffects
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Login'
       responses:
         '200':
-          $ref: '#/components/responses/RolledWheelEffectHistoriesResponse'
+          $ref: '#/components/responses/WheelRowHistoriesResponse'
         '401':
           $ref: '#/components/responses/ErrorResponse'
         '404':
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /wheel-effects/available:
+  /parties/{partyId}/wheel-effects/available:
     get:
       operationId: getAvailableWheelEffects
       tags:
         - WheelEffects
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       responses:
         '200':
-          $ref: '#/components/responses/WheelEffectsResponse'
+          $ref: '#/components/responses/WheelRowsResponse'
         '401':
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /wheel-effects/available/roll:
+  /parties/{partyId}/wheel-effects/available/roll:
     post:
       operationId: rollAvailableWheelEffects
       tags:
         - WheelEffects
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       requestBody:
         $ref: '#/components/requestBodies/WheelEffectRollRequest'
       responses:
-        '200':
-          $ref: '#/components/responses/RolledWheelEffectsResponse'
+        '201':
+          $ref: '#/components/responses/RolledWheelRowsResponse'
         '401':
           $ref: '#/components/responses/ErrorResponse'
         '404':
@@ -49,39 +54,29 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /wheel-effects/available/roll/count:
-    get:
-      operationId: getAvailableWheelEffectRollsCount
-      tags:
-        - WheelEffects
-      responses:
-        '200':
-          $ref: '#/components/responses/PointsResponse'
-        '401':
-          $ref: '#/components/responses/ErrorResponse'
-        '404':
-          $ref: '#/components/responses/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/ErrorResponse'
-  /wheel-effects/available/roll/last:
+  /parties/{partyId}/wheel-effects/available/roll/last:
     get:
       operationId: getLastRolledWheelEffects
       tags:
         - WheelEffects
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       responses:
         '200':
-          $ref: '#/components/responses/RolledWheelEffectsResponse'
+          $ref: '#/components/responses/RolledWheelRowsResponse'
         '401':
           $ref: '#/components/responses/ErrorResponse'
         '404':
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /wheel-effects/available/roll/last/clear:
+  /parties/{partyId}/wheel-effects/available/roll/last/clear:
     post:
       operationId: clearLastRolledWheelEffects
       tags:
         - WheelEffects
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       responses:
         '204':
           description: Success.
@@ -89,16 +84,18 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /wheel-effects/available/roll/apply:
+  /parties/{partyId}/wheel-effects/available/roll/apply:
     post:
       operationId: applyAvailableWheelEffectRoll
       tags:
         - WheelEffects
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       requestBody:
-        $ref: '#/components/requestBodies/WheelEffectRollApplyRequest'
+        $ref: '#/components/requestBodies/WheelRowApplyRequest'
       responses:
-        '200':
-          $ref: '#/components/responses/PointChangeResultByLoginsResponse'
+        '204':
+          description: Success.
         '401':
           $ref: '#/components/responses/ErrorResponse'
         '404':
@@ -108,6 +105,20 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorResponse'
 components:
+  parameters:
+    PartyId:
+      name: partyId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int
+    Login:
+      name: login
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Login'
   schemas:
     Login:
       type: string
@@ -119,7 +130,7 @@ components:
       pattern: ^.+$
       minLength: 1
       maxLength: 70
-    WheelEffect:
+    WheelRow:
       type: object
       properties:
         name:
@@ -128,20 +139,20 @@ components:
           type: string
       required:
         - name
-    RolledWheelEffectHistory:
+    WheelRowHistory:
       allOf:
-        - $ref: '#/components/schemas/WheelEffect'
+        - $ref: '#/components/schemas/WheelRow'
         - type: object
           properties:
-            rollDate:
+            appliedDate:
               type: string
               format: date-time
           required:
-            - rollDate
-    RolledWheelEffectHistories:
+            - appliedDate
+    WheelRowHistories:
       type: array
       items:
-        $ref: '#/components/schemas/RolledWheelEffectHistory'
+        $ref: '#/components/schemas/WheelRowHistory'
     Error:
       type: object
       properties:
@@ -152,154 +163,80 @@ components:
       required:
         - code
         - message
-    WheelEffects:
+    WheelRows:
       type: array
       items:
-        $ref: '#/components/schemas/WheelEffect'
+        $ref: '#/components/schemas/WheelRow'
     WheelEffectRoll:
       type: object
       properties:
         isReroll:
           type: boolean
           default: false
-    RolledWheelEffect:
+    RolledWheelRow:
       allOf:
-        - $ref: '#/components/schemas/WheelEffect'
+        - $ref: '#/components/schemas/WheelRow'
         - type: object
           properties:
             position:
               type: integer
               format: int
-            rollDate:
+            rolledDate:
               type: string
               format: date-time
-            isApplied:
-              type: boolean
           required:
             - position
-            - rollDate
-            - isApplied
-    RolledWheelEffects:
+            - rolledDate
+    RolledWheelRows:
       type: array
       items:
-        $ref: '#/components/schemas/RolledWheelEffect'
-    Points:
-      type: integer
-      format: int
-      minimum: 0
-    PointChange:
+        $ref: '#/components/schemas/RolledWheelRow'
+    WheelRowApply:
       type: object
       properties:
-        changeSource:
-          type: string
-        desiredChangeValue:
-          type: integer
-          format: int
-      required:
-        - changeSource
-        - desiredChangeValue
-    PointChangeByLogins:
-      type: array
-      items:
-        type: object
-        properties:
-          login:
-            $ref: '#/components/schemas/Login'
-          freePointChange:
-            $ref: '#/components/schemas/PointChange'
-          availableRollChange:
-            $ref: '#/components/schemas/PointChange'
-        required:
-          - login
-    WheelEffectRollApply:
-      type: object
-      properties:
-        wheelEffectName:
+        wheelRowName:
           $ref: '#/components/schemas/Name'
-        pointChanges:
-          $ref: '#/components/schemas/PointChangeByLogins'
-      required:
-        - wheelEffectName
-        - pointChanges
-    PointChangeResult:
-      type: object
-      properties:
-        actualChangeValue:
-          type: integer
-          format: int
-        finalValue:
-          $ref: '#/components/schemas/Points'
-      required:
-        - actualChangeValue
-        - finalValue
-    PointChangeResultByTypes:
-      type: object
-      additionalProperties:
-        $ref: '#/components/schemas/PointChangeResult'
-    PointChangeResultByLogins:
-      type: array
-      items:
-        type: object
-        properties:
-          login:
+        targetLogins:
+          type: array
+          items:
             $ref: '#/components/schemas/Login'
-          changeResults:
-            $ref: '#/components/schemas/PointChangeResultByTypes'
-        required:
-          - login
-          - changeResults
-  parameters:
-    Login:
-      name: login
-      in: path
-      required: true
-      schema:
-        $ref: '#/components/schemas/Login'
+          minItems: 1
+      required:
+        - wheelRowName
+        - targetLogins
   responses:
-    RolledWheelEffectHistoriesResponse:
+    WheelRowHistoriesResponse:
       description: Success.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/RolledWheelEffectHistories'
+            $ref: '#/components/schemas/WheelRowHistories'
     ErrorResponse:
       description: Error
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    WheelEffectsResponse:
+    WheelRowsResponse:
       description: Success.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/WheelEffects'
-    RolledWheelEffectsResponse:
+            $ref: '#/components/schemas/WheelRows'
+    RolledWheelRowsResponse:
       description: Success.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/RolledWheelEffects'
-    PointsResponse:
-      description: Success.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Points'
-    PointChangeResultByLoginsResponse:
-      description: Success.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/PointChangeResultByLogins'
+            $ref: '#/components/schemas/RolledWheelRows'
   requestBodies:
     WheelEffectRollRequest:
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/WheelEffectRoll'
-    WheelEffectRollApplyRequest:
+    WheelRowApplyRequest:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/WheelEffectRollApply'
+            $ref: '#/components/schemas/WheelRowApply'

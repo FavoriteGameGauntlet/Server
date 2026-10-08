@@ -3,11 +3,13 @@ info:
   title: Favorite Game Gauntlet
   version: 0.12.5
 paths:
-  /timers/current:
+  /parties/{partyId}/timers/current:
     get:
       operationId: getCurrentTimer
       tags:
         - Timers
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       responses:
         '200':
           $ref: '#/components/responses/TimerResponse'
@@ -17,11 +19,30 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /timers/current/start:
+    post:
+      operationId: createCurrentTimer
+      tags:
+        - Timers
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+      responses:
+        '201':
+          $ref: '#/components/responses/TimerResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '409':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /parties/{partyId}/timers/current/start:
     post:
       operationId: startCurrentTimer
       tags:
         - Timers
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       responses:
         '200':
           $ref: '#/components/responses/TimerResponse'
@@ -33,11 +54,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /timers/current/pause:
+  /parties/{partyId}/timers/current/pause:
     post:
       operationId: pauseCurrentTimer
       tags:
         - Timers
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       responses:
         '200':
           $ref: '#/components/responses/TimerResponse'
@@ -49,7 +72,63 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
+  /parties/{partyId}/timers/reward:
+    get:
+      operationId: getTimerReward
+      tags:
+        - Timers
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+      responses:
+        '200':
+          $ref: '#/components/responses/TimerRewardResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    put:
+      operationId: setTimerReward
+      tags:
+        - Timers
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+      requestBody:
+        $ref: '#/components/requestBodies/TimerRewardRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/TimerRewardResponse'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    delete:
+      operationId: removeTimerReward
+      tags:
+        - Timers
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+      responses:
+        '204':
+          description: Success.
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
 components:
+  parameters:
+    PartyId:
+      name: partyId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int
   schemas:
     Duration:
       type: string
@@ -88,6 +167,47 @@ components:
       required:
         - code
         - message
+    Name:
+      type: string
+      pattern: ^.+$
+      minLength: 1
+      maxLength: 70
+    NullableName:
+      allOf:
+        - $ref: '#/components/schemas/Name'
+      nullable: true
+      default: null
+    NamedChangeEntry:
+      type: object
+      description: |
+        Names one thing a change grants. Exactly one of pointTypeName, itemName, perkName or effectName has to be set. The amount carries the sign it is applied with, so a cost is negative.
+      properties:
+        pointTypeName:
+          $ref: '#/components/schemas/NullableName'
+        itemName:
+          $ref: '#/components/schemas/NullableName'
+        perkName:
+          $ref: '#/components/schemas/NullableName'
+        effectName:
+          $ref: '#/components/schemas/NullableName'
+        amount:
+          type: integer
+          format: int
+      required:
+        - amount
+    NamedChangeEntries:
+      type: array
+      items:
+        $ref: '#/components/schemas/NamedChangeEntry'
+    TimerReward:
+      type: object
+      description: |
+        What the party grants for every completed timer. Without a reward set, entries is empty.
+      properties:
+        entries:
+          $ref: '#/components/schemas/NamedChangeEntries'
+      required:
+        - entries
   responses:
     TimerResponse:
       description: Success.
@@ -101,3 +221,16 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    TimerRewardResponse:
+      description: Success.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TimerReward'
+  requestBodies:
+    TimerRewardRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TimerReward'

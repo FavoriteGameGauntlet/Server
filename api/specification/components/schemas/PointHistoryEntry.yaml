@@ -1,0 +1,16 @@
+type: object
+properties:
+  desiredChangeValue:
+    type: integer
+    format: int
+  actualChangeValue:
+    type: integer
+    format: int
+  finalValue:
+    $ref: "./Points.yaml"
+  actorLogin:
+    $ref: "./Login.yaml"
+  changedDate:
+    type: string
+    format: date-time
+required: [ desiredChangeValue, actualChangeValue, finalValue, changedDate ]

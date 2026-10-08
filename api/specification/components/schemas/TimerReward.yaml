@@ -1,0 +1,7 @@
+type: object
+description: >
+  What the party grants for every completed timer. Without a reward set, entries is empty.
+properties:
+  entries:
+    $ref: "./NamedChangeEntries.yaml"
+required: [ entries ]

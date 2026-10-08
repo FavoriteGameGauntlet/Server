@@ -1,0 +1,34 @@
+get:
+  operationId: getMembers
+  tags: [ Parties ]
+  parameters:
+    - $ref: "../../../components/parameters/PartyId.yaml"
+  responses:
+    "200":
+      $ref: "../../../components/responses/MembersResponse.yaml"
+    "401":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+    "404":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+post:
+  operationId: addMember
+  tags: [ Parties ]
+  parameters:
+    - $ref: "../../../components/parameters/PartyId.yaml"
+  requestBody:
+    $ref: "../../../components/requests/MemberCreateRequest.yaml"
+  responses:
+    "201":
+      $ref: "../../../components/responses/MemberResponse.yaml"
+    "400":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+    "401":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+    "404":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+    "409":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../../components/responses/ErrorResponse.yaml"

@@ -1,0 +1,13 @@
+type: object
+description: >
+  Gives each named user what the entries describe, on an administrator's say-so rather than as the
+  outcome of a game action. Entries carry the sign they are applied with, so taking something away
+  is negative.
+properties:
+  targetLogins:
+    type: array
+    items:
+      $ref: "./Login.yaml"
+  entries:
+    $ref: "./NamedChangeEntries.yaml"
+required: [ targetLogins, entries ]

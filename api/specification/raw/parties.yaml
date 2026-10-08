@@ -1,0 +1,16 @@
+openapi: 3.0.4
+info:
+  title: Favorite Game Gauntlet
+  version: 0.1.0
+paths:
+  /parties:
+    $ref: "../paths/parties.yaml"
+
+  /parties/{partyId}:
+    $ref: "../paths/parties/partyId.yaml"
+
+  /parties/{partyId}/members:
+    $ref: "../paths/parties/partyId/members.yaml"
+
+  /parties/{partyId}/members/{login}:
+    $ref: "../paths/parties/partyId/members/login.yaml"

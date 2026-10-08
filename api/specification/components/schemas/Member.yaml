@@ -1,0 +1,12 @@
+type: object
+properties:
+  login:
+    $ref: "./Login.yaml"
+  displayName:
+    $ref: "./Name.yaml"
+  isAdmin:
+    type: boolean
+  joinedDate:
+    type: string
+    format: date-time
+required: [ login, isAdmin, joinedDate ]

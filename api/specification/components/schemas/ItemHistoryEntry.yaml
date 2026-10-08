@@ -1,0 +1,19 @@
+type: object
+properties:
+  name:
+    $ref: "./Name.yaml"
+  action:
+    type: string
+  actorLogin:
+    $ref: "./Login.yaml"
+  useCount:
+    type: integer
+    format: int
+  usesLeft:
+    type: integer
+    format: int
+    nullable: true
+  createdDate:
+    type: string
+    format: date-time
+required: [ name, action, actorLogin, useCount, usesLeft, createdDate ]

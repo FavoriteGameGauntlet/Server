@@ -1,0 +1,25 @@
+openapi: 3.0.4
+info:
+  title: Favorite Game Gauntlet
+  version: 0.1.0
+paths:
+  /parties/{partyId}/effects/catalog:
+    $ref: "../paths/effects/catalog.yaml"
+
+  /parties/{partyId}/effects/catalog/removed:
+    $ref: "../paths/effects/catalog/removed.yaml"
+
+  /parties/{partyId}/effects/catalog/{name}:
+    $ref: "../paths/effects/catalog/name.yaml"
+
+  /parties/{partyId}/effects/{login}:
+    $ref: "../paths/effects/login.yaml"
+
+  /parties/{partyId}/effects/{login}/history:
+    $ref: "../paths/effects/login/history.yaml"
+
+  /parties/{partyId}/effects/{login}/{name}:
+    $ref: "../paths/effects/login/name.yaml"
+
+  /parties/{partyId}/effects/{login}/{name}/use:
+    $ref: "../paths/effects/login/name/use.yaml"

@@ -1,0 +1,12 @@
+get:
+  operationId: getRemovedItems
+  tags: [ Items ]
+  parameters:
+    - $ref: "../../../components/parameters/PartyId.yaml"
+  responses:
+    "200":
+      $ref: "../../../components/responses/ItemsResponse.yaml"
+    "401":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../../components/responses/ErrorResponse.yaml"

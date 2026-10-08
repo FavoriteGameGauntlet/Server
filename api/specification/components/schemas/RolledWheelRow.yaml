@@ -1,0 +1,11 @@
+allOf:
+  - $ref: "./WheelRow.yaml"
+  - type: object
+    properties:
+      position:
+        type: integer
+        format: int
+      rolledDate:
+        type: string
+        format: date-time
+    required: [ position, rolledDate ]

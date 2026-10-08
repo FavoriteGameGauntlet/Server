@@ -1,0 +1,7 @@
+type: object
+properties:
+  name:
+    $ref: "./Name.yaml"
+  description:
+    type: string
+required: [ name ]

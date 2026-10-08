@@ -1,0 +1,25 @@
+type: object
+description: >
+  Creates an effect. durationInSeconds is left out for an effect that does not run out on its own.
+properties:
+  name:
+    $ref: "./Name.yaml"
+  description:
+    type: string
+  useCount:
+    type: integer
+    format: int
+    nullable: true
+    default: null
+    description: How many times the effect can be used, or null for no limit.
+  durationInSeconds:
+    type: integer
+    format: int
+  entries:
+    $ref: "./NamedChangeEntries.yaml"
+  modifiers:
+    type: array
+    description: Point changes the effect applies passively while it is active. Left out for an effect without any.
+    items:
+      $ref: "./PointModifier.yaml"
+required: [ name, description, entries ]

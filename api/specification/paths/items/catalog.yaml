@@ -1,0 +1,34 @@
+get:
+  operationId: getItems
+  tags: [ Items ]
+  parameters:
+    - $ref: "../../components/parameters/PartyId.yaml"
+  responses:
+    "200":
+      $ref: "../../components/responses/ItemsResponse.yaml"
+    "401":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+post:
+  operationId: createItem
+  tags: [ Items ]
+  parameters:
+    - $ref: "../../components/parameters/PartyId.yaml"
+  requestBody:
+    $ref: "../../components/requests/ItemCreateRequest.yaml"
+  responses:
+    "201":
+      $ref: "../../components/responses/ItemResponse.yaml"
+    "400":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "401":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "404":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "409":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "422":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../components/responses/ErrorResponse.yaml"

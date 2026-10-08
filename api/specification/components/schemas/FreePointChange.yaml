@@ -1,9 +1,0 @@
-allOf:
-  - $ref: "PointChange.yaml"
-  - type: object
-    properties:
-      wheelEffectName:
-        nullable: true
-        example: null
-        allOf:
-          - $ref: "./Name.yaml"

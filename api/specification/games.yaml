@@ -1,23 +1,26 @@
 openapi: 3.0.4
 info:
   title: Favorite Game Gauntlet
-  version: 0.13.0
+  version: 0.15.0
 paths:
-  /games/{login}/wishlist:
+  /parties/{partyId}/games/users/{login}/wishlist:
     post:
       operationId: addUserWishlistGame
       tags:
         - Games
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Login'
       requestBody:
         $ref: '#/components/requestBodies/WishlistGameRequest'
       responses:
-        '204':
+        '201':
           description: Success.
         '401':
           $ref: '#/components/responses/ErrorResponse'
         '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '422':
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
@@ -26,6 +29,7 @@ paths:
       tags:
         - Games
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Login'
       responses:
         '200':
@@ -36,12 +40,13 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /games/{login}/current:
+  /parties/{partyId}/games/users/{login}/current:
     get:
       operationId: getUserCurrentGame
       tags:
         - Games
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Login'
       responses:
         '200':
@@ -52,11 +57,30 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /games/all/current:
+  /parties/{partyId}/games/users/{login}/history:
+    get:
+      operationId: getUserGameHistory
+      tags:
+        - Games
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+        - $ref: '#/components/parameters/Login'
+      responses:
+        '200':
+          $ref: '#/components/responses/GameHistoriesResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /parties/{partyId}/games/current:
     get:
       operationId: getAllCurrentGame
       tags:
         - Games
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
       responses:
         '200':
           $ref: '#/components/responses/CurrentGameByLoginsResponse'
@@ -66,69 +90,94 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /games/current/roll:
+  /parties/{partyId}/games/current/actions:
     post:
-      operationId: rollNewCurrentGame
-      tags:
-        - Games
-      responses:
-        '200':
-          $ref: '#/components/responses/CurrentGameResponse'
-        '401':
-          $ref: '#/components/responses/ErrorResponse'
-        '404':
-          $ref: '#/components/responses/ErrorResponse'
-        '409':
-          $ref: '#/components/responses/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/ErrorResponse'
-  /games/current/finish:
-    post:
-      operationId: finishCurrentGame
-      tags:
-        - Games
-      responses:
-        '204':
-          description: Success.
-        '401':
-          $ref: '#/components/responses/ErrorResponse'
-        '404':
-          $ref: '#/components/responses/ErrorResponse'
-        '409':
-          $ref: '#/components/responses/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/ErrorResponse'
-  /games/current/cancel:
-    post:
-      operationId: cancelCurrentGame
-      tags:
-        - Games
-      responses:
-        '204':
-          description: Success.
-        '401':
-          $ref: '#/components/responses/ErrorResponse'
-        '404':
-          $ref: '#/components/responses/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/ErrorResponse'
-  /games/{login}/history:
-    get:
-      operationId: getUserGameHistory
+      operationId: createCurrentGameAction
       tags:
         - Games
       parameters:
-        - $ref: '#/components/parameters/Login'
+        - $ref: '#/components/parameters/PartyId'
+      requestBody:
+        $ref: '#/components/requestBodies/CurrentGameActionRequest'
       responses:
         '200':
-          $ref: '#/components/responses/CurrentGamesResponse'
+          $ref: '#/components/responses/CurrentGameResponse'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
         '401':
           $ref: '#/components/responses/ErrorResponse'
         '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '409':
+          $ref: '#/components/responses/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /parties/{partyId}/games/reviews/{name}:
+    get:
+      operationId: getGameReview
+      tags:
+        - Games
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+        - $ref: '#/components/parameters/Name'
+      responses:
+        '200':
+          $ref: '#/components/responses/GameReviewResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    put:
+      operationId: putGameReview
+      tags:
+        - Games
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+        - $ref: '#/components/parameters/Name'
+      requestBody:
+        $ref: '#/components/requestBodies/GameReviewRequest'
+      responses:
+        '201':
+          description: The game was rated for the first time.
+        '204':
+          description: The existing rating was replaced.
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '422':
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
 components:
+  parameters:
+    PartyId:
+      name: partyId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int
+    Login:
+      name: login
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Login'
+    Name:
+      name: name
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Name'
   schemas:
     Login:
       type: string
@@ -171,7 +220,23 @@ components:
       properties:
         name:
           $ref: '#/components/schemas/Name'
-        state:
+        timeSpent:
+          $ref: '#/components/schemas/Duration'
+        startDate:
+          type: string
+          format: date-time
+      required:
+        - name
+        - timeSpent
+        - startDate
+    GameHistoryEntry:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/Name'
+        action:
+          type: string
+        endState:
           type: string
           enum:
             - started
@@ -179,17 +244,18 @@ components:
             - cancelled
         timeSpent:
           $ref: '#/components/schemas/Duration'
-        startDate:
-          type: string
-          format: date-time
-        finishDate:
+        createdDate:
           type: string
           format: date-time
       required:
         - name
-        - state
+        - action
         - timeSpent
-        - startDate
+        - createdDate
+    GameHistoryEntries:
+      type: array
+      items:
+        $ref: '#/components/schemas/GameHistoryEntry'
     CurrentGameByLogins:
       type: array
       items:
@@ -201,17 +267,29 @@ components:
             $ref: '#/components/schemas/CurrentGame'
         required:
           - login
-    CurrentGames:
-      type: array
-      items:
-        $ref: '#/components/schemas/CurrentGame'
-  parameters:
-    Login:
-      name: login
-      in: path
-      required: true
-      schema:
-        $ref: '#/components/schemas/Login'
+    CurrentGameAction:
+      type: object
+      properties:
+        action:
+          type: string
+          enum:
+            - start
+            - finish
+            - cancel
+      required:
+        - action
+    GameReview:
+      type: object
+      properties:
+        rating:
+          type: integer
+          format: int
+          minimum: 1
+          maximum: 10
+        reviewComment:
+          type: string
+      required:
+        - rating
   responses:
     WishlistGamesResponse:
       description: Success.
@@ -231,21 +309,39 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CurrentGame'
+    GameHistoriesResponse:
+      description: Success.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GameHistoryEntries'
     CurrentGameByLoginsResponse:
       description: Success.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/CurrentGameByLogins'
-    CurrentGamesResponse:
+    GameReviewResponse:
       description: Success.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/CurrentGames'
+            $ref: '#/components/schemas/GameReview'
   requestBodies:
     WishlistGameRequest:
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/WishlistGame'
+    CurrentGameActionRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CurrentGameAction'
+    GameReviewRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GameReview'

@@ -1,7 +1,8 @@
 package dbaccess
 
 import (
-	"FGG-Service/src/auth/types"
+	"FGG-Service/src/auth/typeauth"
+	"context"
 	"database/sql"
 	"log/slog"
 	"os"
@@ -30,14 +31,14 @@ func Init() func() {
 	}
 }
 
-func Exec(q Query, args ...any) (sql.Result, error) {
+func Exec(ctx context.Context, q Query, args ...any) (sql.Result, error) {
 	queryArgs, logArgs := getArgs(args...)
 
 	if !q.IsSilent {
 		slog.Info(q.Name, "args", logArgs)
 	}
 
-	result, err := db.Exec(q.SQL, queryArgs...)
+	result, err := db.ExecContext(ctx, q.SQL, queryArgs...)
 
 	if err != nil {
 		slog.Error(q.Name, "error", err)
@@ -46,14 +47,14 @@ func Exec(q Query, args ...any) (sql.Result, error) {
 	return result, err
 }
 
-func QueryRows(q Query, args ...any) (*sql.Rows, error) {
+func QueryRows(ctx context.Context, q Query, args ...any) (*sql.Rows, error) {
 	queryArgs, logArgs := getArgs(args...)
 
 	if !q.IsSilent {
 		slog.Info(q.Name, "args", logArgs)
 	}
 
-	rows, err := db.Query(q.SQL, queryArgs...)
+	rows, err := db.QueryContext(ctx, q.SQL, queryArgs...)
 
 	if err != nil {
 		slog.Error(q.Name, "error", err)
@@ -62,14 +63,14 @@ func QueryRows(q Query, args ...any) (*sql.Rows, error) {
 	return rows, err
 }
 
-func QueryRow(q Query, args ...any) *sql.Row {
+func QueryRow(ctx context.Context, q Query, args ...any) *sql.Row {
 	queryArgs, logArgs := getArgs(args...)
 
 	if !q.IsSilent {
 		slog.Info(q.Name, "args", logArgs)
 	}
 
-	return db.QueryRow(q.SQL, queryArgs...)
+	return db.QueryRowContext(ctx, q.SQL, queryArgs...)
 }
 
 func getArgs(args ...any) ([]any, []any) {

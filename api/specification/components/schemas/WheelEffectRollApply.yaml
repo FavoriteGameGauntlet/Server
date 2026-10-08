@@ -1,7 +1,0 @@
-type: object
-properties:
-  wheelEffectName:
-    $ref: "./Name.yaml"
-  pointChanges:
-    $ref: "./PointChangeByLogins.yaml"
-required: [ wheelEffectName, pointChanges ]

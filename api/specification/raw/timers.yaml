@@ -3,11 +3,14 @@ info:
   title: Favorite Game Gauntlet
   version: 0.12.5
 paths:
-  /timers/current:
+  /parties/{partyId}/timers/current:
     $ref: "../paths/timers/current.yaml"
 
-  /timers/current/start:
+  /parties/{partyId}/timers/current/start:
     $ref: "../paths/timers/current/start.yaml"
 
-  /timers/current/pause:
+  /parties/{partyId}/timers/current/pause:
     $ref: "../paths/timers/current/pause.yaml"
+
+  /parties/{partyId}/timers/reward:
+    $ref: "../paths/timers/reward.yaml"

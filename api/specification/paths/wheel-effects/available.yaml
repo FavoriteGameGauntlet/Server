@@ -1,9 +1,11 @@
 get:
   operationId: getAvailableWheelEffects
   tags: [ WheelEffects ]
+  parameters:
+    - $ref: "../../components/parameters/PartyId.yaml"
   responses:
     "200":
-      $ref: "../../components/responses/WheelEffectsResponse.yaml"
+      $ref: "../../components/responses/WheelRowsResponse.yaml"
     "401":
       $ref: "../../components/responses/ErrorResponse.yaml"
     "500":

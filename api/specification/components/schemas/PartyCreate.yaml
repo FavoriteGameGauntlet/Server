@@ -1,0 +1,7 @@
+type: object
+description: >
+  Creates a party. The user creating it joins as its first admin.
+properties:
+  name:
+    $ref: "./Name.yaml"
+required: [ name ]

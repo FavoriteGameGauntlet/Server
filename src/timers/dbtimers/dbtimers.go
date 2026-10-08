@@ -1,0 +1,241 @@
+package dbtimers
+
+import (
+	"FGG-Service/src/changes/typechanges"
+	"FGG-Service/src/dbaccess"
+	"FGG-Service/src/timers/typetimers"
+	"context"
+	"encoding/json"
+	"time"
+)
+
+type IDatabase interface {
+	GetCurrentTimerCommand(ctx context.Context, userId int, partyId int) (timer typetimers.CurrentTimer, err error)
+	CreateCurrentTimerCommand(ctx context.Context, userId int, partyId int, gameId int, duration time.Duration) (timer typetimers.CreatedTimer, err error)
+	ActTimerCommand(ctx context.Context, timerId int, timerState typetimers.TimerStateType, timeSpent time.Duration) error
+	GetCompletedTimerUsersCommand(ctx context.Context) (timers []typetimers.EndedTimer, err error)
+	DeleteCurrentTimerCommand(ctx context.Context, userId int, partyId int) (timer typetimers.EndedTimer, err error)
+	SetTimerRewardCommand(ctx context.Context, partyId int, change typechanges.Change) (timerRewardId int, err error)
+	RemoveTimerRewardCommand(ctx context.Context, partyId int) error
+	GetTimerRewardCommand(ctx context.Context, partyId int) (reward typetimers.TimerReward, err error)
+	GetTimerRewardEntriesCommand(ctx context.Context, partyId int) (entries []typechanges.NamedChangeEntry, err error)
+	CreateTimerHistoryCommand(ctx context.Context, userId int, partyId int, timerRewardId *int, actorUserId int) (entry typetimers.TimerHistoryEntry, err error)
+}
+
+type Database struct {
+}
+
+var getCurrentTimerQuery = dbaccess.Query{Name: "GetCurrentTimerQuery", SQL: `SELECT * FROM get_timer($1::integer, $2::integer)`}
+
+func (db *Database) GetCurrentTimerCommand(ctx context.Context, userId int, partyId int) (timer typetimers.CurrentTimer, err error) {
+	row := dbaccess.QueryRow(ctx, getCurrentTimerQuery, userId, partyId)
+
+	var durationRaw, timeSpentRaw string
+	err = row.Scan(&timer.Id, &timer.GameId, &timer.State, &durationRaw, &timer.LastActionDate, &timeSpentRaw)
+
+	if err == nil {
+		timer.Duration, err = dbaccess.ScanInterval(durationRaw)
+	}
+	if err == nil {
+		timer.TimeSpent, err = dbaccess.ScanInterval(timeSpentRaw)
+	}
+
+	dbaccess.LogDbResult(getCurrentTimerQuery, timer, err)
+
+	return
+}
+
+var createCurrentTimerQuery = dbaccess.Query{Name: "CreateCurrentTimerQuery", SQL: `SELECT * FROM create_timer($1::integer, $2::integer, $3::integer, $4::interval)`}
+
+func (db *Database) CreateCurrentTimerCommand(ctx context.Context, userId int, partyId int, gameId int, duration time.Duration) (timer typetimers.CreatedTimer, err error) {
+	row := dbaccess.QueryRow(ctx, createCurrentTimerQuery, userId, partyId, gameId, duration)
+
+	var durationRaw string
+	err = row.Scan(&timer.Id, &timer.UserId, &timer.PartyId, &timer.GameId, &timer.State, &durationRaw, &timer.CreatedDate)
+
+	if err == nil {
+		timer.Duration, err = dbaccess.ScanInterval(durationRaw)
+	}
+
+	dbaccess.LogDbResult(createCurrentTimerQuery, timer, err)
+
+	return
+}
+
+var actTimerQuery = dbaccess.Query{Name: "ActTimerQuery", SQL: `SELECT act_timer($1::integer, $2::text, $3::interval)`}
+
+func (db *Database) ActTimerCommand(
+	ctx context.Context,
+	timerId int,
+	timerState typetimers.TimerStateType,
+	timeSpent time.Duration) error {
+
+	_, err := dbaccess.Exec(
+		ctx,
+		actTimerQuery,
+		timerId,
+		timerState,
+		timeSpent)
+
+	dbaccess.LogDbResult(actTimerQuery, nil, err)
+
+	return err
+}
+
+var getCompletedTimerUsersQuery = dbaccess.Query{Name: "GetCompletedTimerUsersQuery", SQL: `SELECT * FROM delete_ended_timers()`, IsSilent: true}
+
+func (db *Database) GetCompletedTimerUsersCommand(ctx context.Context) (timers []typetimers.EndedTimer, err error) {
+	rows, err := dbaccess.QueryRows(ctx, getCompletedTimerUsersQuery)
+
+	if err != nil {
+		return
+	}
+
+	for rows.Next() {
+		timer := typetimers.EndedTimer{}
+		var durationRaw, timeSpentRaw string
+		err = rows.Scan(
+			&timer.Id,
+			&timer.UserId,
+			&timer.PartyId,
+			&timer.GameId,
+			&timer.State,
+			&durationRaw,
+			&timeSpentRaw,
+			&timer.LastActionDate)
+
+		if err == nil {
+			timer.Duration, err = dbaccess.ScanInterval(durationRaw)
+		}
+		if err == nil {
+			timer.TimeSpent, err = dbaccess.ScanInterval(timeSpentRaw)
+		}
+
+		if err != nil {
+			_ = rows.Close()
+			return
+		}
+
+		timers = append(timers, timer)
+	}
+
+	err = rows.Err()
+
+	dbaccess.LogDbResult(getCompletedTimerUsersQuery, timers, err)
+
+	_ = rows.Close()
+	return
+}
+
+var deleteCurrentTimerQuery = dbaccess.Query{Name: "DeleteCurrentTimerQuery", SQL: `SELECT * FROM delete_timer($1::integer, $2::integer)`}
+
+func (db *Database) DeleteCurrentTimerCommand(ctx context.Context, userId int, partyId int) (timer typetimers.EndedTimer, err error) {
+	row := dbaccess.QueryRow(ctx, deleteCurrentTimerQuery, userId, partyId)
+
+	var durationRaw, timeSpentRaw string
+	err = row.Scan(
+		&timer.Id,
+		&timer.UserId,
+		&timer.PartyId,
+		&timer.GameId,
+		&timer.State,
+		&durationRaw,
+		&timeSpentRaw,
+		&timer.LastActionDate)
+
+	if err == nil {
+		timer.Duration, err = dbaccess.ScanInterval(durationRaw)
+	}
+	if err == nil {
+		timer.TimeSpent, err = dbaccess.ScanInterval(timeSpentRaw)
+	}
+
+	dbaccess.LogDbResult(deleteCurrentTimerQuery, timer, err)
+
+	return
+}
+
+var setTimerRewardQuery = dbaccess.Query{Name: "SetTimerRewardQuery", SQL: `SELECT set_timer_reward($1::integer, $2::jsonb)`}
+
+func (db *Database) SetTimerRewardCommand(ctx context.Context, partyId int, change typechanges.Change) (timerRewardId int, err error) {
+	changeJson, err := json.Marshal(change)
+	if err != nil {
+		return
+	}
+
+	row := dbaccess.QueryRow(ctx, setTimerRewardQuery, partyId, changeJson)
+
+	err = row.Scan(&timerRewardId)
+
+	dbaccess.LogDbResult(setTimerRewardQuery, timerRewardId, err)
+
+	return
+}
+
+var removeTimerRewardQuery = dbaccess.Query{Name: "RemoveTimerRewardQuery", SQL: `SELECT remove_timer_reward($1::integer)`}
+
+func (db *Database) RemoveTimerRewardCommand(ctx context.Context, partyId int) error {
+	_, err := dbaccess.Exec(ctx, removeTimerRewardQuery, partyId)
+
+	dbaccess.LogDbResult(removeTimerRewardQuery, nil, err)
+
+	return err
+}
+
+var getTimerRewardQuery = dbaccess.Query{Name: "GetTimerRewardQuery", SQL: `SELECT * FROM get_timer_reward($1::integer)`}
+
+func (db *Database) GetTimerRewardCommand(ctx context.Context, partyId int) (reward typetimers.TimerReward, err error) {
+	row := dbaccess.QueryRow(ctx, getTimerRewardQuery, partyId)
+
+	var changeRaw []byte
+	err = row.Scan(&reward.Id, &changeRaw)
+
+	if err == nil {
+		err = json.Unmarshal(changeRaw, &reward.Change)
+	}
+
+	dbaccess.LogDbResult(getTimerRewardQuery, reward, err)
+
+	return
+}
+
+var getTimerRewardEntriesQuery = dbaccess.Query{Name: "GetTimerRewardEntriesQuery", SQL: `SELECT * FROM get_timer_reward_entries($1::integer)`}
+
+func (db *Database) GetTimerRewardEntriesCommand(ctx context.Context, partyId int) (entries []typechanges.NamedChangeEntry, err error) {
+	rows, err := dbaccess.QueryRows(ctx, getTimerRewardEntriesQuery, partyId)
+
+	if err != nil {
+		return
+	}
+
+	for rows.Next() {
+		entry := typechanges.NamedChangeEntry{}
+		err = rows.Scan(&entry.Amount, &entry.PointTypeName, &entry.ItemName, &entry.PerkName, &entry.EffectName)
+
+		if err != nil {
+			_ = rows.Close()
+			return
+		}
+
+		entries = append(entries, entry)
+	}
+
+	err = rows.Err()
+
+	dbaccess.LogDbResult(getTimerRewardEntriesQuery, entries, err)
+
+	_ = rows.Close()
+	return
+}
+
+var createTimerHistoryQuery = dbaccess.Query{Name: "CreateTimerHistoryQuery", SQL: `SELECT * FROM create_timer_history($1::integer, $2::integer, $3::integer, $4::integer)`}
+
+func (db *Database) CreateTimerHistoryCommand(ctx context.Context, userId int, partyId int, timerRewardId *int, actorUserId int) (entry typetimers.TimerHistoryEntry, err error) {
+	row := dbaccess.QueryRow(ctx, createTimerHistoryQuery, userId, partyId, timerRewardId, actorUserId)
+
+	err = row.Scan(&entry.Id, &entry.UserId, &entry.PartyId, &entry.TimerRewardId, &entry.CompletedDate)
+
+	dbaccess.LogDbResult(createTimerHistoryQuery, entry, err)
+
+	return
+}

@@ -1,12 +1,30 @@
 get:
   operationId: getCurrentTimer
   tags: [ Timers ]
+  parameters:
+    - $ref: "../../components/parameters/PartyId.yaml"
   responses:
     "200":
       $ref: "../../components/responses/TimerResponse.yaml"
     "401":
       $ref: "../../components/responses/ErrorResponse.yaml"
     "404":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+post:
+  operationId: createCurrentTimer
+  tags: [ Timers ]
+  parameters:
+    - $ref: "../../components/parameters/PartyId.yaml"
+  responses:
+    "201":
+      $ref: "../../components/responses/TimerResponse.yaml"
+    "401":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "404":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "409":
       $ref: "../../components/responses/ErrorResponse.yaml"
     "500":
       $ref: "../../components/responses/ErrorResponse.yaml"

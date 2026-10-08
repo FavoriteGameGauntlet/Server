@@ -1,0 +1,10 @@
+type: object
+description: Updates whichever of the two is given.
+properties:
+  displayName:
+    allOf:
+      - $ref: "./MemberDisplayName.yaml"
+    nullable: true
+    default: null
+  isAdmin:
+    type: boolean

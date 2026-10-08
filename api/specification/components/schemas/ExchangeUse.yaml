@@ -1,0 +1,10 @@
+type: object
+description: >
+  Uses an exchange. Without targetLogins both sides of the exchange fall on the user making it. With
+  them, the source change is what the named users lose and the target change is what the user making
+  the exchange gains, which is how a mechanic that takes something from another player is expressed.
+properties:
+  targetLogins:
+    type: array
+    items:
+      $ref: "./Login.yaml"

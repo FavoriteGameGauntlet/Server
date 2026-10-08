@@ -1,207 +1,319 @@
 openapi: 3.0.4
 info:
   title: Favorite Game Gauntlet
-  version: 0.14.0
+  version: 0.15.0
 paths:
-  /points/{login}/info:
+  /parties/{partyId}/points/types:
     get:
-      operationId: getUserPointInfo
+      operationId: getPointTypes
       tags:
         - Points
       parameters:
-        - $ref: '#/components/parameters/Login'
+        - $ref: '#/components/parameters/PartyId'
       responses:
         '200':
-          $ref: '#/components/responses/PointInfoResponse'
+          $ref: '#/components/responses/PointTypesResponse'
         '401':
-          $ref: '#/components/responses/ErrorResponse'
-        '404':
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /points/all/info:
-    get:
-      operationId: getAllPointInfo
-      tags:
-        - Points
-      responses:
-        '200':
-          $ref: '#/components/responses/PointInfoByLoginsResponse'
-        '401':
-          $ref: '#/components/responses/ErrorResponse'
-        '404':
-          $ref: '#/components/responses/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/ErrorResponse'
-  /points/{login}/territory-points:
     post:
-      operationId: changeUserTerritoryPoints
+      operationId: createPointType
       tags:
         - Points
       parameters:
-        - $ref: '#/components/parameters/Login'
+        - $ref: '#/components/parameters/PartyId'
       requestBody:
-        $ref: '#/components/requestBodies/PointChangeRequest'
+        $ref: '#/components/requestBodies/PointTypeCreateRequest'
       responses:
-        '200':
-          $ref: '#/components/responses/TerritoryPointChangeResultResponse'
+        '201':
+          $ref: '#/components/responses/PointTypeResponse'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
         '401':
           $ref: '#/components/responses/ErrorResponse'
         '409':
           $ref: '#/components/responses/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-    get:
-      operationId: getUserTerritoryPoints
+  /parties/{partyId}/points/types/{name}:
+    patch:
+      operationId: changePointType
       tags:
         - Points
       parameters:
+        - $ref: '#/components/parameters/PartyId'
+        - $ref: '#/components/parameters/Name'
+      requestBody:
+        $ref: '#/components/requestBodies/PointTypeChangeRequest'
+      responses:
+        '204':
+          description: Success.
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '409':
+          $ref: '#/components/responses/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    delete:
+      operationId: removePointType
+      tags:
+        - Points
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+        - $ref: '#/components/parameters/Name'
+      responses:
+        '204':
+          description: Success.
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /parties/{partyId}/points/users:
+    get:
+      operationId: getAllUserPoints
+      tags:
+        - Points
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+      responses:
+        '200':
+          $ref: '#/components/responses/UserPointsByLoginsResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /parties/{partyId}/points/users/{login}:
+    get:
+      operationId: getUserPoints
+      tags:
+        - Points
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Login'
+      responses:
+        '200':
+          $ref: '#/components/responses/UserPointsResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /parties/{partyId}/points/users/{login}/types/{name}:
+    get:
+      operationId: getUserPointValue
+      tags:
+        - Points
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+        - $ref: '#/components/parameters/Login'
+        - $ref: '#/components/parameters/Name'
       responses:
         '200':
           $ref: '#/components/responses/PointsResponse'
         '401':
           $ref: '#/components/responses/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/ErrorResponse'
-  /points/{login}/territory-points/history:
-    get:
-      operationId: getUserTerritoryPointHistory
-      tags:
-        - Points
-      parameters:
-        - $ref: '#/components/parameters/Login'
-      responses:
-        '200':
-          $ref: '#/components/responses/TerritoryPointChangeHistoriesResponse'
-        '401':
-          $ref: '#/components/responses/ErrorResponse'
         '404':
-          $ref: '#/components/responses/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/ErrorResponse'
-  /points/{login}/free-points:
-    post:
-      operationId: changeFreePoints
-      tags:
-        - Points
-      parameters:
-        - $ref: '#/components/parameters/Login'
-      requestBody:
-        $ref: '#/components/requestBodies/FreePointChangeRequest'
-      responses:
-        '200':
-          $ref: '#/components/responses/FreePointChangeResultResponse'
-        '401':
           $ref: '#/components/responses/ErrorResponse'
         '409':
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-    get:
-      operationId: getFreePoints
+    patch:
+      operationId: changeUserPointValue
       tags:
         - Points
       parameters:
+        - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Login'
-      responses:
-        '200':
-          $ref: '#/components/responses/PointsResponse'
-        '401':
-          $ref: '#/components/responses/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/ErrorResponse'
-  /points/{login}/free-points/history:
-    get:
-      operationId: getUserFreePointHistory
-      tags:
-        - Points
-      parameters:
-        - $ref: '#/components/parameters/Login'
-      responses:
-        '200':
-          $ref: '#/components/responses/FreePointChangeHistoriesResponse'
-        '401':
-          $ref: '#/components/responses/ErrorResponse'
-        '404':
-          $ref: '#/components/responses/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/ErrorResponse'
-  /points/experience-points:
-    post:
-      operationId: changeExperiencePoints
-      tags:
-        - Points
+        - $ref: '#/components/parameters/Name'
       requestBody:
         $ref: '#/components/requestBodies/PointChangeRequest'
       responses:
         '200':
           $ref: '#/components/responses/PointChangeResultResponse'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
         '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '409':
+          $ref: '#/components/responses/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /parties/{partyId}/points/users/{login}/types/{name}/history:
+    get:
+      operationId: getUserPointHistory
+      tags:
+        - Points
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+        - $ref: '#/components/parameters/Login'
+        - $ref: '#/components/parameters/Name'
+      responses:
+        '200':
+          $ref: '#/components/responses/PointHistoriesResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
           $ref: '#/components/responses/ErrorResponse'
         '409':
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
+  /parties/{partyId}/points/party:
     get:
-      operationId: getExperiencePoints
+      operationId: getAllPartyPoints
       tags:
         - Points
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+      responses:
+        '200':
+          $ref: '#/components/responses/PartyPointsResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+  /parties/{partyId}/points/party/types/{name}:
+    get:
+      operationId: getPartyPointValue
+      tags:
+        - Points
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+        - $ref: '#/components/parameters/Name'
       responses:
         '200':
           $ref: '#/components/responses/PointsResponse'
         '401':
           $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '409':
+          $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /points/territory-hours:
-    post:
-      operationId: changeTerritoryHours
+    patch:
+      operationId: changePartyPointValue
       tags:
         - Points
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+        - $ref: '#/components/parameters/Name'
       requestBody:
-        $ref: '#/components/requestBodies/TerritoryHourChangeRequest'
+        $ref: '#/components/requestBodies/PointChangeRequest'
       responses:
         '200':
-          $ref: '#/components/responses/PointChangeResultByTypesResponse'
+          $ref: '#/components/responses/PointChangeResultResponse'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
         '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
           $ref: '#/components/responses/ErrorResponse'
         '409':
           $ref: '#/components/responses/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
+  /parties/{partyId}/points/party/types/{name}/history:
     get:
-      operationId: getTerritoryHours
+      operationId: getPartyPointHistory
       tags:
         - Points
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+        - $ref: '#/components/parameters/Name'
       responses:
         '200':
-          $ref: '#/components/responses/PointsResponse'
+          $ref: '#/components/responses/PointHistoriesResponse'
         '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '409':
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
 components:
-  schemas:
+  parameters:
+    PartyId:
+      name: partyId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int
+    Name:
+      name: name
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Name'
     Login:
+      name: login
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Login'
+  schemas:
+    Name:
       type: string
-      pattern: ^\w+$
-      minLength: 3
-      maxLength: 35
-    Points:
-      type: integer
-      format: int
-      minimum: 0
-    PointInfo:
+      pattern: ^.+$
+      minLength: 1
+      maxLength: 70
+    PointType:
       type: object
       properties:
-        territoryPoints:
-          $ref: '#/components/schemas/Points'
-        freePoints:
-          $ref: '#/components/schemas/Points'
+        name:
+          $ref: '#/components/schemas/Name'
+        description:
+          type: string
+        startValue:
+          type: integer
+          format: int
+        isPublic:
+          type: boolean
+        isShared:
+          type: boolean
+        minimum:
+          type: integer
+          format: int
+          nullable: true
+          description: The lowest value a point can have, or null for no lower bound.
+        maximum:
+          type: integer
+          format: int
+          nullable: true
+          description: The highest value a point can have, or null for no upper bound.
       required:
-        - territoryPoints
-        - freePoints
+        - name
+        - description
+        - startValue
+        - isPublic
+        - isShared
+        - minimum
+        - maximum
+    PointTypes:
+      type: array
+      items:
+        $ref: '#/components/schemas/PointType'
     Error:
       type: object
       properties:
@@ -212,242 +324,243 @@ components:
       required:
         - code
         - message
-    PointInfoByLogins:
+    PointTypeCreate:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/Name'
+        description:
+          type: string
+        startValue:
+          type: integer
+          format: int
+        isPublic:
+          type: boolean
+        isShared:
+          type: boolean
+          default: false
+        minimum:
+          type: integer
+          format: int
+          nullable: true
+          default: 0
+          description: The lowest value a point can have, or null for no lower bound.
+        maximum:
+          type: integer
+          format: int
+          nullable: true
+          default: null
+          description: The highest value a point can have, or null for no upper bound.
+      required:
+        - name
+        - description
+        - startValue
+        - isPublic
+        - isShared
+        - minimum
+        - maximum
+    PointTypeChange:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/Name'
+        description:
+          type: string
+        startValue:
+          type: integer
+          format: int
+          description: The value of a point not held yet. Points already held keep their value.
+        isPublic:
+          type: boolean
+        isShared:
+          type: boolean
+          default: false
+        minimum:
+          type: integer
+          format: int
+          nullable: true
+          default: 0
+          description: The lowest value a point can have, or null for no lower bound.
+        maximum:
+          type: integer
+          format: int
+          nullable: true
+          default: null
+          description: The highest value a point can have, or null for no upper bound.
+      required:
+        - name
+        - description
+        - startValue
+        - isPublic
+        - isShared
+        - minimum
+        - maximum
+    Login:
+      type: string
+      pattern: ^\w+$
+      minLength: 3
+      maxLength: 35
+    Points:
+      type: integer
+      format: int
+    UserPoint:
+      type: object
+      properties:
+        pointType:
+          $ref: '#/components/schemas/PointType'
+        value:
+          $ref: '#/components/schemas/Points'
+      required:
+        - pointType
+        - value
+    UserPoints:
+      type: array
+      items:
+        $ref: '#/components/schemas/UserPoint'
+    UserPointsByLogins:
       type: array
       items:
         type: object
         properties:
           login:
             $ref: '#/components/schemas/Login'
-          pointInfo:
-            $ref: '#/components/schemas/PointInfo'
+          points:
+            $ref: '#/components/schemas/UserPoints'
+        required:
+          - login
+          - points
     PointChange:
       type: object
       properties:
-        changeSource:
-          type: string
         desiredChangeValue:
           type: integer
           format: int
       required:
-        - changeSource
         - desiredChangeValue
     PointChangeResult:
       type: object
       properties:
+        desiredChangeValue:
+          type: integer
+          format: int
         actualChangeValue:
           type: integer
           format: int
         finalValue:
           $ref: '#/components/schemas/Points'
       required:
+        - desiredChangeValue
         - actualChangeValue
         - finalValue
-    PointChangeHistoryRow:
-      allOf:
-        - $ref: '#/components/schemas/PointChange'
-        - type: object
-          properties:
-            actualChangeValue:
-              type: integer
-              format: int
-            finalValue:
-              $ref: '#/components/schemas/Points'
-          required:
-            - actualChangeValue
-            - finalValue
-    TerritoryPointChangeHistory:
-      allOf:
-        - $ref: '#/components/schemas/PointChangeHistoryRow'
-        - type: object
-          properties:
-            changeSource:
-              enum:
-                - territory-obtaining
-                - territory-loss
-                - other
-            changeDate:
-              type: string
-              format: date-time
-            sourceLogin:
-              nullable: true
-              example: null
-              allOf:
-                - $ref: '#/components/schemas/Login'
-          required:
-            - changeDate
-      example:
-        changeSource: territory-obtaining
-        desiredChangeValue: 2
-        actualChangeValue: 2
-        finalValue: 12
-        changeDate: '2026-06-07T08:09:10.123Z'
-    TerritoryPointChangeHistories:
-      type: array
-      items:
-        $ref: '#/components/schemas/TerritoryPointChangeHistory'
-    Name:
-      type: string
-      pattern: ^.+$
-      minLength: 1
-      maxLength: 70
-    FreePointChange:
-      allOf:
-        - $ref: '#/components/schemas/PointChange'
-        - type: object
-          properties:
-            wheelEffectName:
-              nullable: true
-              example: null
-              allOf:
-                - $ref: '#/components/schemas/Name'
-    FreePointChangeHistory:
-      allOf:
-        - $ref: '#/components/schemas/PointChangeHistoryRow'
-        - type: object
-          properties:
-            changeSource:
-              enum:
-                - wheel-effect
-                - quest
-                - base-teleport
-                - sandstorm
-                - other
-            changeDate:
-              type: string
-              format: date-time
-            sourceLogin:
-              nullable: true
-              example: null
-              allOf:
-                - $ref: '#/components/schemas/Login'
-            wheelEffectName:
-              nullable: true
-              example: null
-              allOf:
-                - $ref: '#/components/schemas/Name'
-          required:
-            - changeDate
-      example:
-        actualChangeValue: 2
-        changeSource: quest
-        desiredChangeValue: 2
-        finalValue: 12
-        changeDate: '2026-06-07T08:09:10.123Z'
-    FreePointChangeHistories:
-      type: array
-      items:
-        $ref: '#/components/schemas/FreePointChangeHistory'
-    TerritoryHourChange:
-      allOf:
-        - $ref: '#/components/schemas/PointChange'
-        - type: object
-          properties:
-            isSomeones:
-              type: boolean
-              default: false
-            login:
-              nullable: true
-              example: null
-              allOf:
-                - $ref: '#/components/schemas/Login'
-    PointChangeResultByTypes:
+    PointHistoryEntry:
       type: object
-      additionalProperties:
-        $ref: '#/components/schemas/PointChangeResult'
-  parameters:
-    Login:
-      name: login
-      in: path
-      required: true
-      schema:
-        $ref: '#/components/schemas/Login'
+      properties:
+        desiredChangeValue:
+          type: integer
+          format: int
+        actualChangeValue:
+          type: integer
+          format: int
+        finalValue:
+          $ref: '#/components/schemas/Points'
+        actorLogin:
+          $ref: '#/components/schemas/Login'
+        changedDate:
+          type: string
+          format: date-time
+      required:
+        - desiredChangeValue
+        - actualChangeValue
+        - finalValue
+        - changedDate
+    PointHistoryEntries:
+      type: array
+      items:
+        $ref: '#/components/schemas/PointHistoryEntry'
+    PartyPoint:
+      type: object
+      properties:
+        pointType:
+          $ref: '#/components/schemas/PointType'
+        value:
+          $ref: '#/components/schemas/Points'
+      required:
+        - pointType
+        - value
+    PartyPoints:
+      type: array
+      items:
+        $ref: '#/components/schemas/PartyPoint'
   responses:
-    PointInfoResponse:
+    PointTypesResponse:
       description: Success.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/PointInfo'
+            $ref: '#/components/schemas/PointTypes'
     ErrorResponse:
       description: Error
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    PointInfoByLoginsResponse:
+    PointTypeResponse:
       description: Success.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/PointInfoByLogins'
+            $ref: '#/components/schemas/PointType'
+    UserPointsByLoginsResponse:
+      description: Success.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UserPointsByLogins'
+    UserPointsResponse:
+      description: Success.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UserPoints'
     PointsResponse:
       description: Success.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Points'
-    TerritoryPointChangeResultResponse:
-      description: Success.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/PointChangeResult'
-    TerritoryPointChangeHistoriesResponse:
-      description: Success.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/TerritoryPointChangeHistories'
-          example:
-            - changeSource: territory-obtaining
-              desiredChangeValue: 2
-              actualChangeValue: 2
-              finalValue: 12
-              changeDate: '2026-06-07T08:09:10.123Z'
-    FreePointChangeResultResponse:
-      description: Success.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/PointChangeResult'
-    FreePointChangeHistoriesResponse:
-      description: Success.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/FreePointChangeHistories'
-          example:
-            - changeSource: quest
-              desiredChangeValue: 2
-              actualChangeValue: 2
-              finalValue: 12
-              changeDate: '2026-06-07T08:09:10.123Z'
     PointChangeResultResponse:
       description: Success.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/PointChangeResult'
-    PointChangeResultByTypesResponse:
+    PointHistoriesResponse:
       description: Success.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/PointChangeResultByTypes'
+            $ref: '#/components/schemas/PointHistoryEntries'
+    PartyPointsResponse:
+      description: Success.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PartyPoints'
   requestBodies:
+    PointTypeCreateRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PointTypeCreate'
+    PointTypeChangeRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PointTypeChange'
     PointChangeRequest:
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/PointChange'
-    FreePointChangeRequest:
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/FreePointChange'
-    TerritoryHourChangeRequest:
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/TerritoryHourChange'

@@ -1,0 +1,12 @@
+get:
+  operationId: getAllPartyPoints
+  tags: [ Points ]
+  parameters:
+    - $ref: "../../components/parameters/PartyId.yaml"
+  responses:
+    "200":
+      $ref: "../../components/responses/PartyPointsResponse.yaml"
+    "401":
+      $ref: "../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../components/responses/ErrorResponse.yaml"

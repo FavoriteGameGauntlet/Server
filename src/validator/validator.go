@@ -2,7 +2,10 @@ package validator
 
 import (
 	"FGG-Service/src/common"
+	"fmt"
+	"math"
 	"regexp"
+	"time"
 )
 
 var userNameRegex = regexp.MustCompile(`^\w+$`)
@@ -51,6 +54,111 @@ func ValidateName(name string) error {
 	}
 
 	return nil
+}
+
+func ValidateRating(rating int) error {
+	if rating < 1 || rating > 10 {
+		return common.NewRatingUnprocessableError(
+			rating,
+			"The rating should be between 1 and 10.")
+	}
+
+	return nil
+}
+
+// ValidatePointTypeBounds checks what the schema requires of a point type: every value fits the
+// INTEGER columns, the minimum does not exceed the maximum and the start value lies between them.
+// A nil bound does not limit.
+func ValidatePointTypeBounds(startValue int, minimum *int, maximum *int) error {
+	values := []struct {
+		name  string
+		value *int
+	}{
+		{"start value", &startValue},
+		{"minimum", minimum},
+		{"maximum", maximum},
+	}
+
+	for _, v := range values {
+		if v.value != nil && !fitsInteger(*v.value) {
+			return common.NewPointTypeBoundsUnprocessableError(fmt.Sprintf(
+				"The %s (%d) should be between %d and %d.", v.name, *v.value, math.MinInt32, math.MaxInt32))
+		}
+	}
+
+	if minimum != nil && maximum != nil && *minimum > *maximum {
+		return common.NewPointTypeBoundsUnprocessableError(fmt.Sprintf(
+			"The minimum (%d) should not be greater than the maximum (%d).", *minimum, *maximum))
+	}
+
+	if minimum != nil && startValue < *minimum {
+		return common.NewPointTypeBoundsUnprocessableError(fmt.Sprintf(
+			"The start value (%d) should not be less than the minimum (%d).", startValue, *minimum))
+	}
+
+	if maximum != nil && startValue > *maximum {
+		return common.NewPointTypeBoundsUnprocessableError(fmt.Sprintf(
+			"The start value (%d) should not be greater than the maximum (%d).", startValue, *maximum))
+	}
+
+	return nil
+}
+
+// ValidateChangeAmount checks that a change to a point value fits the INTEGER columns it is stored
+// and recorded in.
+func ValidateChangeAmount(amount int) error {
+	if !fitsInteger(amount) {
+		return common.NewChangeAmountUnprocessableError(amount, math.MinInt32, math.MaxInt32)
+	}
+
+	return nil
+}
+
+// ValidateEffectUseCount checks what the schema requires of an effect's use count: a positive value
+// that fits the INTEGER column. A nil use count does not limit.
+func ValidateEffectUseCount(useCount *int) error {
+	if useCount == nil {
+		return nil
+	}
+
+	if *useCount < 1 || !fitsInteger(*useCount) {
+		return common.NewEffectUseCountUnprocessableError(*useCount, 1, math.MaxInt32)
+	}
+
+	return nil
+}
+
+// maxEffectDurationInSeconds is the longest duration that still fits a time.Duration once converted.
+const maxEffectDurationInSeconds = math.MaxInt64 / int64(time.Second)
+
+// ValidateEffectDurationInSeconds checks that an effect's duration is positive, as the schema
+// requires, and short enough to be converted to a time.Duration. It has to run before that
+// conversion, which wraps around silently. A nil duration does not run out.
+func ValidateEffectDurationInSeconds(seconds *int) error {
+	if seconds == nil {
+		return nil
+	}
+
+	if *seconds < 1 || int64(*seconds) > maxEffectDurationInSeconds {
+		return common.NewEffectDurationUnprocessableError(*seconds, 1, maxEffectDurationInSeconds)
+	}
+
+	return nil
+}
+
+// ValidateEffectModifierAmount checks what the schema requires of a passive point modifier: a
+// nonzero amount that fits the INTEGER column.
+func ValidateEffectModifierAmount(amount int) error {
+	if amount == 0 || !fitsInteger(amount) {
+		return common.NewEffectModifierAmountUnprocessableError(amount, math.MinInt32, math.MaxInt32)
+	}
+
+	return nil
+}
+
+// fitsInteger reports whether a value fits a Postgres INTEGER column.
+func fitsInteger(value int) bool {
+	return value >= math.MinInt32 && value <= math.MaxInt32
 }
 
 var emailRegex = regexp.MustCompile(`^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$`)

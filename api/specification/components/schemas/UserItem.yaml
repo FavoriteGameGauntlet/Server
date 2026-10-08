@@ -1,0 +1,15 @@
+type: object
+properties:
+  name:
+    $ref: "./Name.yaml"
+  description:
+    type: string
+  usesLeft:
+    type: integer
+    format: int
+  receivedDate:
+    type: string
+    format: date-time
+  entries:
+    $ref: "./NamedChangeEntries.yaml"
+required: [ name, description, usesLeft, receivedDate, entries ]

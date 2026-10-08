@@ -1,8 +1,11 @@
 type: object
 properties:
+  desiredChangeValue:
+    type: integer
+    format: int
   actualChangeValue:
     type: integer
     format: int
   finalValue:
     $ref: "./Points.yaml"
-required: [ actualChangeValue, finalValue ]
+required: [ desiredChangeValue, actualChangeValue, finalValue ]

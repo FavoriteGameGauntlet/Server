@@ -1,0 +1,5 @@
+package: genexchanges
+output: generated/exchanges/exchanges.gen.go
+generate:
+  echo-server: true
+  models: true

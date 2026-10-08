@@ -1,0 +1,15 @@
+get:
+  operationId: getUserExchangeHistory
+  tags: [ Exchanges ]
+  parameters:
+    - $ref: "../../../components/parameters/PartyId.yaml"
+    - $ref: "../../../components/parameters/Login.yaml"
+  responses:
+    "200":
+      $ref: "../../../components/responses/ExchangeHistoriesResponse.yaml"
+    "401":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+    "404":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../../components/responses/ErrorResponse.yaml"

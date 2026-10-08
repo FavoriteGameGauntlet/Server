@@ -1,0 +1,5 @@
+package: genparties
+output: generated/parties/parties.gen.go
+generate:
+  echo-server: true
+  models: true

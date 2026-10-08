@@ -9,7 +9,6 @@ services:
     restart: unless-stopped
     environment:
       DATABASE_URL: ${DATABASE_URL}
-      ADMIN_LOGINS: ${ADMIN_LOGINS}
     volumes:
       - ./logs:/app/logs
     networks:

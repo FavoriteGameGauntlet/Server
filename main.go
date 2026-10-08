@@ -2,21 +2,31 @@ package main
 
 import (
 	genauth "FGG-Service/api/generated/auth"
+	geneffects "FGG-Service/api/generated/effects"
+	genexchanges "FGG-Service/api/generated/exchanges"
 	gengames "FGG-Service/api/generated/games"
+	gengrants "FGG-Service/api/generated/grants"
+	genitems "FGG-Service/api/generated/items"
+	genparties "FGG-Service/api/generated/parties"
+	genperks "FGG-Service/api/generated/perks"
 	genpoints "FGG-Service/api/generated/points"
 	gensysparams "FGG-Service/api/generated/system_parameters"
 	gentimers "FGG-Service/api/generated/timers"
-	genusers "FGG-Service/api/generated/users"
-	geneffects "FGG-Service/api/generated/wheel_effects"
-	ctrlauth "FGG-Service/src/auth/controller"
+	genwheeleffects "FGG-Service/api/generated/wheel_effects"
+	"FGG-Service/src/auth/ctrlauth"
 	"FGG-Service/src/dbaccess"
-	ctrlgames "FGG-Service/src/games/controller"
-	ctrlpoints "FGG-Service/src/points/controller"
-	ctrlsysparams "FGG-Service/src/sysparams/controller"
-	ctrltimers "FGG-Service/src/timers/controller"
-	srvtimers "FGG-Service/src/timers/service"
-	ctrlusers "FGG-Service/src/users/controller"
-	ctrleffects "FGG-Service/src/wheeleffects/controller"
+	"FGG-Service/src/effects/ctrleffects"
+	"FGG-Service/src/exchanges/ctrlexchanges"
+	"FGG-Service/src/games/ctrlgames"
+	"FGG-Service/src/grants/ctrlgrants"
+	"FGG-Service/src/items/ctrlitems"
+	"FGG-Service/src/parties/ctrlparties"
+	"FGG-Service/src/perks/ctrlperks"
+	"FGG-Service/src/points/ctrlpoints"
+	"FGG-Service/src/sysparams/ctrlsysparams"
+	"FGG-Service/src/timers/ctrltimers"
+	"FGG-Service/src/timers/srvtimers"
+	"FGG-Service/src/wheeleffects/ctrlwheeleffects"
 	"embed"
 	"log/slog"
 	"net/http"
@@ -49,7 +59,7 @@ func main() {
 		_ = f.Close()
 	}(f)
 
-	startLogScheduler()
+	startLogScheduler(f)
 
 	defer func(e *echo.Echo) {
 		_ = e.Close()
@@ -65,17 +75,22 @@ func registerHandlers(e *echo.Echo) {
 
 	genauth.RegisterHandlers(e, ctrlauth.NewController())
 	gengames.RegisterHandlers(e, ctrlgames.NewController(ts))
+	genitems.RegisterHandlers(e, ctrlitems.NewController())
+	geneffects.RegisterHandlers(e, ctrleffects.NewController())
+	genperks.RegisterHandlers(e, ctrlperks.NewController())
+	genexchanges.RegisterHandlers(e, ctrlexchanges.NewController())
+	gengrants.RegisterHandlers(e, ctrlgrants.NewController())
+	genparties.RegisterHandlers(e, ctrlparties.NewController())
 	genpoints.RegisterHandlers(e, ctrlpoints.NewController())
 	gensysparams.RegisterHandlers(e, ctrlsysparams.NewController())
 	gentimers.RegisterHandlers(e, ctrltimers.NewController(ts))
-	genusers.RegisterHandlers(e, ctrlusers.NewController())
-	geneffects.RegisterHandlers(e, ctrleffects.NewController())
+	genwheeleffects.RegisterHandlers(e, ctrlwheeleffects.NewController())
 }
 
 func createFileAndStartLogger() *os.File {
 	logsDir := getLogsDir()
 	filename := filepath.Join(logsDir, time.Now().Format("2006-01-02")+".txt")
-	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o666)
 
 	if err != nil {
 		panic(err)
@@ -96,26 +111,25 @@ func getLogsDir() string {
 		return filepath.Join(root, "logs")
 	}
 
-	return filepath.Join("logs")
+	return "logs"
 }
 
-func startLogScheduler() {
+// startLogScheduler rotates the log file every midnight. The file the logger already writes to is
+// passed in so that the first rotation closes it too.
+func startLogScheduler(currentFile *os.File) {
 	scheduler, err := gocron.NewScheduler()
 
 	if err != nil {
 		panic(err)
 	}
 
-	var currentFile *os.File
-
 	_, err = scheduler.NewJob(
 		gocron.DailyJob(1, gocron.NewAtTimes(gocron.NewAtTime(0, 0, 0))),
 		gocron.NewTask(func() {
-			if currentFile != nil {
-				_ = currentFile.Close()
-			}
-
+			previousFile := currentFile
 			currentFile = createFileAndStartLogger()
+
+			_ = previousFile.Close()
 		}),
 	)
 

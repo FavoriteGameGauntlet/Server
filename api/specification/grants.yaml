@@ -1,0 +1,112 @@
+openapi: 3.0.4
+info:
+  title: Favorite Game Gauntlet
+  version: 0.1.0
+paths:
+  /parties/{partyId}/grants:
+    post:
+      operationId: grantToUsers
+      tags:
+        - Grants
+      parameters:
+        - $ref: '#/components/parameters/PartyId'
+      requestBody:
+        $ref: '#/components/requestBodies/ManualGrantRequest'
+      responses:
+        '204':
+          description: Success.
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+components:
+  parameters:
+    PartyId:
+      name: partyId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int
+  schemas:
+    Login:
+      type: string
+      pattern: ^\w+$
+      minLength: 3
+      maxLength: 35
+    Name:
+      type: string
+      pattern: ^.+$
+      minLength: 1
+      maxLength: 70
+    NullableName:
+      allOf:
+        - $ref: '#/components/schemas/Name'
+      nullable: true
+      default: null
+    NamedChangeEntry:
+      type: object
+      description: |
+        Names one thing a change grants. Exactly one of pointTypeName, itemName, perkName or effectName has to be set. The amount carries the sign it is applied with, so a cost is negative.
+      properties:
+        pointTypeName:
+          $ref: '#/components/schemas/NullableName'
+        itemName:
+          $ref: '#/components/schemas/NullableName'
+        perkName:
+          $ref: '#/components/schemas/NullableName'
+        effectName:
+          $ref: '#/components/schemas/NullableName'
+        amount:
+          type: integer
+          format: int
+      required:
+        - amount
+    NamedChangeEntries:
+      type: array
+      items:
+        $ref: '#/components/schemas/NamedChangeEntry'
+    ManualGrant:
+      type: object
+      description: |
+        Gives each named user what the entries describe, on an administrator's say-so rather than as the outcome of a game action. Entries carry the sign they are applied with, so taking something away is negative.
+      properties:
+        targetLogins:
+          type: array
+          items:
+            $ref: '#/components/schemas/Login'
+        entries:
+          $ref: '#/components/schemas/NamedChangeEntries'
+      required:
+        - targetLogins
+        - entries
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+  requestBodies:
+    ManualGrantRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ManualGrant'
+  responses:
+    ErrorResponse:
+      description: Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

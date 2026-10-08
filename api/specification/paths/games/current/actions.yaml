@@ -1,0 +1,22 @@
+post:
+  operationId: createCurrentGameAction
+  tags: [ Games ]
+  parameters:
+    - $ref: "../../../components/parameters/PartyId.yaml"
+  requestBody:
+    $ref: "../../../components/requests/CurrentGameActionRequest.yaml"
+  responses:
+    "200":
+      $ref: "../../../components/responses/CurrentGameResponse.yaml"
+    "400":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+    "401":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+    "404":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+    "409":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+    "422":
+      $ref: "../../../components/responses/ErrorResponse.yaml"
+    "500":
+      $ref: "../../../components/responses/ErrorResponse.yaml"

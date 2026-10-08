@@ -1,11 +1,13 @@
 post:
   operationId: applyAvailableWheelEffectRoll
   tags: [ WheelEffects ]
+  parameters:
+    - $ref: "../../../../components/parameters/PartyId.yaml"
   requestBody:
-    $ref: "../../../../components/requests/WheelEffectRollApplyRequest.yaml"
+    $ref: "../../../../components/requests/WheelRowApplyRequest.yaml"
   responses:
-    "200":
-      $ref: "../../../../components/responses/PointChangeResultByLoginsResponse.yaml"
+    "204":
+      description: Success.
     "401":
       $ref: "../../../../components/responses/ErrorResponse.yaml"
     "404":

@@ -1,0 +1,4 @@
+allOf:
+  - $ref: "./Name.yaml"
+nullable: true
+default: null

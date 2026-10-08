@@ -1,9 +1,0 @@
-type: array
-items:
-  type: object
-  properties:
-    login:
-      $ref: "./Login.yaml"
-    changeResults:
-      $ref: "./PointChangeResultByTypes.yaml"
-  required: [ login, changeResults ]

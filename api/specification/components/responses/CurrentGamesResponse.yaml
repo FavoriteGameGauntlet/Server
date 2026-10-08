@@ -1,5 +1,0 @@
-description: Success.
-content:
-  application/json:
-    schema:
-      $ref: "../schemas/CurrentGames.yaml"

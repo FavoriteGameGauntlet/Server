@@ -1,0 +1,5 @@
+package: genperks
+output: generated/perks/perks.gen.go
+generate:
+  echo-server: true
+  models: true

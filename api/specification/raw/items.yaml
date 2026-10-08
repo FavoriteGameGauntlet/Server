@@ -1,0 +1,25 @@
+openapi: 3.0.4
+info:
+  title: Favorite Game Gauntlet
+  version: 0.1.0
+paths:
+  /parties/{partyId}/items/catalog:
+    $ref: "../paths/items/catalog.yaml"
+
+  /parties/{partyId}/items/catalog/removed:
+    $ref: "../paths/items/catalog/removed.yaml"
+
+  /parties/{partyId}/items/catalog/{name}:
+    $ref: "../paths/items/catalog/name.yaml"
+
+  /parties/{partyId}/items/{login}:
+    $ref: "../paths/items/login.yaml"
+
+  /parties/{partyId}/items/{login}/history:
+    $ref: "../paths/items/login/history.yaml"
+
+  /parties/{partyId}/items/{login}/{name}:
+    $ref: "../paths/items/login/name.yaml"
+
+  /parties/{partyId}/items/{login}/{name}/use:
+    $ref: "../paths/items/login/name/use.yaml"
