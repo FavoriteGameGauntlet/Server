@@ -7,6 +7,7 @@ import (
 	"FGG-Service/src/effects/typeeffects"
 	"FGG-Service/src/points/srvpoints"
 	"FGG-Service/src/points/typepoints"
+	"FGG-Service/tests/changes/dbchangesmock"
 	"FGG-Service/tests/changes/srvchangesmock"
 	"FGG-Service/tests/effects/dbeffectsmock"
 	"FGG-Service/tests/points/dbpointsmock"
@@ -25,6 +26,7 @@ var luck = typepoints.PointTypeInfo{Id: 5, PartyId: 1, Name: "luck"}
 func TestSrvEffects_GetEffectsWithModifiers(test *testing.T) {
 	test.Run("Actual_ModifiersNamedPerEffect", func(test *testing.T) {
 		effectsDb := new(dbeffectsmock.DatabaseMock)
+		changesDb := newChangesDbWithoutEntries()
 		pointsDb := new(dbpointsmock.DatabaseMock)
 
 		effectsDb.On("GetActualEffectsCommand", 1).Return([]typeeffects.Effect{
@@ -34,9 +36,11 @@ func TestSrvEffects_GetEffectsWithModifiers(test *testing.T) {
 			}},
 			{Id: 3, PartyId: 1, Name: "plain", Modifiers: []typeeffects.PointModifier{}},
 		}, nil)
+		effectsDb.On("GetEffectCommand", 1, 2).Return(effectWithChange(2, 11), nil)
+		effectsDb.On("GetEffectCommand", 1, 3).Return(effectWithChange(3, 12), nil)
 		pointsDb.On("GetPointTypesCommand", 1).Return([]typepoints.PointTypeInfo{strength, luck}, nil)
 
-		sut := srveffects.Service{Database: effectsDb, PointsService: &srvpoints.Service{Database: pointsDb}}
+		sut := srveffects.Service{Database: effectsDb, ChangesDatabase: changesDb, PointsService: &srvpoints.Service{Database: pointsDb}}
 
 		effects, err := sut.GetEffects(test.Context(), 1)
 
@@ -51,14 +55,16 @@ func TestSrvEffects_GetEffectsWithModifiers(test *testing.T) {
 
 	test.Run("Removed_ModifiersNamed", func(test *testing.T) {
 		effectsDb := new(dbeffectsmock.DatabaseMock)
+		changesDb := newChangesDbWithoutEntries()
 		pointsDb := new(dbpointsmock.DatabaseMock)
 
 		effectsDb.On("GetRemovedEffectsCommand", 1).Return([]typeeffects.Effect{
 			{Id: 2, PartyId: 1, Name: "haste", Modifiers: []typeeffects.PointModifier{{Id: 7, PointTypeId: strength.Id, Amount: 3}}},
 		}, nil)
+		effectsDb.On("GetEffectCommand", 1, 2).Return(effectWithChange(2, 11), nil)
 		pointsDb.On("GetPointTypesCommand", 1).Return([]typepoints.PointTypeInfo{strength}, nil)
 
-		sut := srveffects.Service{Database: effectsDb, PointsService: &srvpoints.Service{Database: pointsDb}}
+		sut := srveffects.Service{Database: effectsDb, ChangesDatabase: changesDb, PointsService: &srvpoints.Service{Database: pointsDb}}
 
 		effects, err := sut.GetRemovedEffects(test.Context(), 1)
 
@@ -81,6 +87,13 @@ func TestSrvEffects_GetEffectsWithModifiers(test *testing.T) {
 	})
 }
 
+func newChangesDbWithoutEntries() *dbchangesmock.DatabaseMock {
+	changesDb := new(dbchangesmock.DatabaseMock)
+	changesDb.On("GetNamedChangeEntriesCommand", 1, mock.Anything).Return([]typechanges.NamedChangeEntry{}, nil)
+
+	return changesDb
+}
+
 // A new effect stores its modifiers by point type id and answers with them named.
 func TestSrvEffects_CreateEffectWithModifiers(test *testing.T) {
 	newService := func(effectsDb *dbeffectsmock.DatabaseMock, pointsDb *dbpointsmock.DatabaseMock) srveffects.Service {
@@ -88,9 +101,10 @@ func TestSrvEffects_CreateEffectWithModifiers(test *testing.T) {
 		changesSvc.On("ResolveChangeEntries", 1, mock.Anything).Return([]typechanges.ChangeEntry{}, nil)
 
 		return srveffects.Service{
-			Database:       effectsDb,
-			ChangesService: changesSvc,
-			PointsService:  &srvpoints.Service{Database: pointsDb},
+			Database:        effectsDb,
+			ChangesDatabase: newChangesDbWithoutEntries(),
+			ChangesService:  changesSvc,
+			PointsService:   &srvpoints.Service{Database: pointsDb},
 		}
 	}
 
@@ -104,7 +118,7 @@ func TestSrvEffects_CreateEffectWithModifiers(test *testing.T) {
 			1, "haste", "faster", (*int)(nil), (*time.Duration)(nil),
 			typechanges.Change{Entries: []typechanges.ChangeEntry{}},
 			[]typeeffects.PointModifier{{PointTypeId: strength.Id, Amount: 3}, {PointTypeId: luck.Id, Amount: -1}}).
-			Return(typeeffects.EffectWithChange{Id: 2, PartyId: 1, Name: "haste", Description: "faster"}, nil)
+			Return(typeeffects.EffectWithChange{Id: 2, PartyId: 1, Name: "haste", Description: "faster", Change: typechanges.Change{ChangeId: &storedChangeId}}, nil)
 
 		sut := newService(effectsDb, pointsDb)
 
@@ -129,7 +143,7 @@ func TestSrvEffects_CreateEffectWithModifiers(test *testing.T) {
 			1, "plain", "nothing", (*int)(nil), (*time.Duration)(nil),
 			typechanges.Change{Entries: []typechanges.ChangeEntry{}},
 			[]typeeffects.PointModifier{}).
-			Return(typeeffects.EffectWithChange{Id: 3, PartyId: 1, Name: "plain", Description: "nothing"}, nil)
+			Return(typeeffects.EffectWithChange{Id: 3, PartyId: 1, Name: "plain", Description: "nothing", Change: typechanges.Change{ChangeId: &storedChangeId}}, nil)
 
 		sut := newService(effectsDb, pointsDb)
 

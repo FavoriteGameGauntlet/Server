@@ -76,9 +76,20 @@ func (s *Service) GetRemovedEffects(ctx context.Context, partyId int) (named []t
 }
 
 // nameEffects names the passive point modifiers of catalogue effects, since they come back from the
-// schema as point type ids.
+// schema as point type ids, and attaches what using each effect grants.
 func (s *Service) nameEffects(ctx context.Context, partyId int, effects []typeeffects.Effect) (named []typeeffects.NamedEffect, err error) {
 	namesByPointTypeId, err := s.fetchPointTypeNamesById(ctx, partyId)
+
+	if err != nil {
+		return
+	}
+
+	effectIds := make([]int, len(effects))
+	for i, effect := range effects {
+		effectIds[i] = effect.Id
+	}
+
+	entriesByEffectId, err := s.fetchEntriesByEffectId(ctx, partyId, effectIds)
 
 	if err != nil {
 		return
@@ -93,10 +104,47 @@ func (s *Service) nameEffects(ctx context.Context, partyId int, effects []typeef
 			UseCount:    effect.UseCount,
 			Duration:    effect.Duration,
 			Modifiers:   nameModifiers(effect.Modifiers, namesByPointTypeId),
+			Entries:     entriesByEffectId[effect.Id],
 		})
 	}
 
 	return
+}
+
+// fetchEntriesByEffectId reads what using each effect grants, looking every distinct effect up once.
+// The schema names an effect's change only in the full effect row, so there is no batch read.
+func (s *Service) fetchEntriesByEffectId(ctx context.Context, partyId int, effectIds []int) (map[int][]typechanges.NamedChangeEntry, error) {
+	entriesByEffectId := make(map[int][]typechanges.NamedChangeEntry, len(effectIds))
+
+	for _, effectId := range effectIds {
+		if _, isFetched := entriesByEffectId[effectId]; isFetched {
+			continue
+		}
+
+		withChange, err := s.Database.GetEffectCommand(ctx, partyId, effectId)
+
+		if err != nil {
+			return nil, err
+		}
+
+		entries, err := s.fetchNamedEntries(ctx, partyId, withChange.Change)
+
+		if err != nil {
+			return nil, err
+		}
+
+		entriesByEffectId[effectId] = entries
+	}
+
+	return entriesByEffectId, nil
+}
+
+func (s *Service) fetchNamedEntries(ctx context.Context, partyId int, change typechanges.Change) ([]typechanges.NamedChangeEntry, error) {
+	if change.ChangeId == nil {
+		return nil, errors.New("effect change has no id")
+	}
+
+	return s.ChangesDatabase.GetNamedChangeEntriesCommand(ctx, partyId, *change.ChangeId)
 }
 
 // nameModifiers swaps the point type ids of modifiers for the names the API uses.
@@ -159,12 +207,19 @@ func (s *Service) CreateEffect(
 		return
 	}
 
+	storedEntries, err := s.fetchNamedEntries(ctx, partyId, created.Change)
+
+	if err != nil {
+		return
+	}
+
 	effect = typeeffects.NamedEffect{
 		Name:        created.Name,
 		Description: created.Description,
 		UseCount:    created.UseCount,
 		Duration:    created.Duration,
 		Modifiers:   modifiers,
+		Entries:     storedEntries,
 	}
 
 	return
@@ -234,8 +289,31 @@ func (s *Service) GetUserEffects(ctx context.Context, userId int, partyId int) (
 	return s.Database.GetUserEffectsCommand(ctx, userId, partyId)
 }
 
+// GetEffectHistory lists what happened to a user's effects, each row along with what using its effect
+// grants.
 func (s *Service) GetEffectHistory(ctx context.Context, userId int, partyId int) (history []typeeffects.EffectHistory, err error) {
-	return s.Database.GetEffectHistoryCommand(ctx, userId, partyId)
+	history, err = s.Database.GetEffectHistoryCommand(ctx, userId, partyId)
+
+	if err != nil {
+		return
+	}
+
+	effectIds := make([]int, len(history))
+	for i, entry := range history {
+		effectIds[i] = entry.EffectId
+	}
+
+	entriesByEffectId, err := s.fetchEntriesByEffectId(ctx, partyId, effectIds)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range history {
+		history[i].Entries = entriesByEffectId[history[i].EffectId]
+	}
+
+	return
 }
 
 // UseEffect spends one use of an active effect and grants what it carries to its holder. The effect
@@ -382,7 +460,7 @@ func (s *Service) StartEndedEffectsScheduler() {
 }
 
 // GetNamedUserEffects lists a user's active effects with their passive point modifiers named, since
-// the modifiers come back from the schema as point type ids.
+// the modifiers come back from the schema as point type ids, and with what using each effect grants.
 func (s *Service) GetNamedUserEffects(ctx context.Context, userId int, partyId int) (named []typeeffects.NamedUserEffect, err error) {
 	details, err := s.Database.GetUserEffectsCommand(ctx, userId, partyId)
 
@@ -391,6 +469,17 @@ func (s *Service) GetNamedUserEffects(ctx context.Context, userId int, partyId i
 	}
 
 	namesByPointTypeId, err := s.fetchPointTypeNamesById(ctx, partyId)
+
+	if err != nil {
+		return
+	}
+
+	effectIds := make([]int, len(details))
+	for i, detail := range details {
+		effectIds[i] = detail.EffectId
+	}
+
+	entriesByEffectId, err := s.fetchEntriesByEffectId(ctx, partyId, effectIds)
 
 	if err != nil {
 		return
@@ -407,6 +496,7 @@ func (s *Service) GetNamedUserEffects(ctx context.Context, userId int, partyId i
 			Duration:    detail.Duration,
 			StartedDate: detail.StartedDate,
 			Modifiers:   nameModifiers(detail.Modifiers, namesByPointTypeId),
+			Entries:     entriesByEffectId[detail.EffectId],
 		})
 	}
 

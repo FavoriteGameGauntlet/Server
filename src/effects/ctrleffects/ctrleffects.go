@@ -165,6 +165,7 @@ func (c *Controller) GetUserEffects(ctx echo.Context, partyId geneffects.PartyId
 			Duration:    convertDurationToDto(userEffect.Duration),
 			StartedDate: userEffect.StartedDate,
 			Modifiers:   convertNamedModifiersToDto(userEffect.Modifiers),
+			Entries:     convertNamedChangeEntriesToDto(userEffect.Entries),
 		}
 	}
 
@@ -240,6 +241,7 @@ func (c *Controller) GetUserEffectHistory(ctx echo.Context, partyId geneffects.P
 			UseCount:    entry.UseCount,
 			UsesLeft:    entry.UsesLeft,
 			CreatedDate: entry.CreatedDate,
+			Entries:     convertNamedChangeEntriesToDto(entry.Entries),
 		}
 	}
 
@@ -284,6 +286,7 @@ func convertEffectToDto(effect typeeffects.NamedEffect) geneffects.Effect {
 		UseCount:    effect.UseCount,
 		Duration:    convertDurationToDto(effect.Duration),
 		Modifiers:   convertNamedModifiersToDto(effect.Modifiers),
+		Entries:     convertNamedChangeEntriesToDto(effect.Entries),
 	}
 }
 
@@ -325,6 +328,22 @@ func convertEffectsToDto(effects []typeeffects.NamedEffect) geneffects.Effects {
 	}
 
 	return effectsDto
+}
+
+func convertNamedChangeEntriesToDto(inputs []typechanges.NamedChangeEntry) geneffects.NamedChangeEntries {
+	entriesDto := make(geneffects.NamedChangeEntries, len(inputs))
+
+	for i, input := range inputs {
+		entriesDto[i] = geneffects.NamedChangeEntry{
+			PointTypeName: input.PointTypeName,
+			ItemName:      input.ItemName,
+			PerkName:      input.PerkName,
+			EffectName:    input.EffectName,
+			Amount:        input.Amount,
+		}
+	}
+
+	return entriesDto
 }
 
 func convertDtoToNamedChangeEntries(entriesDto geneffects.NamedChangeEntries) []typechanges.NamedChangeEntry {

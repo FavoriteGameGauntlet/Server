@@ -20,12 +20,13 @@ type Effect struct {
 	Description string `json:"description"`
 
 	// Duration The duration notation as defined by ISO 8601
-	Duration  *Duration       `json:"duration,omitempty"`
-	Modifiers []PointModifier `json:"modifiers"`
-	Name      Name            `json:"name"`
+	Duration  *Duration          `json:"duration,omitempty"`
+	Entries   NamedChangeEntries `json:"entries"`
+	Modifiers []PointModifier    `json:"modifiers"`
+	Name      Name               `json:"name"`
 
-	// UseCount How many times the effect can be used, or null for no limit.
-	UseCount *int `json:"useCount"`
+	// UseCount How many times the effect can be used, left out for no limit.
+	UseCount *int `json:"useCount,omitempty"`
 }
 
 // EffectCreate Creates an effect. durationInSeconds is left out for an effect that does not run out on its own.
@@ -47,13 +48,14 @@ type EffectHistoryEntries = []EffectHistoryEntry
 
 // EffectHistoryEntry defines model for EffectHistoryEntry.
 type EffectHistoryEntry struct {
-	Action      string    `json:"action"`
-	ActorLogin  Login     `json:"actorLogin"`
-	CreatedDate time.Time `json:"createdDate"`
-	Description string    `json:"description"`
-	Name        Name      `json:"name"`
-	UseCount    *int      `json:"useCount"`
-	UsesLeft    *int      `json:"usesLeft"`
+	Action      string             `json:"action"`
+	ActorLogin  Login              `json:"actorLogin"`
+	CreatedDate time.Time          `json:"createdDate"`
+	Description string             `json:"description"`
+	Entries     NamedChangeEntries `json:"entries"`
+	Name        Name               `json:"name"`
+	UseCount    *int               `json:"useCount,omitempty"`
+	UsesLeft    *int               `json:"usesLeft,omitempty"`
 }
 
 // Effects defines model for Effects.
@@ -77,10 +79,10 @@ type NamedChangeEntries = []NamedChangeEntry
 // NamedChangeEntry Names one thing a change grants. Exactly one of pointTypeName, itemName, perkName or effectName has to be set. The amount carries the sign it is applied with, so a cost is negative.
 type NamedChangeEntry struct {
 	Amount        int           `json:"amount"`
-	EffectName    *NullableName `json:"effectName"`
-	ItemName      *NullableName `json:"itemName"`
-	PerkName      *NullableName `json:"perkName"`
-	PointTypeName *NullableName `json:"pointTypeName"`
+	EffectName    *NullableName `json:"effectName,omitempty"`
+	ItemName      *NullableName `json:"itemName,omitempty"`
+	PerkName      *NullableName `json:"perkName,omitempty"`
+	PointTypeName *NullableName `json:"pointTypeName,omitempty"`
 }
 
 // NullableName defines model for NullableName.
@@ -97,16 +99,17 @@ type UserEffect struct {
 	Description string `json:"description"`
 
 	// Duration The duration notation as defined by ISO 8601
-	Duration    *Duration       `json:"duration,omitempty"`
-	Modifiers   []PointModifier `json:"modifiers"`
-	Name        Name            `json:"name"`
-	StartedDate time.Time       `json:"startedDate"`
+	Duration    *Duration          `json:"duration,omitempty"`
+	Entries     NamedChangeEntries `json:"entries"`
+	Modifiers   []PointModifier    `json:"modifiers"`
+	Name        Name               `json:"name"`
+	StartedDate time.Time          `json:"startedDate"`
 
-	// UseCount How many times the effect can be used, or null for no limit.
-	UseCount *int `json:"useCount"`
+	// UseCount How many times the effect can be used, left out for no limit.
+	UseCount *int `json:"useCount,omitempty"`
 
-	// UsesLeft How many uses are left, or null for an effect without a limit.
-	UsesLeft *int `json:"usesLeft"`
+	// UsesLeft How many uses are left, left out for an effect without a limit.
+	UsesLeft *int `json:"usesLeft,omitempty"`
 }
 
 // UserEffects defines model for UserEffects.
