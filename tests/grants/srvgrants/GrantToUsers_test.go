@@ -63,7 +63,7 @@ func TestSrvGrants_GrantToUsers(test *testing.T) {
 		grantsDb := new(dbgrantsmock.DatabaseMock)
 		changesSvc := new(srvchangesmock.ServiceMock)
 
-		input := typechanges.NamedChangeEntry{ItemName: ptr("missing"), Amount: 1}
+		input := typechanges.NamedChangeEntry{ItemId: ptr(99), Amount: 1}
 
 		changesSvc.On("ResolveChangeEntries", 1, []typechanges.NamedChangeEntry{input}).
 			Return([]typechanges.ChangeEntry{}, assertError)

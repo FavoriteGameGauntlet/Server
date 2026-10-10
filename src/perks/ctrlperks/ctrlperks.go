@@ -86,7 +86,7 @@ func (c *Controller) CreatePerk(ctx echo.Context, partyId genperks.PartyId) erro
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	perk, err := c.Service.CreatePerk(ctx.Request().Context(), partyId, perkDto.Name, perkDto.Description, perkDto.EffectName)
+	perk, err := c.Service.CreatePerk(ctx.Request().Context(), partyId, perkDto.Name, perkDto.Description, perkDto.EffectId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)

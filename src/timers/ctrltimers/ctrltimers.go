@@ -208,9 +208,9 @@ func convertTimerRewardToDto(entries []typechanges.NamedChangeEntry) gentimers.T
 	for i, entry := range entries {
 		entriesDto[i] = gentimers.NamedChangeEntry{
 			PointTypeName: entry.PointTypeName,
-			ItemName:      entry.ItemName,
+			ItemId:        entry.ItemId,
 			PerkName:      entry.PerkName,
-			EffectName:    entry.EffectName,
+			EffectId:      entry.EffectId,
 			Amount:        entry.Amount,
 		}
 	}
@@ -224,9 +224,9 @@ func convertDtoToNamedChangeEntries(entriesDto gentimers.NamedChangeEntries) []t
 	for i, entryDto := range entriesDto {
 		inputs[i] = typechanges.NamedChangeEntry{
 			PointTypeName: entryDto.PointTypeName,
-			ItemName:      entryDto.ItemName,
+			ItemId:        entryDto.ItemId,
 			PerkName:      entryDto.PerkName,
-			EffectName:    entryDto.EffectName,
+			EffectId:      entryDto.EffectId,
 			Amount:        entryDto.Amount,
 		}
 	}

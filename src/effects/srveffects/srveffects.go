@@ -14,6 +14,7 @@ import (
 	"database/sql"
 	"errors"
 	"log/slog"
+	"slices"
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
@@ -23,11 +24,11 @@ type IService interface {
 	GetEffects(ctx context.Context, partyId int) ([]typeeffects.NamedEffect, error)
 	GetRemovedEffects(ctx context.Context, partyId int) ([]typeeffects.NamedEffect, error)
 	CreateEffect(ctx context.Context, partyId int, name string, description string, useCount *int, duration *time.Duration, entries []typechanges.NamedChangeEntry, modifiers []typeeffects.NamedPointModifier) (typeeffects.NamedEffect, error)
-	RemoveEffect(ctx context.Context, partyId int, name string) error
+	RemoveEffect(ctx context.Context, partyId int, effectId int) error
 	GetUserEffects(ctx context.Context, userId int, partyId int) ([]typeeffects.UserEffectDetail, error)
 	GetNamedUserEffects(ctx context.Context, userId int, partyId int) ([]typeeffects.NamedUserEffect, error)
-	UseEffect(ctx context.Context, actorUserId int, userId int, partyId int, effectName string) error
-	EndUserEffect(ctx context.Context, actorUserId int, userId int, partyId int, effectName string) error
+	UseEffect(ctx context.Context, actorUserId int, userId int, partyId int, userEffectId int) error
+	EndUserEffect(ctx context.Context, actorUserId int, userId int, partyId int, userEffectId int) error
 	GetEffectHistory(ctx context.Context, userId int, partyId int) ([]typeeffects.EffectHistory, error)
 	StopEndedUserEffects(ctx context.Context) error
 }
@@ -99,6 +100,7 @@ func (s *Service) nameEffects(ctx context.Context, partyId int, effects []typeef
 
 	for _, effect := range effects {
 		named = append(named, typeeffects.NamedEffect{
+			Id:          effect.Id,
 			Name:        effect.Name,
 			Description: effect.Description,
 			UseCount:    effect.UseCount,
@@ -214,6 +216,7 @@ func (s *Service) CreateEffect(
 	}
 
 	effect = typeeffects.NamedEffect{
+		Id:          created.Id,
 		Name:        created.Name,
 		Description: created.Description,
 		UseCount:    created.UseCount,
@@ -256,33 +259,23 @@ func (s *Service) resolveModifiers(ctx context.Context, partyId int, modifiers [
 	return resolved, nil
 }
 
-func (s *Service) RemoveEffect(ctx context.Context, partyId int, name string) (err error) {
-	effect, err := s.effectByName(ctx, partyId, name)
-
-	if err != nil {
-		return
-	}
-
-	return s.Database.RemoveEffectCommand(ctx, partyId, effect.Id)
-}
-
-// effectByName resolves an effect from the name the API addresses it by.
-func (s *Service) effectByName(ctx context.Context, partyId int, name string) (effect typeeffects.Effect, err error) {
+// RemoveEffect removes an effect from the party catalogue. Copies users already hold stay active.
+func (s *Service) RemoveEffect(ctx context.Context, partyId int, effectId int) (err error) {
 	effects, err := s.Database.GetActualEffectsCommand(ctx, partyId)
 
 	if err != nil {
 		return
 	}
 
-	for _, candidate := range effects {
-		if candidate.Name == name {
-			return candidate, nil
-		}
+	isActual := slices.ContainsFunc(effects, func(effect typeeffects.Effect) bool {
+		return effect.Id == effectId
+	})
+
+	if !isActual {
+		return common.NewEffectNotFoundError(effectId)
 	}
 
-	err = common.NewEffectNotFoundError(name)
-
-	return
+	return s.Database.RemoveEffectCommand(ctx, partyId, effectId)
 }
 
 func (s *Service) GetUserEffects(ctx context.Context, userId int, partyId int) (effects []typeeffects.UserEffectDetail, err error) {
@@ -316,21 +309,16 @@ func (s *Service) GetEffectHistory(ctx context.Context, userId int, partyId int)
 	return
 }
 
-// UseEffect spends one use of an active effect and grants what it carries to its holder. The effect
-// history row it produces is the source event of the resulting grants. Another member may use the
-// effect, so everything recorded names the actor, not the holder. An effect without a use limit has
-// nothing to spend: its history row carries no count and it never runs out.
-func (s *Service) UseEffect(ctx context.Context, actorUserId int, userId int, partyId int, effectName string) (err error) {
-	effect, err := s.effectByName(ctx, partyId, effectName)
-
-	if err != nil {
-		return
-	}
-
-	userEffect, err := s.Database.GetUserEffectCommand(ctx, userId, partyId, effect.Id)
+// UseEffect spends one use of a copy of an active effect and grants what it carries to its holder.
+// The effect history row it produces is the source event of the resulting grants. Another member may
+// use the effect, so everything recorded names the actor, not the holder. An effect without a use
+// limit has nothing to spend: its history row carries no count and it never runs out. The copy stays
+// usable after its effect is removed from the catalogue.
+func (s *Service) UseEffect(ctx context.Context, actorUserId int, userId int, partyId int, userEffectId int) (err error) {
+	userEffect, err := s.Database.GetUserEffectCommand(ctx, userId, partyId, userEffectId)
 
 	if errors.Is(err, sql.ErrNoRows) {
-		return common.NewEffectNotActiveConflictError(effectName)
+		return common.NewUserEffectNotFoundError(userEffectId)
 	}
 
 	if err != nil {
@@ -338,10 +326,10 @@ func (s *Service) UseEffect(ctx context.Context, actorUserId int, userId int, pa
 	}
 
 	if userEffect.UsesLeft != nil && *userEffect.UsesLeft < 1 {
-		return common.NewEffectUsedUpConflictError(effectName)
+		return common.NewEffectUsedUpConflictError(userEffectId)
 	}
 
-	withChange, err := s.Database.GetEffectCommand(ctx, partyId, effect.Id)
+	withChange, err := s.Database.GetEffectCommand(ctx, partyId, userEffect.EffectId)
 
 	if err != nil {
 		return
@@ -353,14 +341,14 @@ func (s *Service) UseEffect(ctx context.Context, actorUserId int, userId int, pa
 		usesLeft = &spent
 	}
 
-	historyEventId, err := s.Database.ChangeUserEffectUsesLeftCommand(ctx, userId, partyId, effect.Id, usesLeft, actorUserId, nil)
+	historyEventId, err := s.Database.ChangeUserEffectUsesLeftCommand(ctx, userId, partyId, userEffectId, usesLeft, actorUserId, nil)
 
 	if err != nil {
 		return
 	}
 
 	if usesLeft != nil && *usesLeft == 0 {
-		err = s.Database.DeleteUserEffectCommand(ctx, userId, partyId, effect.Id, actorUserId, &historyEventId)
+		err = s.Database.DeleteUserEffectCommand(ctx, userId, partyId, userEffectId, actorUserId, &historyEventId)
 
 		if err != nil {
 			return
@@ -393,25 +381,19 @@ func (s *Service) applyEffectChange(ctx context.Context, actorUserId int, userId
 	return s.ChangesService.ApplyChangeEntries(ctx, partyId, userChange.Entries, actorUserId, sourceEventId)
 }
 
-// EndUserEffect ends an active effect before it runs out on its own.
-func (s *Service) EndUserEffect(ctx context.Context, actorUserId int, userId int, partyId int, effectName string) (err error) {
-	effect, err := s.effectByName(ctx, partyId, effectName)
-
-	if err != nil {
-		return
-	}
-
-	_, err = s.Database.GetUserEffectCommand(ctx, userId, partyId, effect.Id)
+// EndUserEffect ends one copy of an active effect before it runs out on its own.
+func (s *Service) EndUserEffect(ctx context.Context, actorUserId int, userId int, partyId int, userEffectId int) (err error) {
+	_, err = s.Database.GetUserEffectCommand(ctx, userId, partyId, userEffectId)
 
 	if errors.Is(err, sql.ErrNoRows) {
-		return common.NewEffectNotActiveConflictError(effectName)
+		return common.NewUserEffectNotFoundError(userEffectId)
 	}
 
 	if err != nil {
 		return
 	}
 
-	return s.Database.DeleteUserEffectCommand(ctx, userId, partyId, effect.Id, actorUserId, nil)
+	return s.Database.DeleteUserEffectCommand(ctx, userId, partyId, userEffectId, actorUserId, nil)
 }
 
 // StopEndedUserEffects clears the effects whose duration has run out. Nothing else calls the sweep,
@@ -425,7 +407,7 @@ func (s *Service) StopEndedUserEffects(ctx context.Context) error {
 	}
 
 	for _, ended := range endedEffects {
-		err = s.Database.DeleteUserEffectCommand(ctx, ended.UserId, ended.PartyId, ended.EffectId, ended.UserId, nil)
+		err = s.Database.DeleteUserEffectCommand(ctx, ended.UserId, ended.PartyId, ended.Id, ended.UserId, nil)
 
 		if err != nil {
 			slog.Error("StopEndedUserEffect", "userEffectId", ended.Id, "userId", ended.UserId, "error", err)
@@ -489,6 +471,8 @@ func (s *Service) GetNamedUserEffects(ctx context.Context, userId int, partyId i
 
 	for _, detail := range details {
 		named = append(named, typeeffects.NamedUserEffect{
+			Id:          detail.Id,
+			EffectId:    detail.EffectId,
 			Name:        detail.Name,
 			Description: detail.Description,
 			UseCount:    detail.UseCount,

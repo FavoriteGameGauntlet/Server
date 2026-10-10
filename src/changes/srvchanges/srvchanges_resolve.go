@@ -7,8 +7,9 @@ import (
 	"context"
 )
 
-// ResolveChangeEntries turns the names an API caller uses into the ids a change entry stores. It
-// lives here because it is the one place that already reaches every domain an entry can target.
+// ResolveChangeEntries turns the names an API caller uses into the ids a change entry stores, and
+// checks that the item and effect ids it is given exist in the party catalogue. It lives here because
+// it is the one place that already reaches every domain an entry can target.
 func (s *Service) ResolveChangeEntries(ctx context.Context, partyId int, inputs []typechanges.NamedChangeEntry) (entries []typechanges.ChangeEntry, err error) {
 	entries = make([]typechanges.ChangeEntry, 0, len(inputs))
 
@@ -40,18 +41,16 @@ func (s *Service) resolveChangeEntry(ctx context.Context, partyId int, input typ
 		var pointTypeId int
 		pointTypeId, err = s.pointTypeIdByName(ctx, partyId, *input.PointTypeName)
 		entry.PointTypeId = &pointTypeId
-	case input.ItemName != nil:
-		var itemId int
-		itemId, err = s.itemIdByName(ctx, partyId, *input.ItemName)
-		entry.ItemId = &itemId
+	case input.ItemId != nil:
+		err = s.requireActualItem(ctx, partyId, *input.ItemId)
+		entry.ItemId = input.ItemId
 	case input.PerkName != nil:
 		var perkId int
 		perkId, err = s.perkIdByName(ctx, partyId, *input.PerkName)
 		entry.PerkId = &perkId
-	case input.EffectName != nil:
-		var effectId int
-		effectId, err = s.effectIdByName(ctx, partyId, *input.EffectName)
-		entry.EffectId = &effectId
+	case input.EffectId != nil:
+		err = s.requireActualEffect(ctx, partyId, *input.EffectId)
+		entry.EffectId = input.EffectId
 	default:
 		err = common.NewChangeEntryUnprocessableError()
 	}
@@ -69,7 +68,9 @@ func (s *Service) pointTypeIdByName(ctx context.Context, partyId int, name strin
 	return pointType.Id, nil
 }
 
-func (s *Service) itemIdByName(ctx context.Context, partyId int, name string) (id int, err error) {
+// requireActualItem fails with a not found error unless the party catalogue holds an item with the id
+// that hasn't been removed.
+func (s *Service) requireActualItem(ctx context.Context, partyId int, itemId int) (err error) {
 	items, err := s.ItemsDatabase.GetActualItemsCommand(ctx, partyId)
 
 	if err != nil {
@@ -77,12 +78,12 @@ func (s *Service) itemIdByName(ctx context.Context, partyId int, name string) (i
 	}
 
 	for _, item := range items {
-		if item.Name == name {
-			return item.Id, nil
+		if item.Id == itemId {
+			return nil
 		}
 	}
 
-	return 0, common.NewItemNotFoundError(name)
+	return common.NewItemNotFoundError(itemId)
 }
 
 func (s *Service) perkIdByName(ctx context.Context, partyId int, name string) (id int, err error) {
@@ -101,7 +102,9 @@ func (s *Service) perkIdByName(ctx context.Context, partyId int, name string) (i
 	return 0, common.NewPerkNotFoundError(name)
 }
 
-func (s *Service) effectIdByName(ctx context.Context, partyId int, name string) (id int, err error) {
+// requireActualEffect fails with a not found error unless the party catalogue holds an effect with the
+// id that hasn't been removed.
+func (s *Service) requireActualEffect(ctx context.Context, partyId int, effectId int) (err error) {
 	effects, err := s.EffectsDatabase.GetActualEffectsCommand(ctx, partyId)
 
 	if err != nil {
@@ -109,10 +112,10 @@ func (s *Service) effectIdByName(ctx context.Context, partyId int, name string) 
 	}
 
 	for _, effect := range effects {
-		if effect.Name == name {
-			return effect.Id, nil
+		if effect.Id == effectId {
+			return nil
 		}
 	}
 
-	return 0, common.NewEffectNotFoundError(name)
+	return common.NewEffectNotFoundError(effectId)
 }

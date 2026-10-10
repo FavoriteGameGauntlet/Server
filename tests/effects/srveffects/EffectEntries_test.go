@@ -30,7 +30,7 @@ func effectWithChange(effectId int, changeId int) typeeffects.EffectWithChange {
 
 var hasteEntries = []typechanges.NamedChangeEntry{
 	{PointTypeName: ptr("strength"), Amount: 2},
-	{ItemName: ptr("potion"), Amount: 1},
+	{ItemId: ptr(5), Amount: 1},
 }
 
 func TestSrvEffects_EntriesOfListedEffects(test *testing.T) {

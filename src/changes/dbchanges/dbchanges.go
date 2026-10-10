@@ -130,8 +130,9 @@ func (db *Database) GetChangeEntriesJsonbCommand(ctx context.Context, partyId in
 
 var getNamedChangeEntriesQuery = dbaccess.Query{Name: "GetNamedChangeEntriesQuery", SQL: `SELECT * FROM get_named_change_entries($1::integer, $2::integer)`}
 
-// GetNamedChangeEntriesCommand reads the entries of a change with the targets named instead of
-// identified. Targets removed from the catalogue keep their names.
+// GetNamedChangeEntriesCommand reads the entries of a change in the shape the API returns them in:
+// point types and perks named, items and effects identified. Targets removed from the catalogue keep
+// their names and ids.
 func (db *Database) GetNamedChangeEntriesCommand(ctx context.Context, partyId int, changeId int) (entries []typechanges.NamedChangeEntry, err error) {
 	rows, err := dbaccess.QueryRows(ctx, getNamedChangeEntriesQuery, partyId, changeId)
 
@@ -141,7 +142,7 @@ func (db *Database) GetNamedChangeEntriesCommand(ctx context.Context, partyId in
 
 	for rows.Next() {
 		entry := typechanges.NamedChangeEntry{}
-		err = rows.Scan(&entry.PointTypeName, &entry.ItemName, &entry.PerkName, &entry.EffectName, &entry.Amount)
+		err = rows.Scan(&entry.PointTypeName, &entry.ItemId, &entry.PerkName, &entry.EffectId, &entry.Amount)
 
 		if err != nil {
 			_ = rows.Close()

@@ -9,8 +9,8 @@ paths:
   /parties/{partyId}/effects/catalog/removed:
     $ref: "../paths/effects/catalog/removed.yaml"
 
-  /parties/{partyId}/effects/catalog/{name}:
-    $ref: "../paths/effects/catalog/name.yaml"
+  /parties/{partyId}/effects/catalog/{id}:
+    $ref: "../paths/effects/catalog/id.yaml"
 
   /parties/{partyId}/effects/{login}:
     $ref: "../paths/effects/login.yaml"
@@ -18,8 +18,8 @@ paths:
   /parties/{partyId}/effects/{login}/history:
     $ref: "../paths/effects/login/history.yaml"
 
-  /parties/{partyId}/effects/{login}/{name}:
-    $ref: "../paths/effects/login/name.yaml"
+  /parties/{partyId}/effects/{login}/{id}:
+    $ref: "../paths/effects/login/id.yaml"
 
-  /parties/{partyId}/effects/{login}/{name}/use:
-    $ref: "../paths/effects/login/name/use.yaml"
+  /parties/{partyId}/effects/{login}/{id}/use:
+    $ref: "../paths/effects/login/id/use.yaml"

@@ -1,5 +1,13 @@
 type: object
 properties:
+  id:
+    type: integer
+    format: int
+    description: Identifies this copy of the item. A user can hold several copies of the same item.
+  itemId:
+    type: integer
+    format: int
+    description: Identifies the item in the catalogue.
   name:
     $ref: "./Name.yaml"
   description:
@@ -12,4 +20,4 @@ properties:
     format: date-time
   entries:
     $ref: "./NamedChangeEntries.yaml"
-required: [ name, description, usesLeft, receivedDate, entries ]
+required: [ id, itemId, name, description, usesLeft, receivedDate, entries ]

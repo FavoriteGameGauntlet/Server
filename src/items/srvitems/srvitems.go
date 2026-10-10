@@ -10,16 +10,17 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"slices"
 )
 
 type IService interface {
 	GetItems(ctx context.Context, partyId int) ([]typeitems.ItemWithEntries, error)
 	GetRemovedItems(ctx context.Context, partyId int) ([]typeitems.ItemWithEntries, error)
 	CreateItem(ctx context.Context, partyId int, name string, description string, useCount int, entries []typechanges.NamedChangeEntry) (typeitems.ItemWithEntries, error)
-	RemoveItem(ctx context.Context, partyId int, name string) error
+	RemoveItem(ctx context.Context, partyId int, itemId int) error
 	GetUserItems(ctx context.Context, userId int, partyId int) ([]typeitems.UserItemDetail, error)
-	UseItem(ctx context.Context, actorUserId int, userId int, partyId int, itemName string) error
-	DiscardUserItem(ctx context.Context, actorUserId int, userId int, partyId int, itemName string) error
+	UseItem(ctx context.Context, actorUserId int, userId int, partyId int, userItemId int) error
+	DiscardUserItem(ctx context.Context, actorUserId int, userId int, partyId int, userItemId int) error
 	GetItemHistory(ctx context.Context, userId int, partyId int) ([]typeitems.ItemHistory, error)
 }
 
@@ -73,8 +74,8 @@ func (s *Service) withEntries(ctx context.Context, partyId int, items []typeitem
 	return
 }
 
-// CreateItem adds an item to the party catalogue. The entries describe what using it grants. Names
-// identify items across the API, so a name already taken by an actual item is rejected.
+// CreateItem adds an item to the party catalogue. The entries describe what using it grants. A name
+// already taken by an actual item is rejected.
 func (s *Service) CreateItem(
 	ctx context.Context,
 	partyId int,
@@ -121,33 +122,23 @@ func (s *Service) CreateItem(
 	return
 }
 
-func (s *Service) RemoveItem(ctx context.Context, partyId int, name string) (err error) {
-	item, err := s.itemByName(ctx, partyId, name)
-
-	if err != nil {
-		return
-	}
-
-	return s.Database.RemoveItemCommand(ctx, partyId, item.Id)
-}
-
-// itemByName resolves an item from the name the API addresses it by.
-func (s *Service) itemByName(ctx context.Context, partyId int, name string) (item typeitems.Item, err error) {
+// RemoveItem removes an item from the party catalogue. Copies users already hold stay usable.
+func (s *Service) RemoveItem(ctx context.Context, partyId int, itemId int) (err error) {
 	items, err := s.Database.GetActualItemsCommand(ctx, partyId)
 
 	if err != nil {
 		return
 	}
 
-	for _, candidate := range items {
-		if candidate.Name == name {
-			return candidate, nil
-		}
+	isActual := slices.ContainsFunc(items, func(item typeitems.Item) bool {
+		return item.Id == itemId
+	})
+
+	if !isActual {
+		return common.NewItemNotFoundError(itemId)
 	}
 
-	err = common.NewItemNotFoundError(name)
-
-	return
+	return s.Database.RemoveItemCommand(ctx, partyId, itemId)
 }
 
 // GetUserItems lists what the user holds, each item along with what using it grants.
@@ -169,20 +160,15 @@ func (s *Service) GetUserItems(ctx context.Context, userId int, partyId int) (de
 	return
 }
 
-// UseItem spends one use of an item the user holds and grants what it carries to that user. The
-// history event of spending the use is the event the resulting grants are attributed to. Another
-// member may use the item, so everything recorded names the actor, not the holder.
-func (s *Service) UseItem(ctx context.Context, actorUserId int, userId int, partyId int, itemName string) (err error) {
-	item, err := s.itemByName(ctx, partyId, itemName)
-
-	if err != nil {
-		return
-	}
-
-	userItem, err := s.Database.GetUserItemCommand(ctx, userId, partyId, item.Id)
+// UseItem spends one use of a copy of an item the user holds and grants what it carries to that user.
+// The history event of spending the use is the event the resulting grants are attributed to. Another
+// member may use the item, so everything recorded names the actor, not the holder. The copy stays
+// usable after its item is removed from the catalogue.
+func (s *Service) UseItem(ctx context.Context, actorUserId int, userId int, partyId int, userItemId int) (err error) {
+	userItem, err := s.Database.GetUserItemCommand(ctx, userId, partyId, userItemId)
 
 	if errors.Is(err, sql.ErrNoRows) {
-		return common.NewItemNotOwnedConflictError(itemName)
+		return common.NewUserItemNotFoundError(userItemId)
 	}
 
 	if err != nil {
@@ -190,10 +176,10 @@ func (s *Service) UseItem(ctx context.Context, actorUserId int, userId int, part
 	}
 
 	if userItem.UsesLeft < 1 {
-		return common.NewItemUsedUpConflictError(itemName)
+		return common.NewItemUsedUpConflictError(userItemId)
 	}
 
-	withChange, err := s.Database.GetItemCommand(ctx, partyId, item.Id)
+	templateEntries, err := s.ChangesDatabase.GetChangeEntriesJsonbCommand(ctx, partyId, userItem.ChangeId)
 
 	if err != nil {
 		return
@@ -201,21 +187,21 @@ func (s *Service) UseItem(ctx context.Context, actorUserId int, userId int, part
 
 	usesLeft := userItem.UsesLeft - 1
 
-	historyEventId, err := s.Database.ChangeUserItemUsesLeftCommand(ctx, userId, partyId, item.Id, usesLeft, actorUserId, nil)
+	historyEventId, err := s.Database.ChangeUserItemUsesLeftCommand(ctx, userId, partyId, userItemId, usesLeft, actorUserId, nil)
 
 	if err != nil {
 		return
 	}
 
 	if usesLeft == 0 {
-		err = s.Database.DeleteUserItemCommand(ctx, userId, partyId, item.Id, actorUserId, &historyEventId)
+		err = s.Database.DeleteUserItemCommand(ctx, userId, partyId, userItemId, actorUserId, &historyEventId)
 
 		if err != nil {
 			return
 		}
 	}
 
-	return s.applyItemChange(ctx, actorUserId, userId, partyId, withChange.Change.Entries, historyEventId)
+	return s.applyItemChange(ctx, actorUserId, userId, partyId, templateEntries, historyEventId)
 }
 
 // applyItemChange stamps the item's change template onto the user and applies it.
@@ -241,25 +227,19 @@ func (s *Service) applyItemChange(ctx context.Context, actorUserId int, userId i
 	return s.ChangesService.ApplyChangeEntries(ctx, partyId, userChange.Entries, actorUserId, sourceEventId)
 }
 
-// DiscardUserItem drops an item the user holds without using it.
-func (s *Service) DiscardUserItem(ctx context.Context, actorUserId int, userId int, partyId int, itemName string) (err error) {
-	item, err := s.itemByName(ctx, partyId, itemName)
-
-	if err != nil {
-		return
-	}
-
-	_, err = s.Database.GetUserItemCommand(ctx, userId, partyId, item.Id)
+// DiscardUserItem drops one copy of an item the user holds without using it.
+func (s *Service) DiscardUserItem(ctx context.Context, actorUserId int, userId int, partyId int, userItemId int) (err error) {
+	_, err = s.Database.GetUserItemCommand(ctx, userId, partyId, userItemId)
 
 	if errors.Is(err, sql.ErrNoRows) {
-		return common.NewItemNotOwnedConflictError(itemName)
+		return common.NewUserItemNotFoundError(userItemId)
 	}
 
 	if err != nil {
 		return
 	}
 
-	return s.Database.DeleteUserItemCommand(ctx, userId, partyId, item.Id, actorUserId, nil)
+	return s.Database.DeleteUserItemCommand(ctx, userId, partyId, userItemId, actorUserId, nil)
 }
 
 func (s *Service) GetItemHistory(ctx context.Context, userId int, partyId int) (history []typeitems.ItemHistory, err error) {

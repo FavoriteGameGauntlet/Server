@@ -9,8 +9,8 @@ paths:
   /parties/{partyId}/items/catalog/removed:
     $ref: "../paths/items/catalog/removed.yaml"
 
-  /parties/{partyId}/items/catalog/{name}:
-    $ref: "../paths/items/catalog/name.yaml"
+  /parties/{partyId}/items/catalog/{id}:
+    $ref: "../paths/items/catalog/id.yaml"
 
   /parties/{partyId}/items/{login}:
     $ref: "../paths/items/login.yaml"
@@ -18,8 +18,8 @@ paths:
   /parties/{partyId}/items/{login}/history:
     $ref: "../paths/items/login/history.yaml"
 
-  /parties/{partyId}/items/{login}/{name}:
-    $ref: "../paths/items/login/name.yaml"
+  /parties/{partyId}/items/{login}/{id}:
+    $ref: "../paths/items/login/id.yaml"
 
-  /parties/{partyId}/items/{login}/{name}/use:
-    $ref: "../paths/items/login/name/use.yaml"
+  /parties/{partyId}/items/{login}/{id}/use:
+    $ref: "../paths/items/login/id/use.yaml"

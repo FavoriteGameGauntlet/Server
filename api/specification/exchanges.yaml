@@ -169,16 +169,24 @@ components:
     NamedChangeEntry:
       type: object
       description: |
-        Names one thing a change grants. Exactly one of pointTypeName, itemName, perkName or effectName has to be set. The amount carries the sign it is applied with, so a cost is negative.
+        Names one thing a change grants. Exactly one of pointTypeName, itemId, perkName or effectId has to be set. The amount carries the sign it is applied with, so a cost is negative.
       properties:
         pointTypeName:
           $ref: '#/components/schemas/NullableName'
-        itemName:
-          $ref: '#/components/schemas/NullableName'
+        itemId:
+          type: integer
+          format: int
+          nullable: true
+          default: null
+          x-omitempty: true
         perkName:
           $ref: '#/components/schemas/NullableName'
-        effectName:
-          $ref: '#/components/schemas/NullableName'
+        effectId:
+          type: integer
+          format: int
+          nullable: true
+          default: null
+          x-omitempty: true
         amount:
           type: integer
           format: int

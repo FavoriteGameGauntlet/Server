@@ -22,6 +22,7 @@ type Effect struct {
 	// Duration The duration notation as defined by ISO 8601
 	Duration  *Duration          `json:"duration,omitempty"`
 	Entries   NamedChangeEntries `json:"entries"`
+	Id        int                `json:"id"`
 	Modifiers []PointModifier    `json:"modifiers"`
 	Name      Name               `json:"name"`
 
@@ -48,14 +49,20 @@ type EffectHistoryEntries = []EffectHistoryEntry
 
 // EffectHistoryEntry defines model for EffectHistoryEntry.
 type EffectHistoryEntry struct {
-	Action      string             `json:"action"`
-	ActorLogin  Login              `json:"actorLogin"`
-	CreatedDate time.Time          `json:"createdDate"`
-	Description string             `json:"description"`
-	Entries     NamedChangeEntries `json:"entries"`
-	Name        Name               `json:"name"`
-	UseCount    *int               `json:"useCount,omitempty"`
-	UsesLeft    *int               `json:"usesLeft,omitempty"`
+	Action      string    `json:"action"`
+	ActorLogin  Login     `json:"actorLogin"`
+	CreatedDate time.Time `json:"createdDate"`
+	Description string    `json:"description"`
+
+	// EffectId Identifies the effect in the catalogue.
+	EffectId int                `json:"effectId"`
+	Entries  NamedChangeEntries `json:"entries"`
+	Name     Name               `json:"name"`
+	UseCount *int               `json:"useCount,omitempty"`
+
+	// UserEffectId Identifies the copy of the effect the entry is about. The copy may be gone by now.
+	UserEffectId int  `json:"userEffectId"`
+	UsesLeft     *int `json:"usesLeft,omitempty"`
 }
 
 // Effects defines model for Effects.
@@ -76,11 +83,11 @@ type Name = string
 // NamedChangeEntries defines model for NamedChangeEntries.
 type NamedChangeEntries = []NamedChangeEntry
 
-// NamedChangeEntry Names one thing a change grants. Exactly one of pointTypeName, itemName, perkName or effectName has to be set. The amount carries the sign it is applied with, so a cost is negative.
+// NamedChangeEntry Names one thing a change grants. Exactly one of pointTypeName, itemId, perkName or effectId has to be set. The amount carries the sign it is applied with, so a cost is negative.
 type NamedChangeEntry struct {
 	Amount        int           `json:"amount"`
-	EffectName    *NullableName `json:"effectName,omitempty"`
-	ItemName      *NullableName `json:"itemName,omitempty"`
+	EffectId      *int          `json:"effectId,omitempty"`
+	ItemId        *int          `json:"itemId,omitempty"`
 	PerkName      *NullableName `json:"perkName,omitempty"`
 	PointTypeName *NullableName `json:"pointTypeName,omitempty"`
 }
@@ -99,11 +106,17 @@ type UserEffect struct {
 	Description string `json:"description"`
 
 	// Duration The duration notation as defined by ISO 8601
-	Duration    *Duration          `json:"duration,omitempty"`
-	Entries     NamedChangeEntries `json:"entries"`
-	Modifiers   []PointModifier    `json:"modifiers"`
-	Name        Name               `json:"name"`
-	StartedDate time.Time          `json:"startedDate"`
+	Duration *Duration `json:"duration,omitempty"`
+
+	// EffectId Identifies the effect in the catalogue.
+	EffectId int                `json:"effectId"`
+	Entries  NamedChangeEntries `json:"entries"`
+
+	// Id Identifies this copy of the effect. A user can hold several copies of the same effect.
+	Id          int             `json:"id"`
+	Modifiers   []PointModifier `json:"modifiers"`
+	Name        Name            `json:"name"`
+	StartedDate time.Time       `json:"startedDate"`
 
 	// UseCount How many times the effect can be used, left out for no limit.
 	UseCount *int `json:"useCount,omitempty"`
@@ -114,6 +127,9 @@ type UserEffect struct {
 
 // UserEffects defines model for UserEffects.
 type UserEffects = []UserEffect
+
+// Id defines model for Id.
+type Id = int
 
 // PartyId defines model for PartyId.
 type PartyId = int
@@ -151,8 +167,8 @@ type ServerInterface interface {
 	// (GET /parties/{partyId}/effects/catalog/removed)
 	GetRemovedEffects(ctx echo.Context, partyId PartyId) error
 
-	// (DELETE /parties/{partyId}/effects/catalog/{name})
-	RemoveEffect(ctx echo.Context, partyId PartyId, name Name) error
+	// (DELETE /parties/{partyId}/effects/catalog/{id})
+	RemoveEffect(ctx echo.Context, partyId PartyId, id Id) error
 
 	// (GET /parties/{partyId}/effects/{login})
 	GetUserEffects(ctx echo.Context, partyId PartyId, login Login) error
@@ -160,11 +176,11 @@ type ServerInterface interface {
 	// (GET /parties/{partyId}/effects/{login}/history)
 	GetUserEffectHistory(ctx echo.Context, partyId PartyId, login Login) error
 
-	// (DELETE /parties/{partyId}/effects/{login}/{name})
-	EndUserEffect(ctx echo.Context, partyId PartyId, login Login, name Name) error
+	// (DELETE /parties/{partyId}/effects/{login}/{id})
+	EndUserEffect(ctx echo.Context, partyId PartyId, login Login, id Id) error
 
-	// (POST /parties/{partyId}/effects/{login}/{name}/use)
-	UseUserEffect(ctx echo.Context, partyId PartyId, login Login, name Name) error
+	// (POST /parties/{partyId}/effects/{login}/{id}/use)
+	UseUserEffect(ctx echo.Context, partyId PartyId, login Login, id Id) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -231,16 +247,16 @@ func (w *ServerInterfaceWrapper) RemoveEffect(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
 	}
 
-	// ------------- Path parameter "name" -------------
-	var name Name
+	// ------------- Path parameter "id" -------------
+	var id Id
 
-	err = runtime.BindStyledParameterWithOptions("simple", "name", ctx.Param("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.RemoveEffect(ctx, partyId, name)
+	err = w.Handler.RemoveEffect(ctx, partyId, id)
 	return err
 }
 
@@ -311,16 +327,16 @@ func (w *ServerInterfaceWrapper) EndUserEffect(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
 	}
 
-	// ------------- Path parameter "name" -------------
-	var name Name
+	// ------------- Path parameter "id" -------------
+	var id Id
 
-	err = runtime.BindStyledParameterWithOptions("simple", "name", ctx.Param("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.EndUserEffect(ctx, partyId, login, name)
+	err = w.Handler.EndUserEffect(ctx, partyId, login, id)
 	return err
 }
 
@@ -343,16 +359,16 @@ func (w *ServerInterfaceWrapper) UseUserEffect(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
 	}
 
-	// ------------- Path parameter "name" -------------
-	var name Name
+	// ------------- Path parameter "id" -------------
+	var id Id
 
-	err = runtime.BindStyledParameterWithOptions("simple", "name", ctx.Param("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.UseUserEffect(ctx, partyId, login, name)
+	err = w.Handler.UseUserEffect(ctx, partyId, login, id)
 	return err
 }
 
@@ -387,10 +403,10 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/parties/:partyId/effects/catalog", wrapper.GetEffects)
 	router.POST(baseURL+"/parties/:partyId/effects/catalog", wrapper.CreateEffect)
 	router.GET(baseURL+"/parties/:partyId/effects/catalog/removed", wrapper.GetRemovedEffects)
-	router.DELETE(baseURL+"/parties/:partyId/effects/catalog/:name", wrapper.RemoveEffect)
+	router.DELETE(baseURL+"/parties/:partyId/effects/catalog/:id", wrapper.RemoveEffect)
 	router.GET(baseURL+"/parties/:partyId/effects/:login", wrapper.GetUserEffects)
 	router.GET(baseURL+"/parties/:partyId/effects/:login/history", wrapper.GetUserEffectHistory)
-	router.DELETE(baseURL+"/parties/:partyId/effects/:login/:name", wrapper.EndUserEffect)
-	router.POST(baseURL+"/parties/:partyId/effects/:login/:name/use", wrapper.UseUserEffect)
+	router.DELETE(baseURL+"/parties/:partyId/effects/:login/:id", wrapper.EndUserEffect)
+	router.POST(baseURL+"/parties/:partyId/effects/:login/:id/use", wrapper.UseUserEffect)
 
 }

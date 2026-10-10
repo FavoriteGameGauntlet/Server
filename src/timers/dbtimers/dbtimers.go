@@ -210,7 +210,7 @@ func (db *Database) GetTimerRewardEntriesCommand(ctx context.Context, partyId in
 
 	for rows.Next() {
 		entry := typechanges.NamedChangeEntry{}
-		err = rows.Scan(&entry.Amount, &entry.PointTypeName, &entry.ItemName, &entry.PerkName, &entry.EffectName)
+		err = rows.Scan(&entry.Amount, &entry.PointTypeName, &entry.ItemId, &entry.PerkName, &entry.EffectId)
 
 		if err != nil {
 			_ = rows.Close()

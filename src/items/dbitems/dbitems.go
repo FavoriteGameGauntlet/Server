@@ -10,16 +10,15 @@ import (
 
 type IDatabase interface {
 	CreateItemCommand(ctx context.Context, partyId int, name string, description string, useCount int, change typechanges.Change) (item typeitems.ItemWithChange, err error)
-	GetItemCommand(ctx context.Context, partyId int, itemId int) (item typeitems.ItemWithChange, err error)
 	GetActualItemsCommand(ctx context.Context, partyId int) (items []typeitems.Item, err error)
 	GetRemovedItemsCommand(ctx context.Context, partyId int) (items []typeitems.Item, err error)
 	RemoveItemCommand(ctx context.Context, partyId int, itemId int) error
 	CreateUserItemCommand(ctx context.Context, userId int, partyId int, itemId int, actorUserId int, sourceEventId int) (userItem typeitems.UserItem, err error)
-	GetUserItemCommand(ctx context.Context, userId int, partyId int, itemId int) (userItem typeitems.UserItem, err error)
+	GetUserItemCommand(ctx context.Context, userId int, partyId int, userItemId int) (userItem typeitems.UserItemWithChangeId, err error)
 	GetUserItemsCommand(ctx context.Context, userId int, partyId int) (userItems []typeitems.UserItemDetail, err error)
-	ChangeUserItemUsesLeftCommand(ctx context.Context, userId int, partyId int, itemId int, usesLeft int, actorUserId int, sourceEventId *int) (historyEventId int, err error)
+	ChangeUserItemUsesLeftCommand(ctx context.Context, userId int, partyId int, userItemId int, usesLeft int, actorUserId int, sourceEventId *int) (historyEventId int, err error)
 	GetItemHistoryCommand(ctx context.Context, userId int, partyId int) (history []typeitems.ItemHistory, err error)
-	DeleteUserItemCommand(ctx context.Context, userId int, partyId int, itemId int, actorUserId int, sourceEventId *int) error
+	DeleteUserItemCommand(ctx context.Context, userId int, partyId int, userItemId int, actorUserId int, sourceEventId *int) error
 }
 
 type Database struct{}
@@ -41,22 +40,6 @@ func (db *Database) CreateItemCommand(ctx context.Context, partyId int, name str
 	}
 
 	dbaccess.LogDbResult(createItemQuery, item, err)
-
-	return
-}
-
-var getItemQuery = dbaccess.Query{Name: "GetItemQuery", SQL: `SELECT * FROM get_item($1::integer, $2::integer)`}
-
-func (db *Database) GetItemCommand(ctx context.Context, partyId int, itemId int) (item typeitems.ItemWithChange, err error) {
-	row := dbaccess.QueryRow(ctx, getItemQuery, partyId, itemId)
-
-	var changeRaw []byte
-	err = row.Scan(&item.Id, &item.PartyId, &item.Name, &item.Description, &item.UseCount, &changeRaw)
-	if err == nil {
-		err = json.Unmarshal(changeRaw, &item.Change)
-	}
-
-	dbaccess.LogDbResult(getItemQuery, item, err)
 
 	return
 }
@@ -124,10 +107,10 @@ func (db *Database) CreateUserItemCommand(ctx context.Context, userId int, party
 
 var getUserItemQuery = dbaccess.Query{Name: "GetUserItemQuery", SQL: `SELECT * FROM get_user_item($1::integer, $2::integer, $3::integer)`}
 
-func (db *Database) GetUserItemCommand(ctx context.Context, userId int, partyId int, itemId int) (userItem typeitems.UserItem, err error) {
-	row := dbaccess.QueryRow(ctx, getUserItemQuery, userId, partyId, itemId)
+func (db *Database) GetUserItemCommand(ctx context.Context, userId int, partyId int, userItemId int) (userItem typeitems.UserItemWithChangeId, err error) {
+	row := dbaccess.QueryRow(ctx, getUserItemQuery, userId, partyId, userItemId)
 
-	err = row.Scan(&userItem.Id, &userItem.UserId, &userItem.PartyId, &userItem.ItemId, &userItem.UsesLeft, &userItem.ReceivedDate)
+	err = row.Scan(&userItem.Id, &userItem.UserId, &userItem.PartyId, &userItem.ItemId, &userItem.UsesLeft, &userItem.ReceivedDate, &userItem.ChangeId)
 
 	dbaccess.LogDbResult(getUserItemQuery, userItem, err)
 
@@ -145,7 +128,7 @@ func (db *Database) GetUserItemsCommand(ctx context.Context, userId int, partyId
 
 	for rows.Next() {
 		userItem := typeitems.UserItemDetail{}
-		err = rows.Scan(&userItem.Name, &userItem.Description, &userItem.UsesLeft, &userItem.ReceivedDate, &userItem.ChangeId)
+		err = rows.Scan(&userItem.Id, &userItem.ItemId, &userItem.Name, &userItem.Description, &userItem.UsesLeft, &userItem.ReceivedDate, &userItem.ChangeId)
 
 		if err != nil {
 			_ = rows.Close()
@@ -165,8 +148,8 @@ func (db *Database) GetUserItemsCommand(ctx context.Context, userId int, partyId
 
 var changeUserItemUsesLeftQuery = dbaccess.Query{Name: "ChangeUserItemUsesLeftQuery", SQL: `SELECT change_user_item_uses_left($1::integer, $2::integer, $3::integer, $4::integer, $5::integer, $6::integer)`}
 
-func (db *Database) ChangeUserItemUsesLeftCommand(ctx context.Context, userId int, partyId int, itemId int, usesLeft int, actorUserId int, sourceEventId *int) (historyEventId int, err error) {
-	row := dbaccess.QueryRow(ctx, changeUserItemUsesLeftQuery, userId, partyId, itemId, usesLeft, actorUserId, sourceEventId)
+func (db *Database) ChangeUserItemUsesLeftCommand(ctx context.Context, userId int, partyId int, userItemId int, usesLeft int, actorUserId int, sourceEventId *int) (historyEventId int, err error) {
+	row := dbaccess.QueryRow(ctx, changeUserItemUsesLeftQuery, userId, partyId, userItemId, usesLeft, actorUserId, sourceEventId)
 
 	err = row.Scan(&historyEventId)
 
@@ -186,7 +169,7 @@ func (db *Database) GetItemHistoryCommand(ctx context.Context, userId int, party
 
 	for rows.Next() {
 		entry := typeitems.ItemHistory{}
-		err = rows.Scan(&entry.Id, &entry.UserId, &entry.ActorUserId, &entry.PartyId, &entry.ItemId, &entry.Name, &entry.UseCount, &entry.Action, &entry.UsesLeft, &entry.SourceEventId, &entry.CreatedDate)
+		err = rows.Scan(&entry.Id, &entry.UserId, &entry.ActorUserId, &entry.PartyId, &entry.ItemId, &entry.UserItemId, &entry.Name, &entry.UseCount, &entry.Action, &entry.UsesLeft, &entry.SourceEventId, &entry.CreatedDate)
 
 		if err != nil {
 			_ = rows.Close()
@@ -206,8 +189,8 @@ func (db *Database) GetItemHistoryCommand(ctx context.Context, userId int, party
 
 var deleteUserItemQuery = dbaccess.Query{Name: "DeleteUserItemQuery", SQL: `SELECT delete_user_item($1::integer, $2::integer, $3::integer, $4::integer, $5::integer)`}
 
-func (db *Database) DeleteUserItemCommand(ctx context.Context, userId int, partyId int, itemId int, actorUserId int, sourceEventId *int) error {
-	_, err := dbaccess.Exec(ctx, deleteUserItemQuery, userId, partyId, itemId, actorUserId, sourceEventId)
+func (db *Database) DeleteUserItemCommand(ctx context.Context, userId int, partyId int, userItemId int, actorUserId int, sourceEventId *int) error {
+	_, err := dbaccess.Exec(ctx, deleteUserItemQuery, userId, partyId, userItemId, actorUserId, sourceEventId)
 
 	dbaccess.LogDbResult(deleteUserItemQuery, nil, err)
 

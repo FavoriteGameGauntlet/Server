@@ -1,5 +1,8 @@
 type: object
 properties:
+  id:
+    type: integer
+    format: int
   name:
     $ref: "./Name.yaml"
   description:
@@ -9,4 +12,4 @@ properties:
     format: int
   entries:
     $ref: "./NamedChangeEntries.yaml"
-required: [ name, description, useCount, entries ]
+required: [ id, name, description, useCount, entries ]

@@ -53,8 +53,8 @@ func (m *DatabaseMock) CreateUserEffectCommand(_ context.Context, userId int, pa
 	return
 }
 
-func (m *DatabaseMock) GetUserEffectCommand(_ context.Context, userId int, partyId int, effectId int) (userEffect typeeffects.UserEffectDetail, err error) {
-	args := m.Called(userId, partyId, effectId)
+func (m *DatabaseMock) GetUserEffectCommand(_ context.Context, userId int, partyId int, userEffectId int) (userEffect typeeffects.UserEffectDetail, err error) {
+	args := m.Called(userId, partyId, userEffectId)
 	userEffect = args.Get(0).(typeeffects.UserEffectDetail)
 	err = args.Error(1)
 	return
@@ -67,15 +67,15 @@ func (m *DatabaseMock) GetUserEffectsCommand(_ context.Context, userId int, part
 	return
 }
 
-func (m *DatabaseMock) ChangeUserEffectUsesLeftCommand(_ context.Context, userId int, partyId int, effectId int, usesLeft *int, actorUserId int, sourceEventId *int) (historyEventId int, err error) {
-	args := m.Called(userId, partyId, effectId, usesLeft, actorUserId, sourceEventId)
+func (m *DatabaseMock) ChangeUserEffectUsesLeftCommand(_ context.Context, userId int, partyId int, userEffectId int, usesLeft *int, actorUserId int, sourceEventId *int) (historyEventId int, err error) {
+	args := m.Called(userId, partyId, userEffectId, usesLeft, actorUserId, sourceEventId)
 	historyEventId = args.Int(0)
 	err = args.Error(1)
 	return
 }
 
-func (m *DatabaseMock) DeleteUserEffectCommand(_ context.Context, userId int, partyId int, effectId int, actorUserId int, sourceEventId *int) error {
-	args := m.Called(userId, partyId, effectId, actorUserId, sourceEventId)
+func (m *DatabaseMock) DeleteUserEffectCommand(_ context.Context, userId int, partyId int, userEffectId int, actorUserId int, sourceEventId *int) error {
+	args := m.Called(userId, partyId, userEffectId, actorUserId, sourceEventId)
 	return args.Error(0)
 }
 

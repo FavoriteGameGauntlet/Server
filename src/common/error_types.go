@@ -228,14 +228,27 @@ func NewNotSharedPointTypeConflictError(name string) error {
 	}
 }
 
-func NewItemNotFoundError(name string) error {
+func NewItemNotFoundError(id int) error {
 	message := fmt.Sprintf(
-		"The item \"%s\" wasn't found.",
-		name)
+		"The item with id %d wasn't found.",
+		id)
 
 	return &NotFoundError{
 		&BaseError{
 			Code:    "ITEM_NOT_FOUND",
+			Message: message,
+		},
+	}
+}
+
+func NewUserItemNotFoundError(id int) error {
+	message := fmt.Sprintf(
+		"The user doesn't have an item with id %d.",
+		id)
+
+	return &NotFoundError{
+		&BaseError{
+			Code:    "USER_ITEM_NOT_FOUND",
 			Message: message,
 		},
 	}
@@ -267,14 +280,27 @@ func NewPerkNotFoundError(name string) error {
 	}
 }
 
-func NewEffectNotFoundError(name string) error {
+func NewEffectNotFoundError(id int) error {
 	message := fmt.Sprintf(
-		"The effect \"%s\" wasn't found.",
-		name)
+		"The effect with id %d wasn't found.",
+		id)
 
 	return &NotFoundError{
 		&BaseError{
 			Code:    "EFFECT_NOT_FOUND",
+			Message: message,
+		},
+	}
+}
+
+func NewUserEffectNotFoundError(id int) error {
+	message := fmt.Sprintf(
+		"The user doesn't have an effect with id %d.",
+		id)
+
+	return &NotFoundError{
+		&BaseError{
+			Code:    "USER_EFFECT_NOT_FOUND",
 			Message: message,
 		},
 	}
@@ -289,23 +315,10 @@ func NewChangeEntryUnprocessableError() error {
 	}
 }
 
-func NewItemNotOwnedConflictError(name string) error {
+func NewItemUsedUpConflictError(id int) error {
 	message := fmt.Sprintf(
-		"The item \"%s\" isn't owned.",
-		name)
-
-	return &ConflictError{
-		&BaseError{
-			Code:    "ITEM_NOT_OWNED",
-			Message: message,
-		},
-	}
-}
-
-func NewItemUsedUpConflictError(name string) error {
-	message := fmt.Sprintf(
-		"The item \"%s\" has no uses left.",
-		name)
+		"The item with id %d has no uses left.",
+		id)
 
 	return &ConflictError{
 		&BaseError{
@@ -315,23 +328,10 @@ func NewItemUsedUpConflictError(name string) error {
 	}
 }
 
-func NewEffectNotActiveConflictError(name string) error {
+func NewEffectUsedUpConflictError(id int) error {
 	message := fmt.Sprintf(
-		"The effect \"%s\" isn't active.",
-		name)
-
-	return &ConflictError{
-		&BaseError{
-			Code:    "EFFECT_NOT_ACTIVE",
-			Message: message,
-		},
-	}
-}
-
-func NewEffectUsedUpConflictError(name string) error {
-	message := fmt.Sprintf(
-		"The effect \"%s\" has no uses left.",
-		name)
+		"The effect with id %d has no uses left.",
+		id)
 
 	return &ConflictError{
 		&BaseError{

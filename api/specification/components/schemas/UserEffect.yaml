@@ -1,5 +1,13 @@
 type: object
 properties:
+  id:
+    type: integer
+    format: int
+    description: Identifies this copy of the effect. A user can hold several copies of the same effect.
+  effectId:
+    type: integer
+    format: int
+    description: Identifies the effect in the catalogue.
   name:
     $ref: "./Name.yaml"
   description:
@@ -27,4 +35,4 @@ properties:
       $ref: "./PointModifier.yaml"
   entries:
     $ref: "./NamedChangeEntries.yaml"
-required: [ name, description, startedDate, modifiers, entries ]
+required: [ id, effectId, name, description, startedDate, modifiers, entries ]

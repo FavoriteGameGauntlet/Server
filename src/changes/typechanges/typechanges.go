@@ -22,13 +22,14 @@ type UserChange struct {
 	Entries  []ChangeEntry `json:"entries"`
 }
 
-// NamedChangeEntry names what one entry of a change grants, the way the API addresses it. The
-// service resolves the name to the id the schema stores. Amount carries the sign it is applied
-// with, so a cost is negative. The API returns the entries of a stored change in this same shape.
+// NamedChangeEntry names what one entry of a change grants, the way the API addresses it: point types
+// and perks by name, items and effects by id. The service resolves the names to the ids the schema
+// stores. Amount carries the sign it is applied with, so a cost is negative. The API returns the
+// entries of a stored change in this same shape.
 type NamedChangeEntry struct {
 	PointTypeName *string
-	ItemName      *string
+	ItemId        *int
 	PerkName      *string
-	EffectName    *string
+	EffectId      *int
 	Amount        int
 }
