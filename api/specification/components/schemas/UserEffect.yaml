@@ -8,12 +8,14 @@ properties:
     type: integer
     format: int
     nullable: true
-    description: How many times the effect can be used, or null for no limit.
+    x-omitempty: true
+    description: How many times the effect can be used, left out for no limit.
   usesLeft:
     type: integer
     format: int
     nullable: true
-    description: How many uses are left, or null for an effect without a limit.
+    x-omitempty: true
+    description: How many uses are left, left out for an effect without a limit.
   duration:
     $ref: "./Duration.yaml"
   startedDate:
@@ -25,4 +27,4 @@ properties:
       $ref: "./PointModifier.yaml"
   entries:
     $ref: "./NamedChangeEntries.yaml"
-required: [ name, description, useCount, usesLeft, startedDate, modifiers, entries ]
+required: [ name, description, startedDate, modifiers, entries ]

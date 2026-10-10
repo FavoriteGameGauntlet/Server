@@ -192,6 +192,7 @@ components:
         - $ref: '#/components/schemas/Name'
       nullable: true
       default: null
+      x-omitempty: true
     NamedChangeEntry:
       type: object
       description: |
@@ -225,7 +226,8 @@ components:
           type: integer
           format: int
           nullable: true
-          description: How many times the effect can be used, or null for no limit.
+          x-omitempty: true
+          description: How many times the effect can be used, left out for no limit.
         duration:
           $ref: '#/components/schemas/Duration'
         modifiers:
@@ -237,7 +239,6 @@ components:
       required:
         - name
         - description
-        - useCount
         - modifiers
         - entries
     Effects:
@@ -299,12 +300,14 @@ components:
           type: integer
           format: int
           nullable: true
-          description: How many times the effect can be used, or null for no limit.
+          x-omitempty: true
+          description: How many times the effect can be used, left out for no limit.
         usesLeft:
           type: integer
           format: int
           nullable: true
-          description: How many uses are left, or null for an effect without a limit.
+          x-omitempty: true
+          description: How many uses are left, left out for an effect without a limit.
         duration:
           $ref: '#/components/schemas/Duration'
         startedDate:
@@ -319,8 +322,6 @@ components:
       required:
         - name
         - description
-        - useCount
-        - usesLeft
         - startedDate
         - modifiers
         - entries
@@ -343,10 +344,12 @@ components:
           type: integer
           format: int
           nullable: true
+          x-omitempty: true
         usesLeft:
           type: integer
           format: int
           nullable: true
+          x-omitempty: true
         createdDate:
           type: string
           format: date-time
@@ -357,8 +360,6 @@ components:
         - description
         - action
         - actorLogin
-        - useCount
-        - usesLeft
         - createdDate
         - entries
     EffectHistoryEntries:

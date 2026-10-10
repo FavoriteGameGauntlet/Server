@@ -50,6 +50,7 @@ components:
         - $ref: '#/components/schemas/Name'
       nullable: true
       default: null
+      x-omitempty: true
     NamedChangeEntry:
       type: object
       description: |

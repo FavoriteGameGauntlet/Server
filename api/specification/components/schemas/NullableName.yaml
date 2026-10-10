@@ -2,3 +2,4 @@ allOf:
   - $ref: "./Name.yaml"
 nullable: true
 default: null
+x-omitempty: true

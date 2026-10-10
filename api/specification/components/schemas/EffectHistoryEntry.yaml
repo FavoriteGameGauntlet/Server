@@ -12,13 +12,15 @@ properties:
     type: integer
     format: int
     nullable: true
+    x-omitempty: true
   usesLeft:
     type: integer
     format: int
     nullable: true
+    x-omitempty: true
   createdDate:
     type: string
     format: date-time
   entries:
     $ref: "./NamedChangeEntries.yaml"
-required: [ name, description, action, actorLogin, useCount, usesLeft, createdDate, entries ]
+required: [ name, description, action, actorLogin, createdDate, entries ]

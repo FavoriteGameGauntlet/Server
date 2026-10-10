@@ -177,6 +177,7 @@ components:
         - $ref: '#/components/schemas/Name'
       nullable: true
       default: null
+      x-omitempty: true
     NamedChangeEntry:
       type: object
       description: |
@@ -293,6 +294,7 @@ components:
           type: integer
           format: int
           nullable: true
+          x-omitempty: true
         createdDate:
           type: string
           format: date-time
@@ -301,7 +303,6 @@ components:
         - action
         - actorLogin
         - useCount
-        - usesLeft
         - createdDate
     ItemHistoryEntries:
       type: array

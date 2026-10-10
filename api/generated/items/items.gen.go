@@ -44,7 +44,7 @@ type ItemHistoryEntry struct {
 	CreatedDate time.Time `json:"createdDate"`
 	Name        Name      `json:"name"`
 	UseCount    int       `json:"useCount"`
-	UsesLeft    *int      `json:"usesLeft"`
+	UsesLeft    *int      `json:"usesLeft,omitempty"`
 }
 
 // Items defines model for Items.
@@ -62,10 +62,10 @@ type NamedChangeEntries = []NamedChangeEntry
 // NamedChangeEntry Names one thing a change grants. Exactly one of pointTypeName, itemName, perkName or effectName has to be set. The amount carries the sign it is applied with, so a cost is negative.
 type NamedChangeEntry struct {
 	Amount        int           `json:"amount"`
-	EffectName    *NullableName `json:"effectName"`
-	ItemName      *NullableName `json:"itemName"`
-	PerkName      *NullableName `json:"perkName"`
-	PointTypeName *NullableName `json:"pointTypeName"`
+	EffectName    *NullableName `json:"effectName,omitempty"`
+	ItemName      *NullableName `json:"itemName,omitempty"`
+	PerkName      *NullableName `json:"perkName,omitempty"`
+	PointTypeName *NullableName `json:"pointTypeName,omitempty"`
 }
 
 // NullableName defines model for NullableName.
