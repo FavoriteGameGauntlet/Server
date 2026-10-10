@@ -224,9 +224,9 @@ func convertDtoToNamedChangeEntries(entriesDto genexchanges.NamedChangeEntries) 
 	for i, entryDto := range entriesDto {
 		inputs[i] = typechanges.NamedChangeEntry{
 			PointTypeName: entryDto.PointTypeName,
-			ItemName:      entryDto.ItemName,
+			ItemId:        entryDto.ItemId,
 			PerkName:      entryDto.PerkName,
-			EffectName:    entryDto.EffectName,
+			EffectId:      entryDto.EffectId,
 			Amount:        entryDto.Amount,
 		}
 	}

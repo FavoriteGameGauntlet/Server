@@ -1,10 +1,11 @@
 type: object
-description: Creates a perk. The named effect is what a user receives when the perk is granted.
+description: Creates a perk. The effect is what a user receives when the perk is granted.
 properties:
   name:
     $ref: "./Name.yaml"
   description:
     type: string
-  effectName:
-    $ref: "./Name.yaml"
-required: [ name, description, effectName ]
+  effectId:
+    type: integer
+    format: int
+required: [ name, description, effectId ]

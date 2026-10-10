@@ -30,10 +30,10 @@ type Perk struct {
 	Name        Name   `json:"name"`
 }
 
-// PerkCreate Creates a perk. The named effect is what a user receives when the perk is granted.
+// PerkCreate Creates a perk. The effect is what a user receives when the perk is granted.
 type PerkCreate struct {
 	Description string `json:"description"`
-	EffectName  Name   `json:"effectName"`
+	EffectId    int    `json:"effectId"`
 	Name        Name   `json:"name"`
 }
 
@@ -79,7 +79,7 @@ type PerksResponse = Perks
 // UserPerksResponse defines model for UserPerksResponse.
 type UserPerksResponse = UserPerks
 
-// PerkCreateRequest Creates a perk. The named effect is what a user receives when the perk is granted.
+// PerkCreateRequest Creates a perk. The effect is what a user receives when the perk is granted.
 type PerkCreateRequest = PerkCreate
 
 // CreatePerkJSONRequestBody defines body for CreatePerk for application/json ContentType.

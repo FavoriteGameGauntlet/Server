@@ -54,14 +54,14 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /parties/{partyId}/items/catalog/{name}:
+  /parties/{partyId}/items/catalog/{id}:
     delete:
       operationId: removeItem
       tags:
         - Items
       parameters:
         - $ref: '#/components/parameters/PartyId'
-        - $ref: '#/components/parameters/Name'
+        - $ref: '#/components/parameters/Id'
       responses:
         '204':
           description: Success.
@@ -105,7 +105,7 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /parties/{partyId}/items/{login}/{name}:
+  /parties/{partyId}/items/{login}/{id}:
     delete:
       operationId: discardUserItem
       tags:
@@ -113,7 +113,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Login'
-        - $ref: '#/components/parameters/Name'
+        - $ref: '#/components/parameters/Id'
       responses:
         '204':
           description: Success.
@@ -121,11 +121,9 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
         '404':
           $ref: '#/components/responses/ErrorResponse'
-        '409':
-          $ref: '#/components/responses/ErrorResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
-  /parties/{partyId}/items/{login}/{name}/use:
+  /parties/{partyId}/items/{login}/{id}/use:
     post:
       operationId: useUserItem
       tags:
@@ -133,7 +131,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/PartyId'
         - $ref: '#/components/parameters/Login'
-        - $ref: '#/components/parameters/Name'
+        - $ref: '#/components/parameters/Id'
       responses:
         '204':
           description: Success.
@@ -154,12 +152,13 @@ components:
       schema:
         type: integer
         format: int
-    Name:
-      name: name
+    Id:
+      name: id
       in: path
       required: true
       schema:
-        $ref: '#/components/schemas/Name'
+        type: integer
+        format: int
     Login:
       name: login
       in: path
@@ -181,16 +180,24 @@ components:
     NamedChangeEntry:
       type: object
       description: |
-        Names one thing a change grants. Exactly one of pointTypeName, itemName, perkName or effectName has to be set. The amount carries the sign it is applied with, so a cost is negative.
+        Names one thing a change grants. Exactly one of pointTypeName, itemId, perkName or effectId has to be set. The amount carries the sign it is applied with, so a cost is negative.
       properties:
         pointTypeName:
           $ref: '#/components/schemas/NullableName'
-        itemName:
-          $ref: '#/components/schemas/NullableName'
+        itemId:
+          type: integer
+          format: int
+          nullable: true
+          default: null
+          x-omitempty: true
         perkName:
           $ref: '#/components/schemas/NullableName'
-        effectName:
-          $ref: '#/components/schemas/NullableName'
+        effectId:
+          type: integer
+          format: int
+          nullable: true
+          default: null
+          x-omitempty: true
         amount:
           type: integer
           format: int
@@ -203,6 +210,9 @@ components:
     Item:
       type: object
       properties:
+        id:
+          type: integer
+          format: int
         name:
           $ref: '#/components/schemas/Name'
         description:
@@ -213,6 +223,7 @@ components:
         entries:
           $ref: '#/components/schemas/NamedChangeEntries'
       required:
+        - id
         - name
         - description
         - useCount
@@ -256,6 +267,14 @@ components:
     UserItem:
       type: object
       properties:
+        id:
+          type: integer
+          format: int
+          description: Identifies this copy of the item. A user can hold several copies of the same item.
+        itemId:
+          type: integer
+          format: int
+          description: Identifies the item in the catalogue.
         name:
           $ref: '#/components/schemas/Name'
         description:
@@ -269,6 +288,8 @@ components:
         entries:
           $ref: '#/components/schemas/NamedChangeEntries'
       required:
+        - id
+        - itemId
         - name
         - description
         - usesLeft
@@ -281,6 +302,14 @@ components:
     ItemHistoryEntry:
       type: object
       properties:
+        itemId:
+          type: integer
+          format: int
+          description: Identifies the item in the catalogue.
+        userItemId:
+          type: integer
+          format: int
+          description: Identifies the copy of the item the entry is about. The copy may be gone by now.
         name:
           $ref: '#/components/schemas/Name'
         action:
@@ -299,6 +328,8 @@ components:
           type: string
           format: date-time
       required:
+        - itemId
+        - userItemId
         - name
         - action
         - actorLogin

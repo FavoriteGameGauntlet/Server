@@ -1,5 +1,13 @@
 type: object
 properties:
+  itemId:
+    type: integer
+    format: int
+    description: Identifies the item in the catalogue.
+  userItemId:
+    type: integer
+    format: int
+    description: Identifies the copy of the item the entry is about. The copy may be gone by now.
   name:
     $ref: "./Name.yaml"
   action:
@@ -17,4 +25,4 @@ properties:
   createdDate:
     type: string
     format: date-time
-required: [ name, action, actorLogin, useCount, createdDate ]
+required: [ itemId, userItemId, name, action, actorLogin, useCount, createdDate ]

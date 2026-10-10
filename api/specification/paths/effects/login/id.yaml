@@ -1,9 +1,10 @@
 delete:
-  operationId: removeItem
-  tags: [ Items ]
+  operationId: endUserEffect
+  tags: [ Effects ]
   parameters:
     - $ref: "../../../components/parameters/PartyId.yaml"
-    - $ref: "../../../components/parameters/Name.yaml"
+    - $ref: "../../../components/parameters/Login.yaml"
+    - $ref: "../../../components/parameters/Id.yaml"
   responses:
     "204":
       description: Success.

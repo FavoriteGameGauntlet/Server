@@ -42,8 +42,8 @@ func TestSrvTimers_SetTimerReward_UnresolvableEntry_KeepsCurrentReward(test *tes
 	timerDb := new(dbtimermock.DatabaseMock)
 	changes := new(srvchangesmock.ServiceMock)
 
-	itemName := "Missing"
-	inputs := []typechanges.NamedChangeEntry{{ItemName: &itemName, Amount: 1}}
+	itemId := 99
+	inputs := []typechanges.NamedChangeEntry{{ItemId: &itemId, Amount: 1}}
 
 	changes.On("ResolveChangeEntries", 1, inputs).Return([]typechanges.ChangeEntry(nil), dbError)
 

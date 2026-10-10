@@ -1,10 +1,10 @@
 post:
-  operationId: useUserEffect
-  tags: [ Effects ]
+  operationId: useUserItem
+  tags: [ Items ]
   parameters:
     - $ref: "../../../../components/parameters/PartyId.yaml"
     - $ref: "../../../../components/parameters/Login.yaml"
-    - $ref: "../../../../components/parameters/Name.yaml"
+    - $ref: "../../../../components/parameters/Id.yaml"
   responses:
     "204":
       description: Success.

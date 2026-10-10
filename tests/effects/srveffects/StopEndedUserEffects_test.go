@@ -19,8 +19,8 @@ func TestSrvEffects_StopEndedUserEffects(test *testing.T) {
 			{Id: 21, UserId: 7, PartyId: 1, EffectId: 3},
 			{Id: 22, UserId: 8, PartyId: 1, EffectId: 4, UsesLeft: ptr(2)},
 		}, nil)
-		effectsDb.On("DeleteUserEffectCommand", 7, 1, 3, 7, (*int)(nil)).Return(nil)
-		effectsDb.On("DeleteUserEffectCommand", 8, 1, 4, 8, (*int)(nil)).Return(nil)
+		effectsDb.On("DeleteUserEffectCommand", 7, 1, 21, 7, (*int)(nil)).Return(nil)
+		effectsDb.On("DeleteUserEffectCommand", 8, 1, 22, 8, (*int)(nil)).Return(nil)
 
 		sut := srveffects.Service{Database: effectsDb}
 
@@ -49,8 +49,8 @@ func TestSrvEffects_StopEndedUserEffects(test *testing.T) {
 			{Id: 21, UserId: 7, PartyId: 1, EffectId: 3},
 			{Id: 22, UserId: 8, PartyId: 1, EffectId: 4},
 		}, nil)
-		effectsDb.On("DeleteUserEffectCommand", 7, 1, 3, 7, (*int)(nil)).Return(errors.New("db is down"))
-		effectsDb.On("DeleteUserEffectCommand", 8, 1, 4, 8, (*int)(nil)).Return(nil)
+		effectsDb.On("DeleteUserEffectCommand", 7, 1, 21, 7, (*int)(nil)).Return(errors.New("db is down"))
+		effectsDb.On("DeleteUserEffectCommand", 8, 1, 22, 8, (*int)(nil)).Return(nil)
 
 		sut := srveffects.Service{Database: effectsDb}
 

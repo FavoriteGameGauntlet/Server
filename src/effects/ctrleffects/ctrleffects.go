@@ -124,15 +124,15 @@ func (c *Controller) CreateEffect(ctx echo.Context, partyId geneffects.PartyId) 
 	return ctx.JSON(http.StatusCreated, convertEffectToDto(effect))
 }
 
-// RemoveEffect (DELETE /parties/{partyId}/effects/catalog/{name})
-func (c *Controller) RemoveEffect(ctx echo.Context, partyId geneffects.PartyId, name geneffects.Name) error {
+// RemoveEffect (DELETE /parties/{partyId}/effects/catalog/{id})
+func (c *Controller) RemoveEffect(ctx echo.Context, partyId geneffects.PartyId, id geneffects.Id) error {
 	err := common.RequireAdmin(ctx, c.AuthService, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.RemoveEffect(ctx.Request().Context(), partyId, name)
+	err = c.Service.RemoveEffect(ctx.Request().Context(), partyId, id)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -158,6 +158,8 @@ func (c *Controller) GetUserEffects(ctx echo.Context, partyId geneffects.PartyId
 	userEffectsDto := make(geneffects.UserEffects, len(userEffects))
 	for i, userEffect := range userEffects {
 		userEffectsDto[i] = geneffects.UserEffect{
+			Id:          userEffect.Id,
+			EffectId:    userEffect.EffectId,
 			Name:        userEffect.Name,
 			Description: userEffect.Description,
 			UseCount:    userEffect.UseCount,
@@ -172,15 +174,15 @@ func (c *Controller) GetUserEffects(ctx echo.Context, partyId geneffects.PartyId
 	return ctx.JSON(http.StatusOK, userEffectsDto)
 }
 
-// UseUserEffect (POST /parties/{partyId}/effects/{login}/{name}/use)
-func (c *Controller) UseUserEffect(ctx echo.Context, partyId geneffects.PartyId, login geneffects.Login, name geneffects.Name) error {
+// UseUserEffect (POST /parties/{partyId}/effects/{login}/{id}/use)
+func (c *Controller) UseUserEffect(ctx echo.Context, partyId geneffects.PartyId, login geneffects.Login, id geneffects.Id) error {
 	actorUserId, userId, err := c.userIdFromLogin(ctx, partyId, login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.UseEffect(ctx.Request().Context(), actorUserId, userId, partyId, name)
+	err = c.Service.UseEffect(ctx.Request().Context(), actorUserId, userId, partyId, id)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -189,15 +191,15 @@ func (c *Controller) UseUserEffect(ctx echo.Context, partyId geneffects.PartyId,
 	return ctx.NoContent(http.StatusNoContent)
 }
 
-// EndUserEffect (DELETE /parties/{partyId}/effects/{login}/{name})
-func (c *Controller) EndUserEffect(ctx echo.Context, partyId geneffects.PartyId, login geneffects.Login, name geneffects.Name) error {
+// EndUserEffect (DELETE /parties/{partyId}/effects/{login}/{id})
+func (c *Controller) EndUserEffect(ctx echo.Context, partyId geneffects.PartyId, login geneffects.Login, id geneffects.Id) error {
 	actorUserId, userId, err := c.userIdFromLogin(ctx, partyId, login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.EndUserEffect(ctx.Request().Context(), actorUserId, userId, partyId, name)
+	err = c.Service.EndUserEffect(ctx.Request().Context(), actorUserId, userId, partyId, id)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -234,14 +236,16 @@ func (c *Controller) GetUserEffectHistory(ctx echo.Context, partyId geneffects.P
 	historyDto := make(geneffects.EffectHistoryEntries, len(history))
 	for i, entry := range history {
 		historyDto[i] = geneffects.EffectHistoryEntry{
-			Name:        entry.Name,
-			Description: entry.Description,
-			Action:      entry.Action,
-			ActorLogin:  loginsByUserId[entry.ActorUserId],
-			UseCount:    entry.UseCount,
-			UsesLeft:    entry.UsesLeft,
-			CreatedDate: entry.CreatedDate,
-			Entries:     convertNamedChangeEntriesToDto(entry.Entries),
+			EffectId:     entry.EffectId,
+			UserEffectId: entry.UserEffectId,
+			Name:         entry.Name,
+			Description:  entry.Description,
+			Action:       entry.Action,
+			ActorLogin:   loginsByUserId[entry.ActorUserId],
+			UseCount:     entry.UseCount,
+			UsesLeft:     entry.UsesLeft,
+			CreatedDate:  entry.CreatedDate,
+			Entries:      convertNamedChangeEntriesToDto(entry.Entries),
 		}
 	}
 
@@ -281,6 +285,7 @@ func convertDurationToDto(duration *time.Duration) *geneffects.Duration {
 
 func convertEffectToDto(effect typeeffects.NamedEffect) geneffects.Effect {
 	return geneffects.Effect{
+		Id:          effect.Id,
 		Name:        effect.Name,
 		Description: effect.Description,
 		UseCount:    effect.UseCount,
@@ -336,9 +341,9 @@ func convertNamedChangeEntriesToDto(inputs []typechanges.NamedChangeEntry) genef
 	for i, input := range inputs {
 		entriesDto[i] = geneffects.NamedChangeEntry{
 			PointTypeName: input.PointTypeName,
-			ItemName:      input.ItemName,
+			ItemId:        input.ItemId,
 			PerkName:      input.PerkName,
-			EffectName:    input.EffectName,
+			EffectId:      input.EffectId,
 			Amount:        input.Amount,
 		}
 	}
@@ -352,9 +357,9 @@ func convertDtoToNamedChangeEntries(entriesDto geneffects.NamedChangeEntries) []
 	for i, entryDto := range entriesDto {
 		inputs[i] = typechanges.NamedChangeEntry{
 			PointTypeName: entryDto.PointTypeName,
-			ItemName:      entryDto.ItemName,
+			ItemId:        entryDto.ItemId,
 			PerkName:      entryDto.PerkName,
-			EffectName:    entryDto.EffectName,
+			EffectId:      entryDto.EffectId,
 			Amount:        entryDto.Amount,
 		}
 	}

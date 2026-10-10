@@ -3,17 +3,19 @@ package srvperks
 import (
 	"FGG-Service/src/common"
 	"FGG-Service/src/effects/dbeffects"
+	"FGG-Service/src/effects/typeeffects"
 	"FGG-Service/src/perks/dbperks"
 	"FGG-Service/src/perks/typeperks"
 	"context"
 	"database/sql"
 	"errors"
+	"slices"
 )
 
 type IService interface {
 	GetPerks(ctx context.Context, partyId int) ([]typeperks.Perk, error)
 	GetRemovedPerks(ctx context.Context, partyId int) ([]typeperks.Perk, error)
-	CreatePerk(ctx context.Context, partyId int, name string, description string, effectName string) (typeperks.Perk, error)
+	CreatePerk(ctx context.Context, partyId int, name string, description string, effectId int) (typeperks.Perk, error)
 	RemovePerk(ctx context.Context, partyId int, name string) error
 	GetUserPerks(ctx context.Context, userId int, partyId int) ([]typeperks.UserPerkDetail, error)
 	RevokeUserPerk(ctx context.Context, actorUserId int, userId int, partyId int, perkName string) error
@@ -42,23 +44,19 @@ func (s *Service) GetRemovedPerks(ctx context.Context, partyId int) (perks []typ
 
 // CreatePerk adds a perk to the party catalogue. A perk always wraps one effect, which is what a
 // user actually receives when the perk is granted.
-func (s *Service) CreatePerk(ctx context.Context, partyId int, name string, description string, effectName string) (perk typeperks.Perk, err error) {
+func (s *Service) CreatePerk(ctx context.Context, partyId int, name string, description string, effectId int) (perk typeperks.Perk, err error) {
 	effects, err := s.EffectsDatabase.GetActualEffectsCommand(ctx, partyId)
 
 	if err != nil {
 		return
 	}
 
-	effectId := 0
-	for _, effect := range effects {
-		if effect.Name == effectName {
-			effectId = effect.Id
-			break
-		}
-	}
+	isEffectActual := slices.ContainsFunc(effects, func(effect typeeffects.Effect) bool {
+		return effect.Id == effectId
+	})
 
-	if effectId == 0 {
-		err = common.NewEffectNotFoundError(effectName)
+	if !isEffectActual {
+		err = common.NewEffectNotFoundError(effectId)
 		return
 	}
 

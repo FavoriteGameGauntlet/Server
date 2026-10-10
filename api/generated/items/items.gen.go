@@ -22,6 +22,7 @@ type Error struct {
 type Item struct {
 	Description string             `json:"description"`
 	Entries     NamedChangeEntries `json:"entries"`
+	Id          int                `json:"id"`
 	Name        Name               `json:"name"`
 	UseCount    int                `json:"useCount"`
 }
@@ -42,9 +43,15 @@ type ItemHistoryEntry struct {
 	Action      string    `json:"action"`
 	ActorLogin  Login     `json:"actorLogin"`
 	CreatedDate time.Time `json:"createdDate"`
-	Name        Name      `json:"name"`
-	UseCount    int       `json:"useCount"`
-	UsesLeft    *int      `json:"usesLeft,omitempty"`
+
+	// ItemId Identifies the item in the catalogue.
+	ItemId   int  `json:"itemId"`
+	Name     Name `json:"name"`
+	UseCount int  `json:"useCount"`
+
+	// UserItemId Identifies the copy of the item the entry is about. The copy may be gone by now.
+	UserItemId int  `json:"userItemId"`
+	UsesLeft   *int `json:"usesLeft,omitempty"`
 }
 
 // Items defines model for Items.
@@ -59,11 +66,11 @@ type Name = string
 // NamedChangeEntries defines model for NamedChangeEntries.
 type NamedChangeEntries = []NamedChangeEntry
 
-// NamedChangeEntry Names one thing a change grants. Exactly one of pointTypeName, itemName, perkName or effectName has to be set. The amount carries the sign it is applied with, so a cost is negative.
+// NamedChangeEntry Names one thing a change grants. Exactly one of pointTypeName, itemId, perkName or effectId has to be set. The amount carries the sign it is applied with, so a cost is negative.
 type NamedChangeEntry struct {
 	Amount        int           `json:"amount"`
-	EffectName    *NullableName `json:"effectName,omitempty"`
-	ItemName      *NullableName `json:"itemName,omitempty"`
+	EffectId      *int          `json:"effectId,omitempty"`
+	ItemId        *int          `json:"itemId,omitempty"`
 	PerkName      *NullableName `json:"perkName,omitempty"`
 	PointTypeName *NullableName `json:"pointTypeName,omitempty"`
 }
@@ -73,15 +80,24 @@ type NullableName = Name
 
 // UserItem defines model for UserItem.
 type UserItem struct {
-	Description  string             `json:"description"`
-	Entries      NamedChangeEntries `json:"entries"`
-	Name         Name               `json:"name"`
-	ReceivedDate time.Time          `json:"receivedDate"`
-	UsesLeft     int                `json:"usesLeft"`
+	Description string             `json:"description"`
+	Entries     NamedChangeEntries `json:"entries"`
+
+	// Id Identifies this copy of the item. A user can hold several copies of the same item.
+	Id int `json:"id"`
+
+	// ItemId Identifies the item in the catalogue.
+	ItemId       int       `json:"itemId"`
+	Name         Name      `json:"name"`
+	ReceivedDate time.Time `json:"receivedDate"`
+	UsesLeft     int       `json:"usesLeft"`
 }
 
 // UserItems defines model for UserItems.
 type UserItems = []UserItem
+
+// Id defines model for Id.
+type Id = int
 
 // PartyId defines model for PartyId.
 type PartyId = int
@@ -119,8 +135,8 @@ type ServerInterface interface {
 	// (GET /parties/{partyId}/items/catalog/removed)
 	GetRemovedItems(ctx echo.Context, partyId PartyId) error
 
-	// (DELETE /parties/{partyId}/items/catalog/{name})
-	RemoveItem(ctx echo.Context, partyId PartyId, name Name) error
+	// (DELETE /parties/{partyId}/items/catalog/{id})
+	RemoveItem(ctx echo.Context, partyId PartyId, id Id) error
 
 	// (GET /parties/{partyId}/items/{login})
 	GetUserItems(ctx echo.Context, partyId PartyId, login Login) error
@@ -128,11 +144,11 @@ type ServerInterface interface {
 	// (GET /parties/{partyId}/items/{login}/history)
 	GetUserItemHistory(ctx echo.Context, partyId PartyId, login Login) error
 
-	// (DELETE /parties/{partyId}/items/{login}/{name})
-	DiscardUserItem(ctx echo.Context, partyId PartyId, login Login, name Name) error
+	// (DELETE /parties/{partyId}/items/{login}/{id})
+	DiscardUserItem(ctx echo.Context, partyId PartyId, login Login, id Id) error
 
-	// (POST /parties/{partyId}/items/{login}/{name}/use)
-	UseUserItem(ctx echo.Context, partyId PartyId, login Login, name Name) error
+	// (POST /parties/{partyId}/items/{login}/{id}/use)
+	UseUserItem(ctx echo.Context, partyId PartyId, login Login, id Id) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -199,16 +215,16 @@ func (w *ServerInterfaceWrapper) RemoveItem(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter partyId: %s", err))
 	}
 
-	// ------------- Path parameter "name" -------------
-	var name Name
+	// ------------- Path parameter "id" -------------
+	var id Id
 
-	err = runtime.BindStyledParameterWithOptions("simple", "name", ctx.Param("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.RemoveItem(ctx, partyId, name)
+	err = w.Handler.RemoveItem(ctx, partyId, id)
 	return err
 }
 
@@ -279,16 +295,16 @@ func (w *ServerInterfaceWrapper) DiscardUserItem(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
 	}
 
-	// ------------- Path parameter "name" -------------
-	var name Name
+	// ------------- Path parameter "id" -------------
+	var id Id
 
-	err = runtime.BindStyledParameterWithOptions("simple", "name", ctx.Param("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.DiscardUserItem(ctx, partyId, login, name)
+	err = w.Handler.DiscardUserItem(ctx, partyId, login, id)
 	return err
 }
 
@@ -311,16 +327,16 @@ func (w *ServerInterfaceWrapper) UseUserItem(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter login: %s", err))
 	}
 
-	// ------------- Path parameter "name" -------------
-	var name Name
+	// ------------- Path parameter "id" -------------
+	var id Id
 
-	err = runtime.BindStyledParameterWithOptions("simple", "name", ctx.Param("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.UseUserItem(ctx, partyId, login, name)
+	err = w.Handler.UseUserItem(ctx, partyId, login, id)
 	return err
 }
 
@@ -355,10 +371,10 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/parties/:partyId/items/catalog", wrapper.GetItems)
 	router.POST(baseURL+"/parties/:partyId/items/catalog", wrapper.CreateItem)
 	router.GET(baseURL+"/parties/:partyId/items/catalog/removed", wrapper.GetRemovedItems)
-	router.DELETE(baseURL+"/parties/:partyId/items/catalog/:name", wrapper.RemoveItem)
+	router.DELETE(baseURL+"/parties/:partyId/items/catalog/:id", wrapper.RemoveItem)
 	router.GET(baseURL+"/parties/:partyId/items/:login", wrapper.GetUserItems)
 	router.GET(baseURL+"/parties/:partyId/items/:login/history", wrapper.GetUserItemHistory)
-	router.DELETE(baseURL+"/parties/:partyId/items/:login/:name", wrapper.DiscardUserItem)
-	router.POST(baseURL+"/parties/:partyId/items/:login/:name/use", wrapper.UseUserItem)
+	router.DELETE(baseURL+"/parties/:partyId/items/:login/:id", wrapper.DiscardUserItem)
+	router.POST(baseURL+"/parties/:partyId/items/:login/:id/use", wrapper.UseUserItem)
 
 }

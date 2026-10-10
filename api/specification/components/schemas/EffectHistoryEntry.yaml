@@ -1,5 +1,13 @@
 type: object
 properties:
+  effectId:
+    type: integer
+    format: int
+    description: Identifies the effect in the catalogue.
+  userEffectId:
+    type: integer
+    format: int
+    description: Identifies the copy of the effect the entry is about. The copy may be gone by now.
   name:
     $ref: "./Name.yaml"
   description:
@@ -23,4 +31,4 @@ properties:
     format: date-time
   entries:
     $ref: "./NamedChangeEntries.yaml"
-required: [ name, description, action, actorLogin, createdDate, entries ]
+required: [ effectId, userEffectId, name, description, action, actorLogin, createdDate, entries ]

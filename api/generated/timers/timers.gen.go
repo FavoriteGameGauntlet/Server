@@ -35,11 +35,11 @@ type Name = string
 // NamedChangeEntries defines model for NamedChangeEntries.
 type NamedChangeEntries = []NamedChangeEntry
 
-// NamedChangeEntry Names one thing a change grants. Exactly one of pointTypeName, itemName, perkName or effectName has to be set. The amount carries the sign it is applied with, so a cost is negative.
+// NamedChangeEntry Names one thing a change grants. Exactly one of pointTypeName, itemId, perkName or effectId has to be set. The amount carries the sign it is applied with, so a cost is negative.
 type NamedChangeEntry struct {
 	Amount        int           `json:"amount"`
-	EffectName    *NullableName `json:"effectName,omitempty"`
-	ItemName      *NullableName `json:"itemName,omitempty"`
+	EffectId      *int          `json:"effectId,omitempty"`
+	ItemId        *int          `json:"itemId,omitempty"`
 	PerkName      *NullableName `json:"perkName,omitempty"`
 	PointTypeName *NullableName `json:"pointTypeName,omitempty"`
 }

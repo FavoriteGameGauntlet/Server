@@ -62,6 +62,7 @@ type EffectHistory struct {
 	ActorUserId   int
 	PartyId       int
 	EffectId      int
+	UserEffectId  int
 	Name          string
 	Description   string
 	UseCount      *int
@@ -91,6 +92,7 @@ type NamedPointModifier struct {
 
 // NamedEffect is a catalogue effect, with its passive modifiers named and the entries using it grants.
 type NamedEffect struct {
+	Id          int
 	Name        string
 	Description string
 	UseCount    *int
@@ -99,9 +101,11 @@ type NamedEffect struct {
 	Entries     []typechanges.NamedChangeEntry
 }
 
-// NamedUserEffect is an active effect of a user, with its passive modifiers named and the entries
-// using it grants.
+// NamedUserEffect is a copy of an effect a user holds, with its passive modifiers named and the
+// entries using it grants. Id identifies the copy, EffectId the catalogue effect it is a copy of.
 type NamedUserEffect struct {
+	Id          int
+	EffectId    int
 	Name        string
 	Description string
 	UseCount    *int

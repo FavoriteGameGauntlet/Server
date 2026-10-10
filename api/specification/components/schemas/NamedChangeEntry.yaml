@@ -1,16 +1,24 @@
 type: object
 description: >
-  Names one thing a change grants. Exactly one of pointTypeName, itemName, perkName or effectName
+  Names one thing a change grants. Exactly one of pointTypeName, itemId, perkName or effectId
   has to be set. The amount carries the sign it is applied with, so a cost is negative.
 properties:
   pointTypeName:
     $ref: "./NullableName.yaml"
-  itemName:
-    $ref: "./NullableName.yaml"
+  itemId:
+    type: integer
+    format: int
+    nullable: true
+    default: null
+    x-omitempty: true
   perkName:
     $ref: "./NullableName.yaml"
-  effectName:
-    $ref: "./NullableName.yaml"
+  effectId:
+    type: integer
+    format: int
+    nullable: true
+    default: null
+    x-omitempty: true
   amount:
     type: integer
     format: int

@@ -174,18 +174,19 @@ components:
         - message
     PerkCreate:
       type: object
-      description: Creates a perk. The named effect is what a user receives when the perk is granted.
+      description: Creates a perk. The effect is what a user receives when the perk is granted.
       properties:
         name:
           $ref: '#/components/schemas/Name'
         description:
           type: string
-        effectName:
-          $ref: '#/components/schemas/Name'
+        effectId:
+          type: integer
+          format: int
       required:
         - name
         - description
-        - effectName
+        - effectId
     Login:
       type: string
       pattern: ^\w+$

@@ -102,15 +102,15 @@ func (c *Controller) CreateItem(ctx echo.Context, partyId genitems.PartyId) erro
 	return ctx.JSON(http.StatusCreated, convertItemToDto(item))
 }
 
-// RemoveItem (DELETE /parties/{partyId}/items/catalog/{name})
-func (c *Controller) RemoveItem(ctx echo.Context, partyId genitems.PartyId, name genitems.Name) error {
+// RemoveItem (DELETE /parties/{partyId}/items/catalog/{id})
+func (c *Controller) RemoveItem(ctx echo.Context, partyId genitems.PartyId, id genitems.Id) error {
 	err := common.RequireAdmin(ctx, c.AuthService, partyId)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.RemoveItem(ctx.Request().Context(), partyId, name)
+	err = c.Service.RemoveItem(ctx.Request().Context(), partyId, id)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -136,6 +136,8 @@ func (c *Controller) GetUserItems(ctx echo.Context, partyId genitems.PartyId, lo
 	userItemsDto := make(genitems.UserItems, len(userItems))
 	for i, userItem := range userItems {
 		userItemsDto[i] = genitems.UserItem{
+			Id:           userItem.Id,
+			ItemId:       userItem.ItemId,
 			Name:         userItem.Name,
 			Description:  userItem.Description,
 			UsesLeft:     userItem.UsesLeft,
@@ -147,15 +149,15 @@ func (c *Controller) GetUserItems(ctx echo.Context, partyId genitems.PartyId, lo
 	return ctx.JSON(http.StatusOK, userItemsDto)
 }
 
-// UseUserItem (POST /parties/{partyId}/items/{login}/{name}/use)
-func (c *Controller) UseUserItem(ctx echo.Context, partyId genitems.PartyId, login genitems.Login, name genitems.Name) error {
+// UseUserItem (POST /parties/{partyId}/items/{login}/{id}/use)
+func (c *Controller) UseUserItem(ctx echo.Context, partyId genitems.PartyId, login genitems.Login, id genitems.Id) error {
 	actorUserId, userId, err := c.userIdFromLogin(ctx, partyId, login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.UseItem(ctx.Request().Context(), actorUserId, userId, partyId, name)
+	err = c.Service.UseItem(ctx.Request().Context(), actorUserId, userId, partyId, id)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -164,15 +166,15 @@ func (c *Controller) UseUserItem(ctx echo.Context, partyId genitems.PartyId, log
 	return ctx.NoContent(http.StatusNoContent)
 }
 
-// DiscardUserItem (DELETE /parties/{partyId}/items/{login}/{name})
-func (c *Controller) DiscardUserItem(ctx echo.Context, partyId genitems.PartyId, login genitems.Login, name genitems.Name) error {
+// DiscardUserItem (DELETE /parties/{partyId}/items/{login}/{id})
+func (c *Controller) DiscardUserItem(ctx echo.Context, partyId genitems.PartyId, login genitems.Login, id genitems.Id) error {
 	actorUserId, userId, err := c.userIdFromLogin(ctx, partyId, login)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
 	}
 
-	err = c.Service.DiscardUserItem(ctx.Request().Context(), actorUserId, userId, partyId, name)
+	err = c.Service.DiscardUserItem(ctx.Request().Context(), actorUserId, userId, partyId, id)
 
 	if err != nil {
 		return common.SendJSONErrorResponse(ctx, err)
@@ -209,6 +211,8 @@ func (c *Controller) GetUserItemHistory(ctx echo.Context, partyId genitems.Party
 	historyDto := make(genitems.ItemHistoryEntries, len(history))
 	for i, entry := range history {
 		historyDto[i] = genitems.ItemHistoryEntry{
+			ItemId:      entry.ItemId,
+			UserItemId:  entry.UserItemId,
 			Name:        entry.Name,
 			Action:      entry.Action,
 			ActorLogin:  loginsByUserId[entry.ActorUserId],
@@ -244,6 +248,7 @@ func (c *Controller) userIdFromLogin(ctx echo.Context, partyId genitems.PartyId,
 
 func convertItemToDto(item typeitems.ItemWithEntries) genitems.Item {
 	return genitems.Item{
+		Id:          item.Id,
 		Name:        item.Name,
 		Description: item.Description,
 		UseCount:    item.UseCount,
@@ -267,9 +272,9 @@ func convertNamedChangeEntriesToDto(inputs []typechanges.NamedChangeEntry) genit
 	for i, input := range inputs {
 		entriesDto[i] = genitems.NamedChangeEntry{
 			PointTypeName: input.PointTypeName,
-			ItemName:      input.ItemName,
+			ItemId:        input.ItemId,
 			PerkName:      input.PerkName,
-			EffectName:    input.EffectName,
+			EffectId:      input.EffectId,
 			Amount:        input.Amount,
 		}
 	}
@@ -283,9 +288,9 @@ func convertDtoToNamedChangeEntries(entriesDto genitems.NamedChangeEntries) []ty
 	for i, entryDto := range entriesDto {
 		inputs[i] = typechanges.NamedChangeEntry{
 			PointTypeName: entryDto.PointTypeName,
-			ItemName:      entryDto.ItemName,
+			ItemId:        entryDto.ItemId,
 			PerkName:      entryDto.PerkName,
-			EffectName:    entryDto.EffectName,
+			EffectId:      entryDto.EffectId,
 			Amount:        entryDto.Amount,
 		}
 	}
