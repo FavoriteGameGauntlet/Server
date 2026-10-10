@@ -70,6 +70,8 @@ type EffectHistory struct {
 	UsesLeft      *int
 	SourceEventId *int
 	CreatedDate   time.Time
+	// Entries is what using the effect grants. The schema does not return it with the history rows.
+	Entries []typechanges.NamedChangeEntry
 }
 
 type EndedUserEffect struct {
@@ -87,16 +89,18 @@ type NamedPointModifier struct {
 	Amount        int
 }
 
-// NamedEffect is a catalogue effect, with its passive modifiers named.
+// NamedEffect is a catalogue effect, with its passive modifiers named and the entries using it grants.
 type NamedEffect struct {
 	Name        string
 	Description string
 	UseCount    *int
 	Duration    *time.Duration
 	Modifiers   []NamedPointModifier
+	Entries     []typechanges.NamedChangeEntry
 }
 
-// NamedUserEffect is an active effect of a user, with its passive modifiers named.
+// NamedUserEffect is an active effect of a user, with its passive modifiers named and the entries
+// using it grants.
 type NamedUserEffect struct {
 	Name        string
 	Description string
@@ -105,4 +109,5 @@ type NamedUserEffect struct {
 	Duration    *time.Duration
 	StartedDate time.Time
 	Modifiers   []NamedPointModifier
+	Entries     []typechanges.NamedChangeEntry
 }

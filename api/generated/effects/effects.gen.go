@@ -20,9 +20,10 @@ type Effect struct {
 	Description string `json:"description"`
 
 	// Duration The duration notation as defined by ISO 8601
-	Duration  *Duration       `json:"duration,omitempty"`
-	Modifiers []PointModifier `json:"modifiers"`
-	Name      Name            `json:"name"`
+	Duration  *Duration          `json:"duration,omitempty"`
+	Entries   NamedChangeEntries `json:"entries"`
+	Modifiers []PointModifier    `json:"modifiers"`
+	Name      Name               `json:"name"`
 
 	// UseCount How many times the effect can be used, or null for no limit.
 	UseCount *int `json:"useCount"`
@@ -47,13 +48,14 @@ type EffectHistoryEntries = []EffectHistoryEntry
 
 // EffectHistoryEntry defines model for EffectHistoryEntry.
 type EffectHistoryEntry struct {
-	Action      string    `json:"action"`
-	ActorLogin  Login     `json:"actorLogin"`
-	CreatedDate time.Time `json:"createdDate"`
-	Description string    `json:"description"`
-	Name        Name      `json:"name"`
-	UseCount    *int      `json:"useCount"`
-	UsesLeft    *int      `json:"usesLeft"`
+	Action      string             `json:"action"`
+	ActorLogin  Login              `json:"actorLogin"`
+	CreatedDate time.Time          `json:"createdDate"`
+	Description string             `json:"description"`
+	Entries     NamedChangeEntries `json:"entries"`
+	Name        Name               `json:"name"`
+	UseCount    *int               `json:"useCount"`
+	UsesLeft    *int               `json:"usesLeft"`
 }
 
 // Effects defines model for Effects.
@@ -97,10 +99,11 @@ type UserEffect struct {
 	Description string `json:"description"`
 
 	// Duration The duration notation as defined by ISO 8601
-	Duration    *Duration       `json:"duration,omitempty"`
-	Modifiers   []PointModifier `json:"modifiers"`
-	Name        Name            `json:"name"`
-	StartedDate time.Time       `json:"startedDate"`
+	Duration    *Duration          `json:"duration,omitempty"`
+	Entries     NamedChangeEntries `json:"entries"`
+	Modifiers   []PointModifier    `json:"modifiers"`
+	Name        Name               `json:"name"`
+	StartedDate time.Time          `json:"startedDate"`
 
 	// UseCount How many times the effect can be used, or null for no limit.
 	UseCount *int `json:"useCount"`

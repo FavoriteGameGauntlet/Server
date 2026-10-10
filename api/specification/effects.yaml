@@ -187,43 +187,6 @@ components:
       required:
         - pointTypeName
         - amount
-    Effect:
-      type: object
-      properties:
-        name:
-          $ref: '#/components/schemas/Name'
-        description:
-          type: string
-        useCount:
-          type: integer
-          format: int
-          nullable: true
-          description: How many times the effect can be used, or null for no limit.
-        duration:
-          $ref: '#/components/schemas/Duration'
-        modifiers:
-          type: array
-          items:
-            $ref: '#/components/schemas/PointModifier'
-      required:
-        - name
-        - description
-        - useCount
-        - modifiers
-    Effects:
-      type: array
-      items:
-        $ref: '#/components/schemas/Effect'
-    Error:
-      type: object
-      properties:
-        code:
-          type: string
-        message:
-          type: string
-      required:
-        - code
-        - message
     NullableName:
       allOf:
         - $ref: '#/components/schemas/Name'
@@ -251,6 +214,46 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/NamedChangeEntry'
+    Effect:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/Name'
+        description:
+          type: string
+        useCount:
+          type: integer
+          format: int
+          nullable: true
+          description: How many times the effect can be used, or null for no limit.
+        duration:
+          $ref: '#/components/schemas/Duration'
+        modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/PointModifier'
+        entries:
+          $ref: '#/components/schemas/NamedChangeEntries'
+      required:
+        - name
+        - description
+        - useCount
+        - modifiers
+        - entries
+    Effects:
+      type: array
+      items:
+        $ref: '#/components/schemas/Effect'
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
     EffectCreate:
       type: object
       description: |
@@ -311,6 +314,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PointModifier'
+        entries:
+          $ref: '#/components/schemas/NamedChangeEntries'
       required:
         - name
         - description
@@ -318,6 +323,7 @@ components:
         - usesLeft
         - startedDate
         - modifiers
+        - entries
     UserEffects:
       type: array
       items:
@@ -344,6 +350,8 @@ components:
         createdDate:
           type: string
           format: date-time
+        entries:
+          $ref: '#/components/schemas/NamedChangeEntries'
       required:
         - name
         - description
@@ -352,6 +360,7 @@ components:
         - useCount
         - usesLeft
         - createdDate
+        - entries
     EffectHistoryEntries:
       type: array
       items:

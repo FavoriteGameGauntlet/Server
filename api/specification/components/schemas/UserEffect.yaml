@@ -23,4 +23,6 @@ properties:
     type: array
     items:
       $ref: "./PointModifier.yaml"
-required: [ name, description, useCount, usesLeft, startedDate, modifiers ]
+  entries:
+    $ref: "./NamedChangeEntries.yaml"
+required: [ name, description, useCount, usesLeft, startedDate, modifiers, entries ]
