@@ -20,8 +20,6 @@ import (
 
 var storedChangeId = 20
 
-// effectWithChange is an effect row as the schema returns it for a lookup by id, which is the only
-// read that names the change an effect points at.
 func effectWithChange(effectId int, changeId int) typeeffects.EffectWithChange {
 	return typeeffects.EffectWithChange{
 		Id:      effectId,
@@ -35,8 +33,6 @@ var hasteEntries = []typechanges.NamedChangeEntry{
 	{ItemName: ptr("potion"), Amount: 1},
 }
 
-// Everything that lists effects shows what using each of them grants, and looks an effect up once
-// however many rows name it.
 func TestSrvEffects_EntriesOfListedEffects(test *testing.T) {
 	test.Run("Catalogue_EntriesAttachedPerEffect", func(test *testing.T) {
 		effectsDb := new(dbeffectsmock.DatabaseMock)
@@ -266,7 +262,6 @@ func TestSrvEffects_EntriesOfEffectHistory(test *testing.T) {
 	})
 }
 
-// A new effect answers with the entries the schema stored for it, named.
 func TestSrvEffects_CreateEffectReturnsStoredEntries(test *testing.T) {
 	test.Run("Success_StoredEntriesNamed", func(test *testing.T) {
 		effectsDb := new(dbeffectsmock.DatabaseMock)

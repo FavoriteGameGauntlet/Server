@@ -70,7 +70,7 @@ type EffectHistory struct {
 	UsesLeft      *int
 	SourceEventId *int
 	CreatedDate   time.Time
-	// Entries is what using the effect grants. The schema does not return it with the history rows.
+	// Entries is filled by the service, since the schema does not return it with the history rows.
 	Entries []typechanges.NamedChangeEntry
 }
 

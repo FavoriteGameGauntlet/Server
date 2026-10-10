@@ -87,8 +87,6 @@ func TestSrvEffects_GetEffectsWithModifiers(test *testing.T) {
 	})
 }
 
-// newChangesDbWithoutEntries answers every entries lookup with a change that grants nothing, for tests
-// that are not about what an effect grants.
 func newChangesDbWithoutEntries() *dbchangesmock.DatabaseMock {
 	changesDb := new(dbchangesmock.DatabaseMock)
 	changesDb.On("GetNamedChangeEntriesCommand", 1, mock.Anything).Return([]typechanges.NamedChangeEntry{}, nil)

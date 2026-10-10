@@ -111,9 +111,8 @@ func (s *Service) nameEffects(ctx context.Context, partyId int, effects []typeef
 	return
 }
 
-// fetchEntriesByEffectId reads what using each of the effects grants. The schema keeps the entries
-// behind the change an effect points at, and only the full effect row names that change, so each
-// effect costs a lookup of its own. An effect listed more than once is looked up once.
+// fetchEntriesByEffectId reads what using each effect grants, looking every distinct effect up once.
+// The schema names an effect's change only in the full effect row, so there is no batch read.
 func (s *Service) fetchEntriesByEffectId(ctx context.Context, partyId int, effectIds []int) (map[int][]typechanges.NamedChangeEntry, error) {
 	entriesByEffectId := make(map[int][]typechanges.NamedChangeEntry, len(effectIds))
 
@@ -140,7 +139,6 @@ func (s *Service) fetchEntriesByEffectId(ctx context.Context, partyId int, effec
 	return entriesByEffectId, nil
 }
 
-// fetchNamedEntries reads the entries of an effect's change with their targets named.
 func (s *Service) fetchNamedEntries(ctx context.Context, partyId int, change typechanges.Change) ([]typechanges.NamedChangeEntry, error) {
 	if change.ChangeId == nil {
 		return nil, errors.New("effect change has no id")
